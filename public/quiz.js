@@ -398,27 +398,6 @@ async function clearDatabase() {
   }
 }
 
-async function clearScoreboard() {
-  if (!confirm("Bạn có chắc muốn xóa toàn bộ bảng điểm hiện tại? Hành động này không thể hoàn tác!")) return;
-  try {
-    const res = await fetch("/clear-results", {
-      method: "DELETE",
-    });
-    const result = await res.json();
-    notification.innerText = result.message;
-    if (res.ok) {
-      selectedQuizId = null;
-      loadQuizzes();
-      if (isAdmin) saveAdminState();
-    } else {
-      throw new Error(result.message || 'Lỗi không xác định');
-    }
-  } catch (error) {
-    console.error("Error clearing database:", error);
-    notification.innerText = `Lỗi khi xóa database: ${error.message}. Vui lòng thử lại.`;
-  }
-}
-
 async function fetchWithRetry(url, retries = 5, delay = 2000) {
   for (let i = 0; i < retries; i++) {
     try {

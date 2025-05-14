@@ -162,18 +162,6 @@ app.delete('/clear-database', async (req, res) => {
   }
 });
 
-app.delete('/clear-results', async (req, res) => {
-  try {
-    results = [];
-    await saveResults();
-    res.status(200).json({ message: 'Results history cleared successfully!' });
-  } catch (err) {
-    console.error('Error clearing results:', err);
-    res.status(500).json({ message: 'Error clearing results' });
-  }
-});
-
-
 // Endpoint để giao bài
 app.post('/assign-quiz', async (req, res) => {
   const { quizId, timeLimit } = req.body;
