@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="google-signin-client_id" content="207656291282-cedkb5qkbeek0s9dbaca2o3ia3svjesv.apps.googleusercontent.com">
+  <title>Quiz App</title>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="quiz.css">
+</head>
+<body class="bg-gray-100 font-sans">
+  <div id="download-notice" class="fixed top-4 right-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 hidden">
+    <p class="font-bold">Admin Chú Ý</p>
+    <p>HÃY TẢI ĐỀ XUỐNG TRƯỚC THOÁT !</p>
+  </div>
+
+  <div id="welcome-screen" class="container mx-auto p-4">
+    <h1 class="text-3xl font-bold mb-4">Quiz App</h1>
+    <p id="notification" class="text-red-500 mb-4"></p>
+    <div class="space-y-4">
+      <button onclick="showAdminLogin()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Đăng nhập Admin</button>
+      <button onclick="showStudentLogin()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Đăng nhập Học sinh</button>
+    </div>
+  </div>
+
+  <div id="admin-login" class="container mx-auto p-4 hidden">
+    <h1 class="text-3xl font-bold mb-4">Đăng nhập Admin</h1>
+    <p id="notification" class="text-red-500 mb-4"></p>
+    <div id="g_id_onload"
+         data-client_id="207656291282-cedkb5qkbeek0s9dbaca2o3ia3svjesv.apps.googleusercontent.com"
+         data-callback="handleAdminCredentialResponse"
+         data-auto_prompt="false">
+    </div>
+    <div class="g_id_signin" data-type="standard" data-size="large" data-theme="outline" data-text="sign_in_with" data-shape="rectangular" data-logo_alignment="left"></div>
+    <button onclick="showWelcomeScreen()" class="mt-4 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
+  </div>
+
+  <div id="student-login" class="container mx-auto p-4 hidden">
+    <h1 class="text-3xl font-bold mb-4">Đăng nhập Học sinh</h1>
+    <p id="notification" class="text-red-500 mb-4"></p>
+    <form id="student-name-form" class="space-y-4">
+      <div>
+        <label for="student-name" class="block text-lg">Tên:</label>
+        <input id="student-name" type="text" class="border p-2 rounded w-full" required>
+      </div>
+      <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Đăng nhập</button>
+    </form>
+    <button onclick="showWelcomeScreen()" class="mt-4 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
+  </div>
+
+  <div id="quiz-list-screen" class="container mx-auto p-4 hidden">
+    <div class="flex justify-between items-center mb-4">
+      <h1 class="text-3xl font-bold">Danh sách đề thi</h1>
+      <button onclick="logout()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Đăng xuất</button>
+    </div>
+    <p id="notification" class="text-red-500 mb-4"></p>
+    <p id="quiz-status" class="text-lg mb-4"></p>
+    <p id="participant-count" class="text-lg mb-4"></p>
+    <p id="submitted-count" class="text-lg mb-4"></p>
+    <div id="admin-options" class="space-y-4 mb-4 hidden">
+      <button onclick="createNewQuiz()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Tạo đề thi mới</button>
+      <button onclick="showUploadQuizzes()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Tải lên đề thi</button>
+      <button onclick="showHistoryScreen()" class="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600">Xem lịch sử</button>
+      <button onclick="clearDatabase()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Xóa database cũ</button>
+    </div>
+    <div id="admin-controls" class="space-x-4 mb-4 hidden">
+      <button id="assignBtn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 hidden">Giao bài</button>
+      <button id="directTestBtn" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 hidden">Kiểm tra trực tiếp</button>
+    </div>
+    <div id="quiz-list" class="space-y-4"></div>
+    <table id="results-table" class="w-full border-collapse hidden">
+      <thead>
+        <tr class="bg-gray-200">
+          <th class="border p-2">Tên</th>
+          <th class="border p-2">Điểm</th>
+          <th class="border p-2">Thời gian nộp</th>
+        </tr>
+      </thead>
+      <tbody id="results-body"></tbody>
+    </table>
+  </div>
+
+  <div id="direct-test-screen" class="container mx-auto p-4 hidden">
+    <h1 class="text-3xl font-bold mb-4">Kiểm tra trực tiếp</h1>
+    <p id="notification" class="text-red-500 mb-4"></p>
+    <p id="direct-participant-count" class="text-lg mb-4"></p>
+    <p id="direct-submitted-count" class="text-lg mb-4"></p>
+    <button id="endDirectTestBtn" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Kết thúc kiểm tra</button>
+    <button onclick="backToQuizList()" class="mt-4 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
+    <table id="direct-results-table" class="w-full border-collapse mt-4 hidden">
+      <thead>
+        <tr class="bg-gray-200">
+          <th class="border p-2">Tên</th>
+          <th class="border p-2">Điểm</th>
+          <th class="border p-2">Thời gian nộp</th>
+        </tr>
+      </thead>
+      <tbody id="direct-results-body"></tbody>
+    </table>
+  </div>
+
+  <div id="upload-quizzes" class="container mx-auto p-4 hidden">
+    <h1 class="text-3xl font-bold mb-4">Tải lên đề thi</h1>
+    <p id="notification" class="text-red-500 mb-4"></p>
+    <input id="quizzes-file" type="file" accept=".json,.zip" class="mb-4">
+    <button onclick="uploadQuizzes()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Tải lên</button>
+    <button onclick="backToQuizList()" class="mt-4 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
+  </div>
+
+  <div id="history-screen" class="container mx-auto p-4 hidden">
+    <h1 class="text-3xl font-bold mb-4">Lịch sử điểm(Hiện không khả dụng!)</h1>
+    <p id="notification" class="text-red-500 mb-4"></p>
+    <button onclick="deleteSelectedResults()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 mb-4">Xóa mục đã chọn</button>
+    <button onclick="backToQuizList()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
+    <table class="w-full border-collapse">
+      <thead>
+        <tr class="bg-gray-200">
+          <th class="border p-2"><input id="select-all" type="checkbox" onclick="toggleSelectAll()"></th>
+          <th class="border p-2">Tên</th>
+          <th class="border p-2">Điểm</th>
+          <th class="border p-2">Thời gian nộp</th>
+        </tr>
+      </thead>
+      <tbody id="history-body"></tbody>
+    </table>
+  </div>
+
+  <div id="admin-step-audio" class="container mx-auto p-4 hidden admin-step">
+    <h1 class="text-3xl font-bold mb-4">Tạo đề thi mới - Bước 1: Tên và file nghe</h1>
+    <p id="notification" class="text-red-500 mb-4"></p>
+    <div class="space-y-4">
+      <div>
+        <label for="quiz-name" class="block text-lg">Tên đề thi:</label>
+        <input id="quiz-name" type="text" class="border p-2 rounded w-full">
+      </div>
+      <div>
+        <label for="audio-file-part1" class="block text-lg">File nghe Part 1:</label>
+        <input id="audio-file-part1" type="file" accept="audio/*">
+      </div>
+      <div>
+        <label for="audio-file-part2" class="block text-lg">File nghe Part 2:</label>
+        <input id="audio-file-part2" type="file" accept="audio/*">
+      </div>
+      <div>
+        <label for="audio-file-part3" class="block text-lg">File nghe Part 3:</label>
+        <input id="audio-file-part3" type="file" accept="audio/*">
+      </div>
+      <div>
+        <label for="audio-file-part4" class="block text-lg">File nghe Part 4:</label>
+        <input id="audio-file-part4" type="file" accept="audio/*">
+      </div>
+      <button onclick="nextAdminStep(1)" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Tiếp theo</button>
+      <button onclick="backToQuizList()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
+    </div>
+  </div>
+
+  <div id="admin-step-part1" class="container mx-auto p-4 hidden admin-step">
+    <h1 class="text-3xl font-bold mb-4">Tạo đề thi mới - Bước 2: Part 1</h1>
+    <p id="notification” class="text-red-500 mb-4"></p>
+    <div class="space-y-4">
+      <div>
+        <label for="images-part1" class="block text-lg">Ảnh Part 1:</label>
+        <input id="images-part1" type="file" accept="image/*" multiple>
+      </div>
+      <div>
+        <label for="answer-key-part1" class="block text-lg">Đáp án Part 1 (6 đáp án, cách nhau bằng dấu phẩy):</label>
+        <input id="answer-key-part1" type="text" class="border p-2 rounded w-full" placeholder="A,B,C,D,A,B">
+      </div>
+      <button onclick="nextAdminStep(2)" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Tiếp theo</button>
+      <button onclick="prevAdminStep(1)" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
+    </div>
+  </div>
+
+  <div id="admin-step-part2" class="container mx-auto p-4 hidden admin-step">
+    <h1 class="text-3xl font-bold mb-4">Tạo đề thi mới - Bước 3: Part 2</h1>
+    <p id="notification" class="text-red-500 mb-4"></p>
+    <div class="space-y-4">
+      <div>
+        <label for="images-part2" class="block text-lg">Ảnh Part 2:</label>
+        <input id="images-part2" type="file" accept="image/*" multiple>
+      </div>
+      <div>
+        <label for="answer-key-part2" class="block text-lg">Đáp án Part 2 (25 đáp án, cách nhau bằng dấu phẩy):</label>
+        <input id="answer-key-part2" type="text" class="border p-2 rounded w-full" placeholder="A,B,C,...">
+      </div>
+      <button onclick="nextAdminStep(3)" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Tiếp theo</button>
+      <button onclick="prevAdminStep(2)" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
+    </div>
+  </div>
+
+  <div id="admin-step-part3" class="container mx-auto p-4 hidden admin-step">
+    <h1 class="text-3xl font-bold mb-4">Tạo đề thi mới - Bước 4: Part 3</h1>
+    <p id="notification" class="text-red-500 mb-4"></p>
+    <div class="space-y-4">
+      <div>
+        <label for="images-part3" class="block text-lg">Ảnh Part 3:</label>
+        <input id="images-part3" type="file" accept="image/*" multiple>
+      </div>
+      <div>
+        <label for="answer-key-part3" class="block text-lg">Đáp án Part 3 (39 đáp án, cách nhau bằng dấu phẩy):</label>
+        <input id="answer-key-part3" type="text" class="border p-2 rounded w-full" placeholder="A,B,C,...">
+      </div>
+      <button onclick="nextAdminStep(4)" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Tiếp theo</button>
+      <button onclick="prevAdminStep(3)" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
+    </div>
+  </div>
+
+  <div id="admin-step-part4" class="container mx-auto p-4 hidden admin-step">
+    <h1 class="text-3xl font-bold mb-4">Tạo đề thi mới - Bước 5: Part 4</h1>
+    <p id="notification" class="text-red-500 mb-4"></p>
+    <div class="space-y-4">
+      <div>
+        <label for="images-part4" class="block text-lg">Ảnh Part 4:</label>
+        <input id="images-part4" type="file" accept="image/*" multiple>
+      </div>
+      <div>
+        <label for="answer-key-part4" class="block text-lg">Đáp án Part 4 (30 đáp án, cách nhau bằng dấu phẩy):</label>
+        <input id="answer-key-part4" type="text" class="border p-2 rounded w-full" placeholder="A,B,C,...">
+      </div>
+      <button onclick="nextAdminStep(5)" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Tiếp theo</button>
+      <button onclick="prevAdminStep(4)" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
+    </div>
+  </div>
+
+  <div id="admin-step-part5" class="container mx-auto p-4 hidden admin-step">
+    <h1 class="text-3xl font-bold mb-4">Tạo đề thi mới - Bước 6: Part 5</h1>
+    <p id="notification" class="text-red-500 mb-4"></p>
+    <div class="space-y-4">
+      <div>
+        <label for="images-part5" class="block text-lg">Ảnh Part 5:</label>
+        <input id="images-part5" type="file" accept="image/*" multiple>
+      </div>
+      <div>
+        <label for="answer-key-part5" class="block text-lg">Đáp án Part 5 (30 đáp án, cách nhau bằng dấu phẩy):</label>
+        <input id="answer-key-part5" type="text" class="border p-2 rounded w-full" placeholder="A,B,C,...">
+      </div>
+      <button onclick="nextAdminStep(6)" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Tiếp theo</button>
+      <button onclick="prevAdminStep(5)" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
+    </div>
+  </div>
+
+  <div id="admin-step-part6" class="container mx-auto p-4 hidden admin-step">
+    <h1 class="text-3xl font-bold mb-4">Tạo đề thi mới - Bước 7: Part 6</h1>
+    <p id="notification" class="text-red-500 mb-4"></p>
+    <div class="space-y-4">
+      <div>
+        <label for="images-part6" class="block text-lg">Ảnh Part 6:</label>
+        <input id="images-part6" type="file" accept="image/*" multiple>
+      </div>
+      <div>
+        <label for="answer-key-part6" class="block text-lg">Đáp án Part 6 (16 đáp án, cách nhau bằng dấu phẩy):</label>
+        <input id="answer-key-part6" type="text" class="border p-2 rounded w-full" placeholder="A,B,C,...">
+      </div>
+      <button onclick="nextAdminStep(7)" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Tiếp theo</button>
+      <button onclick="prevAdminStep(6)" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
+    </div>
+  </div>
+
+  <div id="admin-step-part7" class="container mx-auto p-4 hidden admin-step">
+    <h1 class="text-3xl font-bold mb-4">Tạo đề thi mới - Bước 8: Part 7</h1>
+    <p id="notification" class="text-red-500 mb-4"></p>
+    <div class="space-y-4">
+      <div>
+        <label for="images-part7" class="block text-lg">Ảnh Part 7:</label>
+        <input id="images-part7" type="file" accept="image/*" multiple>
+      </div>
+      <div>
+        <label for="answer-key-part7" class="block text-lg">Đáp án Part 7 (54 đáp án, cách nhau bằng dấu phẩy):</label>
+        <input id="answer-key-part7" type="text" class="border p-2 rounded w-full" placeholder="A,B,C,...">
+      </div>
+      <button onclick="saveQuiz()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Lưu đề thi</button>
+      <button onclick="prevAdminStep(7)" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
+    </div>
+  </div>
+
+  <div id="quiz-container" class="container mx-auto p-4 hidden">
+    <h1 class="text-3xl font-bold mb-4">Bài thi</h1>
+    <p id="notification" class="text-red-500 mb-4"></p>
+    <p id="timer" class="text-lg mb-4 hidden"></p>
+    <audio id="audio" controls class="mb-4 hidden">
+      <source id="audio-source" src="" type="audio/mpeg">
+    </audio>
+    <div class="split-container">
+      <div class="image-section" id="image-display">
+        <h3 class="text-lg font-semibold mb-2">Part 1</h3>
+      </div>
+      <div class="question-section">
+        <form id="quizForm" class="space-y-4">
+          <div id="quiz-part1">
+            <h2 class="text-2xl font-semibold mb-2">Part 1</h2>
+            <div id="section1" class="space-y-4"></div>
+          </div>
+          <div id="quiz-part2" class="hidden">
+            <h2 class="text-2xl font-semibold mb-2">Part 2</h2>
+            <div id="section2" class="space-y-4"></div>
+          </div>
+          <div id="quiz-part3" class="hidden">
+            <h2 class="text-2xl font-semibold mb-2">Part 3</h2>
+            <div id="section3" class="space-y-4"></div>
+          </div>
+          <div id="quiz-part4" class="hidden">
+            <h2 class="text-2xl font-semibold mb-2">Part 4</h2>
+            <div id="section4" class="space-y-4"></div>
+          </div>
+          <div id="quiz-part5" class="hidden">
+            <h2 class="text-2xl font-semibold mb-2">Part 5</h2>
+            <div id="section5" class="space-y-4"></div>
+          </div>
+          <div id="quiz-part6" class="hidden">
+            <h2 class="text-2xl font-semibold mb-2">Part 6</h2>
+            <div id="section6" class="space-y-4"></div>
+          </div>
+          <div id="quiz-part7" class="hidden">
+            <h2 class="text-2xl font-semibold mb-2">Part 7</h2>
+            <div id="section7" class="space-y-4"></div>
+          </div>
+          <div class="flex space-x-4 sticky bottom-0 bg-gray-100 p-4">
+            <button type="button" onclick="prevQuizPart(currentQuizPart + 1)" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Phần trước</button>
+            <button type="button" onclick="nextQuizPart(currentQuizPart + 1)" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Phần tiếp theo</button>
+            <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Nộp bài</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="result-screen" class="container mx-auto p-4 hidden">
+    <h1 class="text-3xl font-bold mb-4">Kết quả</h1>
+    <p id="notification" class="text-red-500 mb-4"></p>
+    <p id="result-score" class="text-lg mb-2"></p>
+    <p id="result-time" class="text-lg mb-2"></p>
+    <button onclick="showWelcomeScreen()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
+  </div>
+
+  <script src="quiz.js"></script>
+</body>
+</html>

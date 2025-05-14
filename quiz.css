@@ -1,0 +1,48 @@
+/* quiz.css */
+.split-container {
+  display: flex;
+  height: calc(100vh - 200px); /* Trừ header, timer, audio, và padding */
+  overflow: hidden;
+}
+
+.image-section, .question-section {
+  width: 50%;
+  overflow-y: auto; /* Cho phép cuộn dọc */
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.image-section {
+  border-right: 1px solid #ccc; /* Đường phân cách */
+}
+
+.image-section img {
+  width: 100%;
+  max-width: 400px; /* Giới hạn chiều rộng ảnh */
+  margin-bottom: 16px;
+  border-radius: 8px;
+}
+
+.question-section {
+  background-color: #f9fafb; /* Nền nhẹ để phân biệt */
+}
+
+.question-section .bg-gray-50 {
+  margin-bottom: 16px; /* Khoảng cách giữa các câu hỏi */
+}
+
+/* Responsive cho mobile */
+@media (max-width: 768px) {
+  .split-container {
+    flex-direction: column;
+    height: auto;
+  }
+  .image-section, .question-section {
+    width: 100%;
+    max-height: 50vh; /* Giới hạn chiều cao trên mobile */
+  }
+  .image-section {
+    border-right: none;
+    border-bottom: 1px solid #ccc;
+  }
+}
