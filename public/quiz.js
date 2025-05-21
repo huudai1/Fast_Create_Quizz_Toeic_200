@@ -708,7 +708,6 @@ async function loadImages(part) {
 }
 
 function nextAdminStep(step) {
-  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
   let notificationElement;
 
   // Xác định phần tử notification dựa trên bước
@@ -728,10 +727,6 @@ function nextAdminStep(step) {
     for (let i = 0; i < audioFiles.length; i++) {
       if (!audioFiles[i]) {
         notificationElement.innerText = `Vui lòng tải file nghe cho Part ${i + 1}!`;
-        return;
-      }
-      if (audioFiles[i].size > MAX_FILE_SIZE) {
-        notificationElement.innerText = `File nghe cho Part ${i + 1} vượt quá giới hạn 10MB!`;
         return;
       }
     }
@@ -792,7 +787,6 @@ function prevAdminStep(step) {
 
 async function saveQuiz() {
   const notificationElement = document.getElementById("notification-part7");
-  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
   const quizName = document.getElementById("quiz-name").value.trim();
   if (!quizName) {
     notificationElement.innerText = "Vui lòng nhập tên đề thi!";
@@ -809,10 +803,6 @@ async function saveQuiz() {
   for (let i = 0; i < audioFiles.length; i++) {
     if (!audioFiles[i]) {
       notificationElement.innerText = `Vui lòng tải file nghe cho Part ${i + 1}!`;
-      return;
-    }
-    if (audioFiles[i].size > MAX_FILE_SIZE) {
-      notificationElement.innerText = `File nghe cho Part ${i + 1} vượt quá giới hạn 10MB!`;
       return;
     }
     formData.append(`audio-part${i + 1}`, audioFiles[i]);
