@@ -787,6 +787,8 @@ function prevAdminStep(step) {
 
 async function saveQuiz() {
   const notificationElement = document.getElementById("notification-part7");
+  const saveButton = document.querySelector('#admin-step-part7 button[onclick="saveQuiz()"]');
+  const modal = document.getElementById("loading-modal");
   const quizName = document.getElementById("quiz-name").value.trim();
   console.log("Quiz name:", quizName);
   if (!quizName) {
@@ -833,7 +835,11 @@ async function saveQuiz() {
     }
     const answers = answerKeyInput.split(",").map(a => a.trim().toUpperCase());
     if (answers.length !== partAnswerCounts[part - 1]) {
-      notificationElement.innerText = `Part ${part} phải có đúng ${partAnswerCounts[part - 1]} đáp án!`;
+      notificationElement.innerText = `Đã nhập ${answers.length} đáp án, yêu cầu đúng ${partAnswerCounts[part - 1]} đáp án cho Part ${part}!`;
+      return;
+    }
+    if (!answers.every(a => ["A", "B", "C", "D"].includes(a))) {
+      notificationElement.innerText = `Đáp án Part ${part} chỉ được chứa A, B, C, D!`;
       return;
     }
     for (let i = 0; i < partAnswerCounts[part - 1]; i++) {
@@ -848,9 +854,13 @@ async function saveQuiz() {
   formData.append("createdBy", user.email);
   console.log("FormData prepared, createdBy:", user.email);
 
+  // Hiển thị modal và vô hiệu hóa nút Lưu
+  modal.classList.remove("hidden");
+  saveButton.disabled = true;
+
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // Timeout 30 giây
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // Timeout 60 giây
     const res = await fetch("/save-quiz", {
       method: "POST",
       body: formData,
@@ -862,10 +872,16 @@ async function saveQuiz() {
     notificationElement.innerText = result.message;
     if (res.ok) {
       backToQuizList();
+    } else {
+      throw new Error(result.message || "Server returned an error");
     }
   } catch (error) {
     console.error("Error saving quiz:", error);
     notificationElement.innerText = `Lỗi khi lưu đề thi: ${error.message}. Vui lòng thử lại.`;
+  } finally {
+    // Ẩn modal và kích hoạt lại nút Lưu
+    modal.classList.add("hidden");
+    saveButton.disabled = false;
   }
 }
 
