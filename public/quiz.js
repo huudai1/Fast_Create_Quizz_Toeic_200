@@ -788,6 +788,7 @@ function prevAdminStep(step) {
 async function saveQuiz() {
   const notificationElement = document.getElementById("notification-part7");
   const quizName = document.getElementById("quiz-name").value.trim();
+  console.log("Quiz name:", quizName);
   if (!quizName) {
     notificationElement.innerText = "Vui lòng nhập tên đề thi!";
     return;
@@ -800,6 +801,7 @@ async function saveQuiz() {
     document.getElementById("audio-file-part3").files[0],
     document.getElementById("audio-file-part4").files[0],
   ];
+  console.log("Audio files:", audioFiles.map(f => f ? f.name : null));
   for (let i = 0; i < audioFiles.length; i++) {
     if (!audioFiles[i]) {
       notificationElement.innerText = `Vui lòng tải file nghe cho Part ${i + 1}!`;
@@ -810,6 +812,7 @@ async function saveQuiz() {
 
   for (let i = 1; i <= 7; i++) {
     const files = document.getElementById(`images-part${i}`).files;
+    console.log(`Images for Part ${i}:`, files.length, Array.from(files).map(f => f.name));
     if (!files.length) {
       notificationElement.innerText = `Vui lòng tải ít nhất một ảnh cho Part ${i}!`;
       return;
@@ -823,17 +826,14 @@ async function saveQuiz() {
   let questionIndex = 1;
   for (let part = 1; part <= 7; part++) {
     const answerKeyInput = document.getElementById(`answer-key-part${part}`).value.trim();
+    console.log(`Answer key for Part ${part}:`, answerKeyInput);
     if (!answerKeyInput) {
       notificationElement.innerText = `Vui lòng nhập đáp án cho Part ${part}!`;
       return;
     }
     const answers = answerKeyInput.split(",").map(a => a.trim().toUpperCase());
     if (answers.length !== partAnswerCounts[part - 1]) {
-      notificationElement.innerText = `Đã nhập ${answers.length} đáp án, yêu cầu đúng ${partAnswerCounts[part - 1]} đáp án cho Part ${part}!`;
-      return;
-    }
-    if (!answers.every(a => ["A", "B", "C", "D"].includes(a))) {
-      notificationElement.innerText = `Đáp án Part ${part} chỉ được chứa A, B, C, D!`;
+      notificationElement.innerText = `Part ${part} phải có đúng ${partAnswerCounts[part - 1]} đáp án!`;
       return;
     }
     for (let i = 0; i < partAnswerCounts[part - 1]; i++) {
@@ -841,23 +841,31 @@ async function saveQuiz() {
       questionIndex++;
     }
   }
+  console.log("Answer key object:", answerKey);
   formData.append("answerKey", JSON.stringify(answerKey));
   formData.append("quizName", quizName);
+  console.log("User object:", user);
   formData.append("createdBy", user.email);
+  console.log("FormData prepared, createdBy:", user.email);
 
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // Timeout 30 giây
     const res = await fetch("/save-quiz", {
       method: "POST",
       body: formData,
+      signal: controller.signal,
     });
+    clearTimeout(timeoutId);
     const result = await res.json();
+    console.log("Server response:", result);
     notificationElement.innerText = result.message;
     if (res.ok) {
       backToQuizList();
     }
   } catch (error) {
     console.error("Error saving quiz:", error);
-    notificationElement.innerText = "Lỗi khi lưu đề thi. Vui lòng thử lại.";
+    notificationElement.innerText = `Lỗi khi lưu đề thi: ${error.message}. Vui lòng thử lại.`;
   }
 }
 
