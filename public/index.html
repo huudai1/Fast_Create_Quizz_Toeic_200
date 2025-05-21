@@ -127,152 +127,159 @@
   </div>
 
   <div id="admin-step-audio" class="container mx-auto p-4 hidden admin-step">
-    <h1 class="text-3xl font-bold mb-4">Tạo đề thi mới - Bước 1: Tên và file nghe</h1>
-    <p id="notification" class="text-red-500 mb-4"></p>
-    <div class="space-y-4">
-      <div>
-        <label for="quiz-name" class="block text-lg">Tên đề thi:</label>
-        <input id="quiz-name" type="text" class="border p-2 rounded w-full">
-      </div>
-      <div>
-        <label for="audio-file-part1" class="block text-lg">File nghe Part 1:</label>
-        <input id="audio-file-part1" type="file" accept="audio/*">
-      </div>
-      <div>
-        <label for="audio-file-part2" class="block text-lg">File nghe Part 2:</label>
-        <input id="audio-file-part2" type="file" accept="audio/*">
-      </div>
-      <div>
-        <label for="audio-file-part3" class="block text-lg">File nghe Part 3:</label>
-        <input id="audio-file-part3" type="file" accept="audio/*">
-      </div>
-      <div>
-        <label for="audio-file-part4" class="block text-lg">File nghe Part 4:</label>
-        <input id="audio-file-part4" type="file" accept="audio/*">
-      </div>
-      <button onclick="nextAdminStep(1)" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Tiếp theo</button>
-      <button onclick="backToQuizList()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
+  <h1 class="text-3xl font-bold mb-4">Tạo đề thi mới - Bước 1: Tên và file nghe</h1>
+  <p id="notification-audio" class="text-red-500 mb-4"></p>
+  <div class="space-y-4">
+    <div>
+      <label for="quiz-name" class="block text-lg">Tên đề thi:</label>
+      <input id="quiz-name" type="text" class="border p-2 rounded w-full">
     </div>
+    <div>
+      <label for="audio-file-part1" class="block text-lg">File nghe Part 1:</label>
+      <input id="audio-file-part1" type="file" accept="audio/*">
+    </div>
+    <div>
+      <label for="audio-file-part2" class="block text-lg">File nghe Part 2:</label>
+      <input id="audio-file-part2" type="file" accept="audio/*">
+    </div>
+    <div>
+      <label for="audio-file-part3" class="block text-lg">File nghe Part 3:</label>
+      <input id="audio-file-part3" type="file" accept="audio/*">
+    </div>
+    <div>
+      <label for="audio-file-part4" class="block text-lg">File nghe Part 4:</label>
+      <input id="audio-file-part4" type="file" accept="audio/*">
+    </div>
+    <button onclick="nextAdminStep(1)" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Tiếp theo</button>
+    <button onclick="backToQuizList()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
   </div>
+</div>
 
-  <div id="admin-step-part1" class="container mx-auto p-4 hidden admin-step">
-    <h1 class="text-3xl font-bold mb-4">Tạo đề thi mới - Bước 2: Part 1</h1>
-    <p id="notification” class="text-red-500 mb-4"></p>
-    <div class="space-y-4">
-      <div>
-        <label for="images-part1" class="block text-lg">Ảnh Part 1:</label>
-        <input id="images-part1" type="file" accept="image/*" multiple>
-      </div>
-      <div>
-        <label for="answer-key-part1" class="block text-lg">Đáp án Part 1 (6 đáp án, cách nhau bằng dấu phẩy):</label>
-        <input id="answer-key-part1" type="text" class="border p-2 rounded w-full" placeholder="A,B,C,D,A,B">
-      </div>
-      <button onclick="nextAdminStep(2)" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Tiếp theo</button>
-      <button onclick="prevAdminStep(1)" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
+<!-- Trong admin-step-part1 -->
+<div id="admin-step-part1" class="container mx-auto p-4 hidden admin-step">
+  <h1 class="text-3xl font-bold mb-4">Tạo đề thi mới - Bước 2: Part 1</h1>
+  <p id="notification-part1" class="text-red-500 mb-4"></p>
+  <div class="space-y-4">
+    <div>
+      <label for="images-part1" class="block text-lg">Ảnh Part 1:</label>
+      <input id="images-part1" type="file" accept="image/*" multiple>
     </div>
+    <div>
+      <label for="answer-key-part1" class="block text-lg">Đáp án Part 1 (6 đáp án, cách nhau bằng dấu phẩy):</label>
+      <input id="answer-key-part1" type="text" class="border p-2 rounded w-full" placeholder="A,B,C,D,A,B">
+    </div>
+    <button onclick="nextAdminStep(2)" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Tiếp theo</button>
+    <button onclick="prevAdminStep(1)" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
   </div>
+</div>
 
-  <div id="admin-step-part2" class="container mx-auto p-4 hidden admin-step">
-    <h1 class="text-3xl font-bold mb-4">Tạo đề thi mới - Bước 3: Part 2</h1>
-    <p id="notification" class="text-red-500 mb-4"></p>
-    <div class="space-y-4">
-      <div>
-        <label for="images-part2" class="block text-lg">Ảnh Part 2:</label>
-        <input id="images-part2" type="file" accept="image/*" multiple>
-      </div>
-      <div>
-        <label for="answer-key-part2" class="block text-lg">Đáp án Part 2 (25 đáp án, cách nhau bằng dấu phẩy):</label>
-        <input id="answer-key-part2" type="text" class="border p-2 rounded w-full" placeholder="A,B,C,...">
-      </div>
-      <button onclick="nextAdminStep(3)" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Tiếp theo</button>
-      <button onclick="prevAdminStep(2)" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
+<!-- Trong admin-step-part2 -->
+<div id="admin-step-part2" class="container mx-auto p-4 hidden admin-step">
+  <h1 class="text-3xl font-bold mb-4">Tạo đề thi mới - Bước 3: Part 2</h1>
+  <p id="notification-part2" class="text-red-500 mb-4"></p>
+  <div class="space-y-4">
+    <div>
+      <label for="images-part2" class="block text-lg">Ảnh Part 2:</label>
+      <input id="images-part2" type="file" accept="image/*" multiple>
     </div>
+    <div>
+      <label for="answer-key-part2" class="block text-lg">Đáp án Part 2 (25 đáp án, cách nhau bằng dấu phẩy):</label>
+      <input id="answer-key-part2" type="text" class="border p-2 rounded w-full" placeholder="A,B,C,...">
+    </div>
+    <button onclick="nextAdminStep(3)" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Tiếp theo</button>
+    <button onclick="prevAdminStep(2)" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
   </div>
+</div>
 
-  <div id="admin-step-part3" class="container mx-auto p-4 hidden admin-step">
-    <h1 class="text-3xl font-bold mb-4">Tạo đề thi mới - Bước 4: Part 3</h1>
-    <p id="notification" class="text-red-500 mb-4"></p>
-    <div class="space-y-4">
-      <div>
-        <label for="images-part3" class="block text-lg">Ảnh Part 3:</label>
-        <input id="images-part3" type="file" accept="image/*" multiple>
-      </div>
-      <div>
-        <label for="answer-key-part3" class="block text-lg">Đáp án Part 3 (39 đáp án, cách nhau bằng dấu phẩy):</label>
-        <input id="answer-key-part3" type="text" class="border p-2 rounded w-full" placeholder="A,B,C,...">
-      </div>
-      <button onclick="nextAdminStep(4)" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Tiếp theo</button>
-      <button onclick="prevAdminStep(3)" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
+<!-- Trong admin-step-part3 -->
+<div id="admin-step-part3" class="container mx-auto p-4 hidden admin-step">
+  <h1 class="text-3xl font-bold mb-4">Tạo đề thi mới - Bước 4: Part 3</h1>
+  <p id="notification-part3" class="text-red-500 mb-4"></p>
+  <div class="space-y-4">
+    <div>
+      <label for="images-part3" class="block text-lg">Ảnh Part 3:</label>
+      <input id="images-part3" type="file" accept="image/*" multiple>
     </div>
+    <div>
+      <label for="answer-key-part3" class="block text-lg">Đáp án Part 3 (39 đáp án, cách nhau bằng dấu phẩy):</label>
+      <input id="answer-key-part3" type="text" class="border p-2 rounded w-full" placeholder="A,B,C,...">
+    </div>
+    <button onclick="nextAdminStep(4)" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Tiếp theo</button>
+    <button onclick="prevAdminStep(3)" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
   </div>
+</div>
 
-  <div id="admin-step-part4" class="container mx-auto p-4 hidden admin-step">
-    <h1 class="text-3xl font-bold mb-4">Tạo đề thi mới - Bước 5: Part 4</h1>
-    <p id="notification" class="text-red-500 mb-4"></p>
-    <div class="space-y-4">
-      <div>
-        <label for="images-part4" class="block text-lg">Ảnh Part 4:</label>
-        <input id="images-part4" type="file" accept="image/*" multiple>
-      </div>
-      <div>
-        <label for="answer-key-part4" class="block text-lg">Đáp án Part 4 (30 đáp án, cách nhau bằng dấu phẩy):</label>
-        <input id="answer-key-part4" type="text" class="border p-2 rounded w-full" placeholder="A,B,C,...">
-      </div>
-      <button onclick="nextAdminStep(5)" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Tiếp theo</button>
-      <button onclick="prevAdminStep(4)" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
+<!-- Trong admin-step-part4 -->
+<div id="admin-step-part4" class="container mx-auto p-4 hidden admin-step">
+  <h1 class="text-3xl font-bold mb-4">Tạo đề thi mới - Bước 5: Part 4</h1>
+  <p id="notification-part4" class="text-red-500 mb-4"></p>
+  <div class="space-y-4">
+    <div>
+      <label for="images-part4" class="block text-lg">Ảnh Part 4:</label>
+      <input id="images-part4" type="file" accept="image/*" multiple>
     </div>
+    <div>
+      <label for="answer-key-part4" class="block text-lg">Đáp án Part 4 (30 đáp án, cách nhau bằng dấu phẩy):</label>
+      <input id="answer-key-part4" type="text" class="border p-2 rounded w-full" placeholder="A,B,C,...">
+    </div>
+    <button onclick="nextAdminStep(5)" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Tiếp theo</button>
+    <button onclick="prevAdminStep(4)" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
   </div>
+</div>
 
-  <div id="admin-step-part5" class="container mx-auto p-4 hidden admin-step">
-    <h1 class="text-3xl font-bold mb-4">Tạo đề thi mới - Bước 6: Part 5</h1>
-    <p id="notification" class="text-red-500 mb-4"></p>
-    <div class="space-y-4">
-      <div>
-        <label for="images-part5" class="block text-lg">Ảnh Part 5:</label>
-        <input id="images-part5" type="file" accept="image/*" multiple>
-      </div>
-      <div>
-        <label for="answer-key-part5" class="block text-lg">Đáp án Part 5 (30 đáp án, cách nhau bằng dấu phẩy):</label>
-        <input id="answer-key-part5" type="text" class="border p-2 rounded w-full" placeholder="A,B,C,...">
-      </div>
-      <button onclick="nextAdminStep(6)" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Tiếp theo</button>
-      <button onclick="prevAdminStep(5)" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
+<!-- Trong admin-step-part5 -->
+<div id="admin-step-part5" class="container mx-auto p-4 hidden admin-step">
+  <h1 class="text-3xl font-bold mb-4">Tạo đề thi mới - Bước 6: Part 5</h1>
+  <p id="notification-part5" class="text-red-500 mb-4"></p>
+  <div class="space-y-4">
+    <div>
+      <label for="images-part5" class="block text-lg">Ảnh Part 5:</label>
+      <input id="images-part5" type="file" accept="image/*" multiple>
     </div>
+    <div>
+      <label for="answer-key-part5" class="block text-lg">Đáp án Part 5 (30 đáp án, cách nhau bằng dấu phẩy):</label>
+      <input id="answer-key-part5" type="text" class="border p-2 rounded w-full" placeholder="A,B,C,...">
+    </div>
+    <button onclick="nextAdminStep(6)" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Tiếp theo</button>
+    <button onclick="prevAdminStep(5)" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
   </div>
+</div>
 
-  <div id="admin-step-part6" class="container mx-auto p-4 hidden admin-step">
-    <h1 class="text-3xl font-bold mb-4">Tạo đề thi mới - Bước 7: Part 6</h1>
-    <p id="notification" class="text-red-500 mb-4"></p>
-    <div class="space-y-4">
-      <div>
-        <label for="images-part6" class="block text-lg">Ảnh Part 6:</label>
-        <input id="images-part6" type="file" accept="image/*" multiple>
-      </div>
-      <div>
-        <label for="answer-key-part6" class="block text-lg">Đáp án Part 6 (16 đáp án, cách nhau bằng dấu phẩy):</label>
-        <input id="answer-key-part6" type="text" class="border p-2 rounded w-full" placeholder="A,B,C,...">
-      </div>
-      <button onclick="nextAdminStep(7)" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Tiếp theo</button>
-      <button onclick="prevAdminStep(6)" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
+<!-- Trong admin-step-part6 -->
+<div id="admin-step-part6" class="container mx-auto p-4 hidden admin-step">
+  <h1 class="text-3xl font-bold mb-4">Tạo đề thi mới - Bước 7: Part 6</h1>
+  <p id="notification-part6" class="text-red-500 mb-4"></p>
+  <div class="space-y-4">
+    <div>
+      <label for="images-part6" class="block text-lg">Ảnh Part 6:</label>
+      <input id="images-part6" type="file" accept="image/*" multiple>
     </div>
+    <div>
+      <label for="answer-key-part6" class="block text-lg">Đáp án Part 6 (16 đáp án, cách nhau bằng dấu phẩy):</label>
+      <input id="answer-key-part6" type="text" class="border p-2 rounded w-full" placeholder="A,B,C,...">
+    </div>
+    <button onclick="nextAdminStep(7)" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Tiếp theo</button>
+    <button onclick="prevAdminStep(6)" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
   </div>
+</div>
 
-  <div id="admin-step-part7" class="container mx-auto p-4 hidden admin-step">
-    <h1 class="text-3xl font-bold mb-4">Tạo đề thi mới - Bước 8: Part 7</h1>
-    <p id="notification" class="text-red-500 mb-4"></p>
-    <div class="space-y-4">
-      <div>
-        <label for="images-part7" class="block text-lg">Ảnh Part 7:</label>
-        <input id="images-part7" type="file" accept="image/*" multiple>
-      </div>
-      <div>
-        <label for="answer-key-part7" class="block text-lg">Đáp án Part 7 (54 đáp án, cách nhau bằng dấu phẩy):</label>
-        <input id="answer-key-part7" type="text" class="border p-2 rounded w-full" placeholder="A,B,C,...">
-      </div>
-      <button onclick="saveQuiz()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Lưu đề thi</button>
-      <button onclick="prevAdminStep(7)" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
+<!-- Trong admin-step-part7 -->
+<div id="admin-step-part7" class="container mx-auto p-4 hidden admin-step">
+  <h1 class="text-3xl font-bold mb-4">Tạo đề thi mới - Bước 8: Part 7</h1>
+  <p id="notification-part7" class="text-red-500 mb-4"></p>
+  <div class="space-y-4">
+    <div>
+      <label for="images-part7" class="block text-lg">Ảnh Part 7:</label>
+      <input id="images-part7" type="file" accept="image/*" multiple>
     </div>
+    <div>
+      <label for="answer-key-part7" class="block text-lg">Đáp án Part 7 (54 đáp án, cách nhau bằng dấu phẩy):</label>
+      <input id="answer-key-part7" type="text" class="border p-2 rounded w-full" placeholder="A,B,C,...">
+    </div>
+    <button onclick="saveQuiz()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Lưu đề thi</button>
+    <button onclick="prevAdminStep(7)" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
   </div>
+</div>
 
   <div id="quiz-container" class="container mx-auto p-4 hidden">
     <h1 class="text-3xl font-bold mb-4">Bài thi</h1>

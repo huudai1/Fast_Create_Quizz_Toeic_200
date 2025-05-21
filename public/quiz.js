@@ -708,10 +708,15 @@ async function loadImages(part) {
 }
 
 function nextAdminStep(step) {
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
+  let notificationElement;
+
+  // Xác định phần tử notification dựa trên bước
   if (step === 1) {
+    notificationElement = document.getElementById("notification-audio");
     const quizName = document.getElementById("quiz-name").value.trim();
     if (!quizName) {
-      notification.innerText = "Vui lòng nhập tên đề thi!";
+      notificationElement.innerText = "Vui lòng nhập tên đề thi!";
       return;
     }
     const audioFiles = [
@@ -722,13 +727,17 @@ function nextAdminStep(step) {
     ];
     for (let i = 0; i < audioFiles.length; i++) {
       if (!audioFiles[i]) {
-        notification.innerText = `Vui lòng tải file nghe cho Part ${i + 1}!`;
+        notificationElement.innerText = `Vui lòng tải file nghe cho Part ${i + 1}!`;
+        return;
+      }
+      if (audioFiles[i].size > MAX_FILE_SIZE) {
+        notificationElement.innerText = `File nghe cho Part ${i + 1} vượt quá giới hạn 10MB!`;
         return;
       }
     }
     hideAllScreens();
     document.getElementById("admin-step-part1").classList.remove("hidden");
-    notification.innerText = "";
+    notificationElement.innerText = "";
     currentAdminStep = step;
     saveAdminState();
     return;
@@ -736,51 +745,57 @@ function nextAdminStep(step) {
 
   if (step >= 2 && step <= 7) {
     const part = step - 1;
+    notificationElement = document.getElementById(`notification-part${part}`);
     const imagesInput = document.getElementById(`images-part${part}`);
     if (!imagesInput.files.length) {
-      notification.innerText = `Vui lòng tải ít nhất một ảnh cho Part ${part}!`;
+      notificationElement.innerText = `Vui lòng tải ít nhất một ảnh cho Part ${part}!`;
       return;
     }
     const answerKeyInput = document.getElementById(`answer-key-part${part}`).value.trim();
     if (!answerKeyInput) {
-      notification.innerText = `Vui lòng nhập đáp án cho Part ${part}!`;
+      notificationElement.innerText = `Vui lòng nhập đáp án cho Part ${part}!`;
       return;
     }
     const answers = answerKeyInput.split(",").map(a => a.trim().toUpperCase());
     const expectedCount = partAnswerCounts[part - 1];
     if (answers.length !== expectedCount) {
-      notification.innerText = `Đã nhập ${answers.length} đáp án, yêu cầu đúng ${expectedCount} đáp án cho Part ${part}!`;
+      notificationElement.innerText = `Đã nhập ${answers.length} đáp án, yêu cầu đúng ${expectedCount} đáp án cho Part ${part}!`;
       return;
     }
     if (!answers.every(a => ["A", "B", "C", "D"].includes(a))) {
-      notification.innerText = `Đáp án Part ${part} chỉ được chứa A, B, C, D!`;
+      notificationElement.innerText = `Đáp án Part ${part} chỉ được chứa A, B, C, D!`;
       return;
     }
   }
 
   hideAllScreens();
   document.getElementById(`admin-step-part${step}`).classList.remove("hidden");
-  notification.innerText = "";
+  notificationElement.innerText = "";
   currentAdminStep = step;
   saveAdminState();
 }
 
 function prevAdminStep(step) {
   hideAllScreens();
+  let notificationElement;
   if (step === 1) {
     document.getElementById("admin-step-audio").classList.remove("hidden");
+    notificationElement = document.getElementById("notification-audio");
   } else {
     document.getElementById(`admin-step-part${step - 1}`).classList.remove("hidden");
+    notificationElement = document.getElementById(`notification-part${step - 1}`);
   }
-  notification.innerText = "";
+  notificationElement.innerText = "";
   currentAdminStep = step - 1;
   saveAdminState();
 }
 
 async function saveQuiz() {
+  const notificationElement = document.getElementById("notification-part7");
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
   const quizName = document.getElementById("quiz-name").value.trim();
   if (!quizName) {
-    notification.innerText = "Vui lòng nhập tên đề thi!";
+    notificationElement.innerText = "Vui lòng nhập tên đề thi!";
     return;
   }
 
@@ -793,7 +808,11 @@ async function saveQuiz() {
   ];
   for (let i = 0; i < audioFiles.length; i++) {
     if (!audioFiles[i]) {
-      notification.innerText = `Vui lòng tải file nghe cho Part ${i + 1}!`;
+      notificationElement.innerText = `Vui lòng tải file nghe cho Part ${i + 1}!`;
+      return;
+    }
+    if (audioFiles[i].size > MAX_FILE_SIZE) {
+      notificationElement.innerText = `File nghe cho Part ${i + 1} vượt quá giới hạn 10MB!`;
       return;
     }
     formData.append(`audio-part${i + 1}`, audioFiles[i]);
@@ -801,6 +820,10 @@ async function saveQuiz() {
 
   for (let i = 1; i <= 7; i++) {
     const files = document.getElementById(`images-part${i}`).files;
+    if (!files.length) {
+      notificationElement.innerText = `Vui lòng tải ít nhất một ảnh cho Part ${i}!`;
+      return;
+    }
     for (let file of files) {
       formData.append(`images-part${i}`, file);
     }
@@ -811,12 +834,16 @@ async function saveQuiz() {
   for (let part = 1; part <= 7; part++) {
     const answerKeyInput = document.getElementById(`answer-key-part${part}`).value.trim();
     if (!answerKeyInput) {
-      notification.innerText = `Vui lòng nhập đáp án cho Part ${part}!`;
+      notificationElement.innerText = `Vui lòng nhập đáp án cho Part ${part}!`;
       return;
     }
     const answers = answerKeyInput.split(",").map(a => a.trim().toUpperCase());
     if (answers.length !== partAnswerCounts[part - 1]) {
-      notification.innerText = `Part ${part} phải có đúng ${partAnswerCounts[part - 1]} đáp án!`;
+      notificationElement.innerText = `Đã nhập ${answers.length} đáp án, yêu cầu đúng ${partAnswerCounts[part - 1]} đáp án cho Part ${part}!`;
+      return;
+    }
+    if (!answers.every(a => ["A", "B", "C", "D"].includes(a))) {
+      notificationElement.innerText = `Đáp án Part ${part} chỉ được chứa A, B, C, D!`;
       return;
     }
     for (let i = 0; i < partAnswerCounts[part - 1]; i++) {
@@ -834,13 +861,13 @@ async function saveQuiz() {
       body: formData,
     });
     const result = await res.json();
-    notification.innerText = result.message;
+    notificationElement.innerText = result.message;
     if (res.ok) {
       backToQuizList();
     }
   } catch (error) {
     console.error("Error saving quiz:", error);
-    notification.innerText = "Lỗi khi lưu đề thi. Vui lòng thử lại.";
+    notificationElement.innerText = "Lỗi khi lưu đề thi. Vui lòng thử lại.";
   }
 }
 
