@@ -738,7 +738,7 @@ function nextAdminStep(step) {
     const part = step - 1;
     const imagesInput = document.getElementById(`images-part${part}`);
     if (!imagesInput.files.length) {
-      notification.innerText = `Vui lòng tải ảnh cho Part ${part}!`;
+      notification.innerText = `Vui lòng tải ít nhất một ảnh cho Part ${part}!`;
       return;
     }
     const answerKeyInput = document.getElementById(`answer-key-part${part}`).value.trim();
@@ -747,8 +747,13 @@ function nextAdminStep(step) {
       return;
     }
     const answers = answerKeyInput.split(",").map(a => a.trim().toUpperCase());
-    if (answers.length !== partAnswerCounts[part - 1] || !answers.every(a => ["A", "B", "C", "D"].includes(a))) {
-      notification.innerText = `Đáp án Part ${part} phải có đúng ${partAnswerCounts[part - 1]} câu, chỉ chứa A, B, C, D!`;
+    const expectedCount = partAnswerCounts[part - 1];
+    if (answers.length !== expectedCount) {
+      notification.innerText = `Đã nhập ${answers.length} đáp án, yêu cầu đúng ${expectedCount} đáp án cho Part ${part}!`;
+      return;
+    }
+    if (!answers.every(a => ["A", "B", "C", "D"].includes(a))) {
+      notification.innerText = `Đáp án Part ${part} chỉ được chứa A, B, C, D!`;
       return;
     }
   }
