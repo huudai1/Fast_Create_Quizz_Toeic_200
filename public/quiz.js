@@ -326,58 +326,32 @@ function showUploadQuizzes() {
   saveAdminState();
 }
 
-async function uploadQuiz() {
-  const notificationElement = document.getElementById("notification-upload");
-  const uploadButton = document.querySelector('button[onclick="uploadQuiz()"]');
-  const modal = document.getElementById("loading-modal");
-  const quizName = document.getElementById("upload-quiz-name").value.trim();
-  console.log("Upload quiz name:", quizName);
-  if (!quizName) {
-    notificationElement.innerText = "Vui lòng nhập tên đề thi!";
-    return;
-  }
-
-  const quizFile = document.getElementById("upload-quiz-file").files[0];
-  console.log("Quiz file:", quizFile ? quizFile.name : null);
-  if (!quizFile) {
-    notificationElement.innerText = "Vui lòng tải file đề thi!";
+async function uploadQuizzes() {
+  const file = quizzesFileInput.files[0];
+  if (!file) {
+    notification.innerText = "Vui lòng chọn file (.json hoặc .zip)!";
     return;
   }
 
   const formData = new FormData();
-  formData.append("quizFile", quizFile);
-  formData.append("quizName", quizName);
-  formData.append("createdBy", user.email);
-  console.log("FormData prepared, createdBy:", user.email);
-
-  // Hiển thị modal và vô hiệu hóa nút Tải lên
-  modal.classList.remove("hidden");
-  uploadButton.disabled = true;
+  formData.append("quizzes", file);
 
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 60000); // Timeout 60 giây
-    const res = await fetch("/upload-quiz", {
+    let endpoint = file.name.endsWith('.zip') ? '/upload-quizzes-zip' : '/upload-quizzes';
+    const res = await fetch(endpoint, {
       method: "POST",
       body: formData,
-      signal: controller.signal,
     });
-    clearTimeout(timeoutId);
     const result = await res.json();
-    console.log("Server response:", result);
-    notificationElement.innerText = result.message;
+    notification.innerText = result.message;
     if (res.ok) {
-      backToQuizList(); // Hoặc hàm chuyển màn hình phù hợp
+      backToQuizList();
     } else {
-      throw new Error(result.message || "Server returned an error");
+      throw new Error(result.message || "Upload failed");
     }
   } catch (error) {
-    console.error("Error uploading quiz:", error);
-    notificationElement.innerText = `Lỗi khi tải đề thi: ${error.message}. Vui lòng thử lại.`;
-  } finally {
-    // Ẩn modal và kích hoạt lại nút Tải lên
-    modal.classList.add("hidden");
-    uploadButton.disabled = false;
+    console.error("Error uploading quizzes:", error);
+    notification.innerText = "Lỗi khi tải lên file. Vui lòng kiểm tra định dạng file và thử lại.";
   }
 }
 
