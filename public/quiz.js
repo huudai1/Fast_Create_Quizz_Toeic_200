@@ -372,10 +372,22 @@ async function uploadQuizzes() {
       throw new Error("Phản hồi server không hợp lệ");
     }
 
-    notificationElement.innerText = result.message || "Tải lên hoàn tất";
+    // Hiển thị thông báo thành công
+    notificationElement.innerText = result.message || "Tải lên đề thi thành công!";
     if (res.ok) {
       console.log("Upload successful, calling backToQuizList()");
       backToQuizList();
+      
+      // Thêm thông báo reload nếu chưa thấy đề
+      setTimeout(() => {
+        notificationElement.innerText = "Đã tải lên thành công! Nếu chưa thấy đề, vui lòng làm mới trang.";
+        // Tự động reload sau 5 giây nếu người dùng không thao tác
+        setTimeout(() => {
+          if (confirm("Bạn có muốn làm mới trang để xem đề thi mới?")) {
+            window.location.reload();
+          }
+        }, 5000);
+      }, 1000); // Hiển thị thông báo sau 1 giây để tránh chồng lấn
     } else {
       throw new Error(result.message || "Server returned an error");
     }
