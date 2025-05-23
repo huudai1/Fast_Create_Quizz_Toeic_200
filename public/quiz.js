@@ -319,84 +319,45 @@ function createNewQuiz() {
   saveAdminState();
 }
 
-let isUploading = false;
-
 async function uploadQuizzes() {
-  if (isUploading) {
-    console.log("Upload đang xử lý, ngăn spam!");
-    return;
-  }
-
   const notificationElement = document.getElementById("notification-upload");
   const uploadButton = document.querySelector('#upload-quizzes button[onclick="uploadQuizzes()"]');
   const modal = document.getElementById("loading-modal");
   const file = quizzesFileInput.files[0];
 
-  console.log("uploadQuizzes called, file:", file ? file.name : null);
-  console.log("Modal element:", modal);
-  console.log("Upload button:", uploadButton);
-
-  if (!modal) {
-    console.error("Modal #loading-modal không tồn tại!");
-    notificationElement.innerText = "Lỗi hệ thống: Không tìm thấy modal tải lên!";
-    return;
-  }
-
-  if (!uploadButton) {
-    console.error("Nút Tải lên không tìm thấy!");
-    notificationElement.innerText = "Lỗi hệ thống: Không tìm thấy nút Tải lên!";
-    return;
-  }
-
+  console.log("Selected file:", file ? file.name : null);
   if (!file) {
     notificationElement.innerText = "Vui lòng chọn file (.json hoặc .zip)!";
-    console.log("Không có file được chọn");
     return;
   }
-
   if (!user || !user.email) {
     notificationElement.innerText = "Lỗi: Vui lòng đăng nhập lại!";
-    console.log("User hoặc user.email không tồn tại:", user);
     return;
   }
-
-  isUploading = true;
-  console.log("Bắt đầu xử lý upload, set isUploading =", isUploading);
 
   const formData = new FormData();
   formData.append("quizzes", file);
   formData.append("createdBy", user.email);
-  console.log("FormData prepared, createdBy:", user.email, "file:", file.name);
+  console.log("FormData prepared, createdBy:", user.email);
 
-  // Hiển thị modal và vô hiệu hóa nút
-  console.log("Hiển thị modal, gỡ class 'hidden'");
+  // Hiển thị modal và vô hiệu hóa nút Tải lên
   modal.classList.remove("hidden");
   uploadButton.disabled = true;
-  uploadButton.style.opacity = "0.5"; // Hiệu ứng trực quan
-  console.log("Nút Tải lên disabled:", uploadButton.disabled);
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => {
-      controller.abort();
-      console.log("Request timeout sau 60s");
-    }, 60000); // Timeout 60 giây
-
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // Timeout 60 giây
     const endpoint = file.name.endsWith('.zip') ? '/upload-quizzes-zip' : '/upload-quizzes';
-    console.log("Gửi request tới endpoint:", endpoint);
     const res = await fetch(endpoint, {
       method: "POST",
       body: formData,
       signal: controller.signal,
     });
-
     clearTimeout(timeoutId);
     const result = await res.json();
     console.log("Server response:", result);
-
     notificationElement.innerText = result.message;
     if (res.ok) {
-      console.log("Upload thành công, chuyển về quiz list");
       backToQuizList();
     } else {
       throw new Error(result.message || "Server returned an error");
@@ -405,13 +366,9 @@ async function uploadQuizzes() {
     console.error("Error uploading quizzes:", error);
     notificationElement.innerText = `Lỗi khi tải lên đề thi: ${error.message}. Vui lòng thử lại.`;
   } finally {
-    // Ẩn modal và kích hoạt lại nút
-    console.log("Ẩn modal, kích hoạt lại nút");
+    // Ẩn modal và kích hoạt lại nút Tải lên
     modal.classList.add("hidden");
     uploadButton.disabled = false;
-    uploadButton.style.opacity = "1";
-    isUploading = false;
-    console.log("Kết thúc xử lý, isUploading =", isUploading);
   }
 }
 
