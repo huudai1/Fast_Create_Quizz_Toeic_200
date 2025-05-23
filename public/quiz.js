@@ -302,7 +302,7 @@ function backToQuizList() {
     adminOptions.classList.add("hidden");
     adminControls.classList.add("hidden");
   }
-  notification.innerText = "";
+  if (notificationQuizList) notificationQuizList.innerText = "";
   isDirectTestMode = false;
   isTestEnded = false;
   endDirectTestBtn.disabled = false;
