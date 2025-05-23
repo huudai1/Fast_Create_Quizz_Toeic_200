@@ -319,11 +319,57 @@ function createNewQuiz() {
   saveAdminState();
 }
 
-function showUploadQuizzes() {
-  hideAllScreens();
-  uploadQuizzesSection.classList.remove("hidden");
-  downloadNotice.classList.add("hidden");
-  saveAdminState();
+async function uploadQuizzes() {
+  const notificationElement = document.getElementById("notification-upload");
+  const uploadButton = document.querySelector('#upload-quizzes button[onclick="uploadQuizzes()"]');
+  const modal = document.getElementById("loading-modal");
+  const file = quizzesFileInput.files[0];
+
+  console.log("Selected file:", file ? file.name : null);
+  if (!file) {
+    notificationElement.innerText = "Vui lòng chọn file (.json hoặc .zip)!";
+    return;
+  }
+  if (!user || !user.email) {
+    notificationElement.innerText = "Lỗi: Vui lòng đăng nhập lại!";
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("quizzes", file);
+  formData.append("createdBy", user.email);
+  console.log("FormData prepared, createdBy:", user.email);
+
+  // Hiển thị modal và vô hiệu hóa nút Tải lên
+  modal.classList.remove("hidden");
+  uploadButton.disabled = true;
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // Timeout 60 giây
+    const endpoint = file.name.endsWith('.zip') ? '/upload-quizzes-zip' : '/upload-quizzes';
+    const res = await fetch(endpoint, {
+      method: "POST",
+      body: formData,
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    const result = await res.json();
+    console.log("Server response:", result);
+    notificationElement.innerText = result.message;
+    if (res.ok) {
+      backToQuizList();
+    } else {
+      throw new Error(result.message || "Server returned an error");
+    }
+  } catch (error) {
+    console.error("Error uploading quizzes:", error);
+    notificationElement.innerText = `Lỗi khi tải lên đề thi: ${error.message}. Vui lòng thử lại.`;
+  } finally {
+    // Ẩn modal và kích hoạt lại nút Tải lên
+    modal.classList.add("hidden");
+    uploadButton.disabled = false;
+  }
 }
 
 async function uploadQuizzes() {
