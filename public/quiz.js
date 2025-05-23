@@ -379,28 +379,6 @@ async function uploadQuizzes() {
   }
 }
 
-  const formData = new FormData();
-  formData.append("quizzes", file);
-
-  try {
-    let endpoint = file.name.endsWith('.zip') ? '/upload-quizzes-zip' : '/upload-quizzes';
-    const res = await fetch(endpoint, {
-      method: "POST",
-      body: formData,
-    });
-    const result = await res.json();
-    notification.innerText = result.message;
-    if (res.ok) {
-      backToQuizList();
-    } else {
-      throw new Error(result.message || "Upload failed");
-    }
-  } catch (error) {
-    console.error("Error uploading quizzes:", error);
-    notification.innerText = "Lỗi khi tải lên file. Vui lòng kiểm tra định dạng file và thử lại.";
-  }
-}
-
 async function downloadQuizzes(quizId) {
   try {
     const res = await fetch(`/download-quiz-zip/${quizId}`);
