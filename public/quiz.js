@@ -332,20 +332,19 @@ async function uploadQuizzes() {
   const modal = document.getElementById("loading-modal");
   const file = quizzesFileInput.files[0];
 
-  console.log("Selected file:", file ? file.name : null);
   if (!file) {
     notificationElement.innerText = "Vui lòng chọn file (.json hoặc .zip)!";
-    return;
-  }
-  if (!user || !user.email) {
-    notificationElement.innerText = "Lỗi: Vui lòng đăng nhập lại!";
     return;
   }
 
   const formData = new FormData();
   formData.append("quizzes", file);
-  formData.append("createdBy", user.email);
-  console.log("FormData prepared, createdBy:", user.email);
+  if (user && user.email) {
+    formData.append("createdBy", user.email);
+    console.log("FormData prepared, createdBy:", user.email);
+  } else {
+    console.warn("No user.email, skipping createdBy");
+  }
 
   // Hiển thị modal và vô hiệu hóa nút Tải lên
   modal.classList.remove("hidden");
@@ -372,16 +371,16 @@ async function uploadQuizzes() {
       throw new Error("Phản hồi server không hợp lệ");
     }
 
-    notificationElement.innerText = result.message || "Không có thông báo từ server";
+    notificationElement.innerText = result.message || "Tải lên hoàn tất";
     if (res.ok) {
       console.log("Upload successful, calling backToQuizList()");
       backToQuizList();
     } else {
-      throw new Error(result.message || `Server error: ${res.status}`);
+      notificationElement.innerText = result.message || `Lỗi server: ${res.status}`;
     }
   } catch (error) {
     console.error("Error uploading quizzes:", error);
-    notificationElement.innerText = `Lỗi khi tải lên đề thi: ${error.message}. Vui lòng thử lại.`;
+    notificationElement.innerText = `Lỗi khi tải lên: ${error.message}. Vui lòng thử lại.`;
   } finally {
     // Ẩn modal và kích hoạt lại nút Tải lên
     modal.classList.add("hidden");
