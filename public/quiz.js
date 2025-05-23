@@ -361,23 +361,13 @@ async function uploadQuizzes() {
       signal: controller.signal,
     });
     clearTimeout(timeoutId);
-
-    console.log("Response status:", res.status, "OK:", res.ok);
-    let result;
-    try {
-      result = await res.json();
-      console.log("Server response:", result);
-    } catch (jsonError) {
-      console.error("Error parsing JSON:", jsonError);
-      throw new Error("Phản hồi server không hợp lệ");
-    }
-
-    notificationElement.innerText = result.message || "Không có thông báo từ server";
+    const result = await res.json();
+    console.log("Server response:", result);
+    notificationElement.innerText = result.message;
     if (res.ok) {
-      console.log("Upload successful, calling backToQuizList()");
       backToQuizList();
     } else {
-      throw new Error(result.message || `Server error: ${res.status}`);
+      throw new Error(result.message || "Server returned an error");
     }
   } catch (error) {
     console.error("Error uploading quizzes:", error);
