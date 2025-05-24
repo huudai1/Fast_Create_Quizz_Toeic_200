@@ -54,6 +54,8 @@ const storage = multer.diskStorage({
       cb(null, "public/uploads/audio");
     } else if (file.mimetype.startsWith("image/")) {
       cb(null, "public/uploads/images");
+    } else if (file.mimetype === "application/pdf") {
+      cb(null, "public/uploads/pdf");
     } else {
       cb(null, "temp");
     }
@@ -223,7 +225,11 @@ app.post(
       const images = {};
       for (let i = 1; i <= 7; i++) {
         const partFiles = req.files[`images-part${i}`] || [];
-        images[`part${i}`] = partFiles.map((file) => `/uploads/images/${file.filename}`);
+        images[`part${i}`] = partFiles.map((file) =>
+          file.mimetype === "application/pdf"
+            ? `/uploads/pdf/${file.filename}`
+            : `/uploads/images/${file.filename}`
+        );
       }
 
       const quiz = {
