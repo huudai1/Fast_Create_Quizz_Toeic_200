@@ -58,3 +58,8 @@
   border-left: 4px solid #ff0000; /* Viền đỏ */
   padding: 8px;
 }
+
+iframe {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
