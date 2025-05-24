@@ -263,6 +263,7 @@ function hideAllScreens() {
   historyScreen.classList.add("hidden");
   quizContainer.classList.add("hidden");
   resultScreen.classList.add("hidden");
+  answerScreen.classList.add("hidden");
   document.querySelectorAll(".admin-step").forEach(step => step.classList.add("hidden"));
 }
 
