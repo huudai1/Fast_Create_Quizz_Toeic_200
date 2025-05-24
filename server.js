@@ -52,7 +52,7 @@ const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     if (file.mimetype.startsWith("audio/")) {
       cb(null, "public/uploads/audio");
-    } else if (file.mimetype.startsWith("image/")) {
+    } else if (file.mimetype.startsWith("image/") || file.mimetype === "application/pdf") {
       cb(null, "public/uploads/images");
     } else {
       cb(null, "temp");
@@ -377,18 +377,18 @@ app.post(
       }
 
       for (let i = 1; i <= 7; i++) {
-        const imagesDir = path.join(extractPath, `part${i}`, 'images');
-        quizData.images[`part${i}`] = [];
-        if (fsSync.existsSync(imagesDir)) {
-          const imageFiles = await fs.readdir(imagesDir);
-          for (const imageFile of imageFiles) {
-            const imageSrcPath = path.join(imagesDir, imageFile);
-            const imageDestPath = path.join(__dirname, 'public/uploads/images', `${newQuizId}_part${i}_${imageFile}`);
-            await fs.copyFile(imageSrcPath, imageDestPath);
-            quizData.images[`part${i}`].push(`/uploads/images/${path.basename(imageDestPath)}`);
-          }
-        }
-      }
+  const imagesDir = path.join(extractPath, `part${i}`, 'images');
+  quizData.images[`part${i}`] = [];
+  if (fsSync.existsSync(imagesDir)) {
+    const imageFiles = await fs.readdir(imagesDir);
+    for (const imageFile of imageFiles) {
+      const imageSrcPath = path.join(imagesDir, imageFile);
+      const imageDestPath = path.join(__dirname, 'public/uploads/images', `${newQuizId}_part${i}_${imageFile}`);
+      await fs.copyFile(imageSrcPath, imageDestPath);
+      quizData.images[`part${i}`].push(`/uploads/images/${path.basename(imageDestPath)}`);
+    }
+  }
+}
 
       quizzes.push(quizData);
       await saveQuizzes();

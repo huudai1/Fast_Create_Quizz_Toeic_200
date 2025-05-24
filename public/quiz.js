@@ -83,16 +83,25 @@ async function loadAnswerImages() {
   answerImageDisplay.innerHTML = "";
   for (let part = 1; part <= 7; part++) {
     const res = await fetch(`/images?part=${part}`);
-    const images = await res.json();
+    const files = await res.json();
     const section = document.createElement("div");
     section.id = `answer-images-part${part}`;
     section.className = part === 1 ? "" : "hidden";
     section.innerHTML = `<h3 class="text-lg font-semibold mb-2">Part ${part}</h3>`;
-    images.forEach((img) => {
-      const imgElement = document.createElement("img");
-      imgElement.src = img;
-      imgElement.alt = `Image for Part ${part}`;
-      section.appendChild(imgElement);
+    files.forEach((url) => {
+      const isPDF = url.endsWith('.pdf');
+      if (isPDF) {
+        const embed = document.createElement("embed");
+        embed.src = url;
+        embed.type = "application/pdf";
+        embed.className = "w-full h-[600px] mb-4";
+        section.appendChild(embed);
+      } else {
+        const imgElement = document.createElement("img");
+        imgElement.src = url;
+        imgElement.alt = `Image for Part ${part}`;
+        section.appendChild(imgElement);
+      }
     });
     answerImageDisplay.appendChild(section);
   }
@@ -916,17 +925,26 @@ function startTimer() {
 async function loadImages(part) {
   try {
     const res = await fetch(`/images?part=${part}`);
-    const images = await res.json();
+    const files = await res.json();
     imageDisplay.innerHTML = `<h3 class="text-lg font-semibold mb-2">Part ${part}</h3>`;
-    images.forEach(url => {
-      const img = document.createElement("img");
-      img.src = url;
-      img.className = "w-full max-w-[400px] mb-4 rounded"; // Đồng bộ với CSS
-      imageDisplay.appendChild(img);
+    files.forEach(url => {
+      const isPDF = url.endsWith('.pdf');
+      if (isPDF) {
+        const embed = document.createElement("embed");
+        embed.src = url;
+        embed.type = "application/pdf";
+        embed.className = "w-full h-[600px] mb-4"; // Điều chỉnh kích thước phù hợp
+        imageDisplay.appendChild(embed);
+      } else {
+        const img = document.createElement("img");
+        img.src = url;
+        img.className = "w-full max-w-[400px] mb-4 rounded";
+        imageDisplay.appendChild(img);
+      }
     });
   } catch (error) {
     console.error("Error loading images:", error);
-    notification.innerText = `Lỗi khi tải ảnh cho Part ${part}.`;
+    notification.innerText = `Lỗi khi tải ảnh hoặc PDF cho Part ${part}.`;
   }
 }
 
