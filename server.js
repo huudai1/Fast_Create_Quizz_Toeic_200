@@ -224,12 +224,8 @@ app.post(
 
       const images = {};
       for (let i = 1; i <= 7; i++) {
-        const partFiles = req.files[`images-part${i}`] || [];
-        images[`part${i}`] = partFiles.map((file) =>
-          file.mimetype === "application/pdf"
-            ? `/uploads/pdf/${file.filename}`
-            : `/uploads/images/${file.filename}`
-        );
+        const partImages = req.files[`images-part${i}`] || [];
+        images[`part${i}`] = partImages.map((file) => `/uploads/images/${file.filename}`);
       }
 
       const quiz = {
@@ -251,52 +247,6 @@ app.post(
     }
   }
 );
-
-app.delete('/delete-quiz/:quizId', async (req, res) => {
-  try {
-    const quizId = req.params.quizId;
-    const quizIndex = quizzes.findIndex((quiz) => quiz.quizId === quizId);
-    if (quizIndex === -1) {
-      return res.status(404).json({ message: 'Quiz not found' });
-    }
-
-    const quiz = quizzes[quizIndex];
-    for (let part in quiz.audio) {
-      const audioPath = path.join(__dirname, 'public', quiz.audio[part].substring(1));
-      try {
-        if (fsSync.existsSync(audioPath)) {
-          await fs.unlink(audioPath);
-        }
-      } catch (err) {
-        console.error(`Error deleting audio file ${audioPath}:`, err);
-      }
-    }
-
-    for (let part in quiz.images) {
-      for (let imagePath of quiz.images[part]) {
-        const fullPath = path.join(__dirname, 'public', imagePath.substring(1));
-        try {
-          if (fsSync.existsSync(fullPath)) {
-            await fs.unlink(fullPath);
-          }
-        } catch (err) {
-          console.error(`Error deleting image file ${fullPath}:`, err);
-        }
-      }
-    }
-
-    quizzes.splice(quizIndex, 1);
-    if (currentQuiz && currentQuiz.quizId === quizId) {
-      currentQuiz = null;
-      broadcast({ type: 'quizStatus', quizExists: false });
-    }
-    await saveQuizzes();
-    res.json({ message: 'Quiz deleted successfully!' });
-  } catch (err) {
-    console.error('Error deleting quiz:', err);
-    res.status(500).json({ message: 'Error deleting quiz' });
-  }
-});
 
 app.get('/download-quiz-zip/:quizId', async (req, res) => {
   try {
