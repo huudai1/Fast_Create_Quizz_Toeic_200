@@ -502,33 +502,6 @@ async function loadQuizzes() {
   }
 }
 
-// Hàm tải xuống với tiến trình
-async function downloadQuizzes(quizId) {
-  const url = `/download-quiz?quizId=${encodeURIComponent(quizId)}`; // Thay bằng API tải xuống của bạn
-  try {
-    const response = await fetch(url, { method: 'GET', credentials: 'include' });
-    if (!response.ok) throw new Error('Tải xuống thất bại');
-
-    const blob = await response.blob();
-    const contentLength = response.headers.get('Content-Length'); // Lấy kích thước tệp từ header
-    const fileName = `quiz_${quizId}.zip`; // Tên tệp tải xuống, có thể lấy từ header 'Content-Disposition'
-
-    // Tạo URL tạm thời và kích hoạt tải xuống
-    const link = document.createElement('a');
-    link.href = window.URL.createObjectURL(blob);
-    link.download = fileName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    // Theo dõi tiến trình (tùy thuộc vào trình duyệt, thông báo sẽ tự hiển thị)
-    console.log(`Đang tải xuống ${fileName} với kích thước ${contentLength ? (contentLength / 1024 / 1024).toFixed(2) + ' MB' : 'không xác định'}`);
-  } catch (error) {
-    console.error("Lỗi khi tải xuống:", error);
-    notification.innerText = "Tải xuống thất bại. Vui lòng thử lại.";
-  }
-}
-
 async function deleteQuiz(quizId) {
   if (!confirm("Bạn có chắc muốn xóa đề thi này?")) return;
   try {
