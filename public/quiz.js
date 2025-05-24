@@ -402,24 +402,67 @@ async function uploadQuizzes() {
 }
 
 async function downloadQuizzes(quizId) {
+  const loadingModal = document.getElementById('loading-modal');
+  const progressBar = document.getElementById('progress-bar');
+  const progressText = document.getElementById('progress-text');
+
+  // Hiển thị modal
+  loadingModal.classList.remove('hidden');
+
   try {
-    const res = await fetch(`/download-quiz-zip/${quizId}`);
-    if (!res.ok) {
-      throw new Error(`HTTP error! Status: ${res.status}`);
-    }
-    const blob = await res.blob();
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `quiz_${quizId}.zip`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
-    notification.innerText = "Đã tải xuống file ZIP chứa đề thi.";
+    const url = `/download-quiz-zip/${quizId}`;
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.responseType = 'blob';
+
+    // Theo dõi tiến trình tải xuống
+    xhr.onprogress = function(event) {
+      if (event.lengthComputable) {
+        const percentComplete = (event.loaded / event.total) * 100;
+        progressBar.style.width = `${percentComplete}%`;
+        progressText.innerText = `${Math.round(percentComplete)}%`;
+      }
+    };
+
+    // Khi tải xong
+    xhr.onload = function() {
+      if (xhr.status === 200) {
+        const blob = xhr.response;
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = `quiz_${quizId}.zip`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(downloadUrl);
+
+        // Cập nhật thông báo
+        notification.innerText = "Đã tải xuống file ZIP chứa đề thi.";
+
+        // Ẩn modal sau khi tải xong
+        setTimeout(() => {
+          loadingModal.classList.add('hidden');
+          progressBar.style.width = '0%'; // Reset thanh tiến trình
+          progressText.innerText = '0%'; // Reset text
+        }, 1000); // Hiển thị thêm 1 giây trước khi ẩn
+      } else {
+        throw new Error(`HTTP error! Status: ${xhr.status}`);
+      }
+    };
+
+    // Xử lý lỗi
+    xhr.onerror = function() {
+      throw new Error('Network error occurred');
+    };
+
+    xhr.send();
   } catch (error) {
     console.error("Error downloading quiz:", error);
     notification.innerText = "Lỗi khi tải xuống file ZIP. Vui lòng thử lại.";
+    loadingModal.classList.add('hidden'); // Ẩn modal nếu có lỗi
+    progressBar.style.width = '0%'; // Reset thanh tiến trình
+    progressText.innerText = '0%'; // Reset text
   }
 }
 
