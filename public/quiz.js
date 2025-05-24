@@ -402,7 +402,7 @@ async function uploadQuizzes() {
 }
 
 async function downloadQuizzes(quizId) {
-  const loadingModal = document.getElementById('loading-modal');
+  const loadingModal = document.getElementById('loading-modal-download');
   const progressBar = document.getElementById('progress-bar');
   const progressText = document.getElementById('progress-text');
 
