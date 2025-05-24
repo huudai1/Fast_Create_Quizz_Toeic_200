@@ -222,8 +222,8 @@ app.post(
 
       const images = {};
       for (let i = 1; i <= 7; i++) {
-        const partImages = req.files[`images-part${i}`] || [];
-        images[`part${i}`] = partImages.map((file) => `/uploads/images/${file.filename}`);
+        const partFiles = req.files[`images-part${i}`] || [];
+        images[`part${i}`] = partFiles.map((file) => `/uploads/images/${file.filename}`);
       }
 
       const quiz = {
