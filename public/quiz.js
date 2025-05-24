@@ -199,6 +199,7 @@ function getCurrentScreen() {
   if (!historyScreen.classList.contains("hidden")) return "history-screen";
   if (!quizContainer.classList.contains("hidden")) return "quiz-container";
   if (!resultScreen.classList.contains("hidden")) return "result-screen";
+  if (!answerScreen.classList.contains("hidden")) return "answer-screen"; // Thêm điều kiện cho answer-screen
   if (!document.getElementById("admin-step-audio").classList.contains("hidden")) return "admin-step-audio";
   for (let i = 1; i <= 7; i++) {
     if (!document.getElementById(`admin-step-part${i}`).classList.contains("hidden")) {
@@ -241,6 +242,13 @@ async function restoreAdminState() {
       } else if (state.screen === "history-screen") {
         historyScreen.classList.remove("hidden");
         await loadHistory();
+      } else if (state.screen === "answer-screen") { // Thêm điều kiện cho answer-screen
+        answerScreen.classList.remove("hidden");
+        // Khôi phục trạng thái nếu cần (ví dụ: hiển thị phần đáp án hiện tại)
+        currentAnswerPart = state.currentAnswerPart || 1;
+        await loadAnswerImages();
+        await loadAnswerQuestions();
+        updateAnswerPartVisibility();
       } else if (state.screen.startsWith("admin-step-")) {
         document.getElementById(state.screen).classList.remove("hidden");
       }
