@@ -83,28 +83,16 @@ async function loadAnswerImages() {
   answerImageDisplay.innerHTML = "";
   for (let part = 1; part <= 7; part++) {
     const res = await fetch(`/images?part=${part}`);
-    const files = await res.json();
+    const images = await res.json();
     const section = document.createElement("div");
     section.id = `answer-images-part${part}`;
     section.className = part === 1 ? "" : "hidden";
     section.innerHTML = `<h3 class="text-lg font-semibold mb-2">Part ${part}</h3>`;
-    files.forEach((url) => {
-      const fileExt = url.split('.').pop().toLowerCase();
-      if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExt)) {
-        // Hiển thị hình ảnh
-        const imgElement = document.createElement("img");
-        imgElement.src = url;
-        imgElement.alt = `Image for Part ${part}`;
-        imgElement.className = "w-full max-w-[400px] mb-4 rounded";
-        section.appendChild(imgElement);
-      } else if (fileExt === 'pdf') {
-        // Hiển thị PDF
-        const iframe = document.createElement("iframe");
-        iframe.src = url;
-        iframe.className = "w-full max-w-[400px] h-[500px] mb-4 rounded";
-        iframe.title = `PDF for Part ${part}`;
-        section.appendChild(iframe);
-      }
+    images.forEach((img) => {
+      const imgElement = document.createElement("img");
+      imgElement.src = img;
+      imgElement.alt = `Image for Part ${part}`;
+      section.appendChild(imgElement);
     });
     answerImageDisplay.appendChild(section);
   }
@@ -928,28 +916,17 @@ function startTimer() {
 async function loadImages(part) {
   try {
     const res = await fetch(`/images?part=${part}`);
-    const files = await res.json();
+    const images = await res.json();
     imageDisplay.innerHTML = `<h3 class="text-lg font-semibold mb-2">Part ${part}</h3>`;
-    files.forEach(url => {
-      const fileExt = url.split('.').pop().toLowerCase();
-      if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExt)) {
-        // Hiển thị hình ảnh
-        const img = document.createElement("img");
-        img.src = url;
-        img.className = "w-full max-w-[400px] mb-4 rounded";
-        imageDisplay.appendChild(img);
-      } else if (fileExt === 'pdf') {
-        // Hiển thị PDF
-        const iframe = document.createElement("iframe");
-        iframe.src = url;
-        iframe.className = "w-full max-w-[400px] h-[500px] mb-4 rounded";
-        iframe.title = `PDF for Part ${part}`;
-        imageDisplay.appendChild(iframe);
-      }
+    images.forEach(url => {
+      const img = document.createElement("img");
+      img.src = url;
+      img.className = "w-full max-w-[400px] mb-4 rounded"; // Đồng bộ với CSS
+      imageDisplay.appendChild(img);
     });
   } catch (error) {
     console.error("Error loading images:", error);
-    notification.innerText = `Lỗi khi tải ảnh hoặc PDF cho Part ${part}.`;
+    notification.innerText = `Lỗi khi tải ảnh cho Part ${part}.`;
   }
 }
 

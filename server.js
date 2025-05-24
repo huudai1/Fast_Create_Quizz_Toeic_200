@@ -54,8 +54,6 @@ const storage = multer.diskStorage({
       cb(null, "public/uploads/audio");
     } else if (file.mimetype.startsWith("image/")) {
       cb(null, "public/uploads/images");
-    } else if (file.mimetype === "application/pdf") {
-      cb(null, "public/uploads/pdf");
     } else {
       cb(null, "temp");
     }
@@ -247,6 +245,52 @@ app.post(
     }
   }
 );
+
+app.delete('/delete-quiz/:quizId', async (req, res) => {
+  try {
+    const quizId = req.params.quizId;
+    const quizIndex = quizzes.findIndex((quiz) => quiz.quizId === quizId);
+    if (quizIndex === -1) {
+      return res.status(404).json({ message: 'Quiz not found' });
+    }
+
+    const quiz = quizzes[quizIndex];
+    for (let part in quiz.audio) {
+      const audioPath = path.join(__dirname, 'public', quiz.audio[part].substring(1));
+      try {
+        if (fsSync.existsSync(audioPath)) {
+          await fs.unlink(audioPath);
+        }
+      } catch (err) {
+        console.error(`Error deleting audio file ${audioPath}:`, err);
+      }
+    }
+
+    for (let part in quiz.images) {
+      for (let imagePath of quiz.images[part]) {
+        const fullPath = path.join(__dirname, 'public', imagePath.substring(1));
+        try {
+          if (fsSync.existsSync(fullPath)) {
+            await fs.unlink(fullPath);
+          }
+        } catch (err) {
+          console.error(`Error deleting image file ${fullPath}:`, err);
+        }
+      }
+    }
+
+    quizzes.splice(quizIndex, 1);
+    if (currentQuiz && currentQuiz.quizId === quizId) {
+      currentQuiz = null;
+      broadcast({ type: 'quizStatus', quizExists: false });
+    }
+    await saveQuizzes();
+    res.json({ message: 'Quiz deleted successfully!' });
+  } catch (err) {
+    console.error('Error deleting quiz:', err);
+    res.status(500).json({ message: 'Error deleting quiz' });
+  }
+});
 
 app.get('/download-quiz-zip/:quizId', async (req, res) => {
   try {
