@@ -630,4 +630,11 @@ wss.on('connection', (ws) => {
     clients.delete(ws);
     broadcast({ type: 'participantCount', count: clients.size });
   });
+
+  app.get('/answer-key', (req, res) => {
+  if (!currentQuiz) {
+    return res.status(404).json({ message: 'No quiz selected' });
+  }
+  res.json(currentQuiz.answerKey);
+});
 });

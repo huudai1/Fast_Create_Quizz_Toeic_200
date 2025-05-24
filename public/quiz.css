@@ -46,3 +46,15 @@
     border-bottom: 1px solid #ccc;
   }
 }
+
+.correct-answer {
+  background-color: rgba(0, 128, 0, 0.1); /* Nền xanh nhạt */
+  border-left: 4px solid #008000; /* Viền xanh */
+  padding: 8px;
+}
+
+.wrong-answer {
+  background-color: rgba(255, 0, 0, 0.1); /* Nền đỏ nhạt */
+  border-left: 4px solid #ff0000; /* Viền đỏ */
+  padding: 8px;
+}
