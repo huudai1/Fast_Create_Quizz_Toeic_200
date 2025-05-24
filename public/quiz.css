@@ -46,16 +46,3 @@
     border-bottom: 1px solid #ccc;
   }
 }
-
-#loading-modal {
-  transition: opacity 0.3s ease; /* Hiệu ứng ẩn/hiện mượt mà */
-}
-
-#progress-bar {
-  transition: width 0.3s ease; /* Hiệu ứng thay đổi chiều rộng mượt mà */
-}
-
-#loading-modal.hidden {
-  opacity: 0;
-  pointer-events: none; /* Ngăn tương tác khi ẩn */
-}
