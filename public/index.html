@@ -101,12 +101,75 @@
   </div>
 
   <div id="upload-quizzes" class="container mx-auto p-4 hidden">
-    <h1 class="text-3xl font-bold mb-4">Tải lên đề thi</h1>
-    <p id="notification" class="text-red-500 mb-4"></p>
-    <input id="quizzes-file" type="file" accept=".json,.zip" class="mb-4">
+  <h1 class="text-3xl font-bold mb-4">Tải lên đề thi</h1>
+  <p id="notification-upload" class="text-red-500 mb-4"></p>
+  <div class="space-y-4">
+    <div>
+      <label for="quiz-name" class="block text-lg">Tên đề thi:</label>
+      <input id="quiz-name" type="text" class="border p-2 rounded w-full" placeholder="Nhập tên đề thi">
+    </div>
+    <div>
+      <label for="quizzes-file" class="block text-lg">File đề thi (.json, .zip hoặc .pdf):</label>
+      <input id="quizzes-file" type="file" accept=".json,.zip,.pdf" class="mb-4">
+    </div>
+    <div>
+      <label for="answer-key" class="block text-lg">Đáp án (JSON format):</label>
+      <textarea id="answer-key" class="border p-2 rounded w-full" placeholder='{"q1":"A","q2":"B",...}'></textarea>
+    </div>
+    <div>
+      <label for="audio-part1" class="block text-lg">File nghe Part 1:</label>
+      <input id="audio-part1" type="file" accept="audio/*">
+    </div>
+    <div>
+      <label for="audio-part2" class="block text-lg">File nghe Part 2:</label>
+      <input id="audio-part2" type="file" accept="audio/*">
+    </div>
+    <div>
+      <label for="audio-part3" class="block text-lg">File nghe Part 3:</label>
+      <input id="audio-part3" type="file" accept="audio/*">
+    </div>
+    <div>
+      <label for="audio-part4" class="block text-lg">File nghe Part 4:</label>
+      <input id="audio-part4" type="file" accept="audio/*">
+    </div>
+    <div>
+      <label for="images-part1" class="block text-lg">Ảnh Part 1:</label>
+      <input id="images-part1" type="file" accept="image/*" multiple>
+    </div>
+    <div>
+      <label for="images-part2" class="block text-lg">Ảnh Part 2:</label>
+      <input id="images-part2" type="file" accept="image/*" multiple>
+    </div>
+    <div>
+      <label for="images-part3" class="block text-lg">Ảnh Part 3:</label>
+      <input id="images-part3" type="file" accept="image/*" multiple>
+    </div>
+    <div>
+      <label for="images-part4" class="block text-lg">Ảnh Part 4:</label>
+      <input id="images-part4" type="file" accept="image/*" multiple>
+    </div>
+    <div>
+      <label for="images-part5" class="block text-lg">Ảnh Part 5:</label>
+      <input id="images-part5" type="file" accept="image/*" multiple>
+    </div>
+    <div>
+      <label for="images-part6" class="block text-lg">Ảnh Part 6:</label>
+      <input id="images-part6" type="file" accept="image/*" multiple>
+    </div>
+    <div>
+      <label for="images-part7" class="block text-lg">Ảnh Part 7:</label>
+      <input id="images-part7" type="file" accept="image/*" multiple>
+    </div>
     <button onclick="uploadQuizzes()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Tải lên</button>
     <button onclick="backToQuizList()" class="mt-4 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
   </div>
+</div>
+  <h1 class="text-3xl font-bold mb-4">Tải lên đề thi</h1>
+  <p id="notification-upload" class="text-red-500 mb-4"></p>
+  <input id="quizzes-file" type="file" accept=".json,.zip,.pdf" class="mb-4">
+  <button onclick="uploadQuizzes()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Tải lên</button>
+  <button onclick="backToQuizList()" class="mt-4 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
+</div>
 
   <div id="history-screen" class="container mx-auto p-4 hidden">
     <h1 class="text-3xl font-bold mb-4">Lịch sử điểm(Hiện không khả dụng!)</h1>

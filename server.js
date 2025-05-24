@@ -7,6 +7,7 @@ const fs = require("fs").promises;
 const fsSync = require("fs");
 const archiver = require("archiver");
 const unzipper = require("unzipper");
+const { PDFDocument } = require('pdf-lib');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -32,7 +33,8 @@ const ensureDirectories = async () => {
   const directories = [
     path.join(__dirname, "public/uploads/audio"),
     path.join(__dirname, "public/uploads/images"),
-    path.join(__dirname, "temp")
+    path.join(__dirname, "public/uploads/pdf"), // Thêm thư mục cho PDF
+    path.join(__dirname, "temp"),
   ];
   for (const dir of directories) {
     try {
@@ -54,6 +56,8 @@ const storage = multer.diskStorage({
       cb(null, "public/uploads/audio");
     } else if (file.mimetype.startsWith("image/")) {
       cb(null, "public/uploads/images");
+    } else if (file.mimetype === "application/pdf") {
+      cb(null, "public/uploads/pdf");
     } else {
       cb(null, "temp");
     }

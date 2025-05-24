@@ -465,10 +465,12 @@ async function uploadQuizzes() {
   const uploadButton = document.querySelector('#upload-quizzes button[onclick="uploadQuizzes()"]');
   const modal = document.getElementById("loading-modal");
   const file = quizzesFileInput.files[0];
+  const quizNameInput = document.getElementById("quiz-name");
+  const answerKeyInput = document.getElementById("answer-key");
 
   console.log("Selected file:", file ? file.name : null);
   if (!file) {
-    notificationElement.innerText = "Vui lòng chọn file (.json hoặc .zip)!";
+    notificationElement.innerText = "Vui lòng chọn file (.json, .zip hoặc .pdf)!";
     return;
   }
   if (!user || !user.email) {
@@ -476,9 +478,56 @@ async function uploadQuizzes() {
     return;
   }
 
+  // Kiểm tra định dạng file
+  const validExtensions = ['.json', '.zip', '.pdf'];
+  const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+  if (!validExtensions.includes(fileExtension)) {
+    notificationElement.innerText = "File không hợp lệ! Chỉ chấp nhận file .json, .zip hoặc .pdf.";
+    return;
+  }
+
+  // Kiểm tra quiz name và answer key cho PDF
+  if (fileExtension === '.pdf') {
+    if (!quizNameInput.value) {
+      notificationElement.innerText = "Vui lòng nhập tên đề thi cho file PDF!";
+      return;
+    }
+    if (!answerKeyInput.value) {
+      notificationElement.innerText = "Vui lòng nhập đáp án (JSON format) cho file PDF!";
+      return;
+    }
+    try {
+      JSON.parse(answerKeyInput.value);
+    } catch (err) {
+      notificationElement.innerText = "Đáp án không đúng định dạng JSON!";
+      return;
+    }
+  }
+
   const formData = new FormData();
   formData.append("quizzes", file);
   formData.append("createdBy", user.email);
+  if (fileExtension === '.pdf') {
+    formData.append("quizName", quizNameInput.value);
+    formData.append("answerKey", answerKeyInput.value);
+    // Thêm audio files
+    for (let i = 1; i <= 4; i++) {
+      const audioInput = document.getElementById(`audio-part${i}`);
+      if (audioInput.files[0]) {
+        formData.append(`audio-part${i}`, audioInput.files[0]);
+      }
+    }
+    // Thêm image files
+    for (let i = 1; i <= 7; i++) {
+      const imageInput = document.getElementById(`images-part${i}`);
+      if (imageInput.files.length > 0) {
+        for (let file of imageInput.files) {
+          formData.append(`images-part${i}`, file);
+        }
+      }
+    }
+  }
+
   console.log("FormData prepared, createdBy:", user.email);
 
   // Hiển thị modal và vô hiệu hóa nút Tải lên
@@ -488,7 +537,16 @@ async function uploadQuizzes() {
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60000); // Timeout 60 giây
-    const endpoint = file.name.endsWith('.zip') ? '/upload-quizzes-zip' : '/upload-quizzes';
+    // Chọn endpoint dựa trên loại file
+    let endpoint;
+    if (fileExtension === '.zip') {
+      endpoint = '/upload-quizzes-zip';
+    } else if (fileExtension === '.pdf') {
+      endpoint = '/upload-quizzes-pdf';
+    } else {
+      endpoint = '/upload-quizzes';
+    }
+
     const res = await fetch(endpoint, {
       method: "POST",
       body: formData,
@@ -515,13 +573,12 @@ async function uploadQuizzes() {
       // Thêm thông báo reload nếu chưa thấy đề
       setTimeout(() => {
         notificationElement.innerText = "Đã tải lên thành công! Nếu chưa thấy đề, vui lòng làm mới trang.";
-        // Tự động reload sau 5 giây nếu người dùng không thao tác
         setTimeout(() => {
           if (confirm("Bạn có muốn làm mới trang để xem đề thi mới?")) {
             window.location.reload();
           }
         }, 5000);
-      }, 1000); // Hiển thị thông báo sau 1 giây để tránh chồng lấn
+      }, 1000);
     } else {
       throw new Error(result.message || "Server returned an error");
     }
