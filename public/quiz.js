@@ -464,11 +464,11 @@ async function uploadQuizzes() {
   const notificationElement = document.getElementById("notification-upload");
   const uploadButton = document.querySelector('#upload-quizzes button[onclick="uploadQuizzes()"]');
   const modal = document.getElementById("loading-modal");
-  const files = document.getElementById("quizzes-file").files;
+  const file = quizzesFileInput.files[0];
 
-  console.log("Selected files:", files.length ? Array.from(files).map(f => f.name) : null);
-  if (files.length === 0) {
-    notificationElement.innerText = "Vui lòng chọn ít nhất một file (.json hoặc .pdf)!";
+  console.log("Selected file:", file ? file.name : null);
+  if (!file) {
+    notificationElement.innerText = "Vui lòng chọn file (.json hoặc .zip)!";
     return;
   }
   if (!user || !user.email) {
@@ -476,20 +476,8 @@ async function uploadQuizzes() {
     return;
   }
 
-  // Kiểm tra định dạng file
-  const validExtensions = ['.json', '.pdf'];
-  for (let file of files) {
-    const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
-    if (!validExtensions.includes(fileExtension)) {
-      notificationElement.innerText = `File ${file.name} không hợp lệ! Chỉ chấp nhận file .json hoặc .pdf.`;
-      return;
-    }
-  }
-
   const formData = new FormData();
-  for (let file of files) {
-    formData.append("quizzes", file);
-  }
+  formData.append("quizzes", file);
   formData.append("createdBy", user.email);
   console.log("FormData prepared, createdBy:", user.email);
 
@@ -500,9 +488,8 @@ async function uploadQuizzes() {
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60000); // Timeout 60 giây
-
-    // Gửi đến endpoint mới xử lý nhiều file
-    const res = await fetch('/upload-quizzes-multi', {
+    const endpoint = file.name.endsWith('.zip') ? '/upload-quizzes-zip' : '/upload-quizzes';
+    const res = await fetch(endpoint, {
       method: "POST",
       body: formData,
       signal: controller.signal,
@@ -528,12 +515,13 @@ async function uploadQuizzes() {
       // Thêm thông báo reload nếu chưa thấy đề
       setTimeout(() => {
         notificationElement.innerText = "Đã tải lên thành công! Nếu chưa thấy đề, vui lòng làm mới trang.";
+        // Tự động reload sau 5 giây nếu người dùng không thao tác
         setTimeout(() => {
           if (confirm("Bạn có muốn làm mới trang để xem đề thi mới?")) {
             window.location.reload();
           }
         }, 5000);
-      }, 1000);
+      }, 1000); // Hiển thị thông báo sau 1 giây để tránh chồng lấn
     } else {
       throw new Error(result.message || "Server returned an error");
     }

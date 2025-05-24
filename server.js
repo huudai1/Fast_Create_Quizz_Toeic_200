@@ -7,7 +7,6 @@ const fs = require("fs").promises;
 const fsSync = require("fs");
 const archiver = require("archiver");
 const unzipper = require("unzipper");
-const { PDFDocument } = require('pdf-lib');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -33,8 +32,7 @@ const ensureDirectories = async () => {
   const directories = [
     path.join(__dirname, "public/uploads/audio"),
     path.join(__dirname, "public/uploads/images"),
-    path.join(__dirname, "public/uploads/pdf"), // Thêm thư mục cho PDF
-    path.join(__dirname, "temp"),
+    path.join(__dirname, "temp")
   ];
   for (const dir of directories) {
     try {
@@ -56,8 +54,6 @@ const storage = multer.diskStorage({
       cb(null, "public/uploads/audio");
     } else if (file.mimetype.startsWith("image/")) {
       cb(null, "public/uploads/images");
-    } else if (file.mimetype === "application/pdf") {
-      cb(null, "public/uploads/pdf");
     } else {
       cb(null, "temp");
     }
@@ -641,61 +637,4 @@ wss.on('connection', (ws) => {
   }
   res.json(currentQuiz.answerKey);
 });
-  app.post(
-  '/upload-quizzes-multi',
-  upload.array('quizzes'), // Sử dụng upload.array để xử lý nhiều file cùng key
-  async (req, res) => {
-    try {
-      if (!req.files || req.files.length === 0) {
-        return res.status(400).json({ message: 'No files uploaded' });
-      }
-      const createdBy = req.body.createdBy;
-      if (!createdBy) {
-        return res.status(400).json({ message: 'Missing createdBy field' });
-      }
-
-      // Xử lý từng file
-      for (let file of req.files) {
-        const fileExtension = path.extname(file.originalname).toLowerCase();
-        
-        if (fileExtension === '.json') {
-          // Xử lý file JSON
-          const data = await fs.readFile(file.path, 'utf8');
-          const uploadedQuizzes = JSON.parse(data);
-          quizzes = uploadedQuizzes; // Ghi đè danh sách quizzes (theo logic của /upload-quizzes)
-          await saveQuizzes();
-          await fs.unlink(file.path);
-          console.log(`JSON file ${file.originalname} processed successfully`);
-        } else if (fileExtension === '.pdf') {
-          // Xử lý file PDF
-          const pdfDestPath = path.join(__dirname, 'public/uploads/pdf', `${uuidv4()}.pdf`);
-          await fs.copyFile(file.path, pdfDestPath);
-
-          const quiz = {
-            quizId: uuidv4(),
-            quizName: `Quiz from PDF ${path.basename(pdfDestPath)}`,
-            pdf: `/uploads/pdf/${path.basename(pdfDestPath)}`,
-            createdBy,
-            isAssigned: false,
-          };
-
-          quizzes.push(quiz);
-          await saveQuizzes();
-          await fs.unlink(file.path);
-          console.log(`PDF file ${file.originalname} processed successfully`);
-        } else {
-          // Xóa file không hợp lệ
-          await fs.unlink(file.path);
-          console.log(`Unsupported file ${file.originalname} ignored`);
-        }
-      }
-
-      res.json({ message: 'Files uploaded successfully!' });
-    } catch (err) {
-      console.error('Error uploading files:', err);
-      res.status(500).json({ message: 'Error uploading files' });
-    }
-  }
-);
-  
 });
