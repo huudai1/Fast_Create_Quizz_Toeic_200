@@ -10,7 +10,6 @@ let isTestEnded = false;
 let userAnswers = null; // Lưu đáp án người dùng
 let answerKey = null; // Lưu đáp án đúng
 let currentAnswerPart = 1; // Phần hiện tại trong màn hình đáp án
-const answerScreen = document.getElementById("answer-screen");
 const answerNotification = document.getElementById("answer-notification");
 const answerImageDisplay = document.getElementById("answer-image-display");
 const welcomeScreen = document.getElementById("welcome-screen");
@@ -59,104 +58,6 @@ const partAnswerCounts = [6, 25, 39, 30, 30, 16, 54];
 function showResultScreen() {
   hideAllScreens();
   resultScreen.classList.remove("hidden");
-}
-
-// Hàm hiển thị màn hình đáp án
-async function showAnswerScreen() {
-  if (!userAnswers || !answerKey) {
-    answerNotification.innerText = "Không thể hiển thị đáp án. Dữ liệu không đầy đủ.";
-    return;
-  }
-
-  hideAllScreens();
-  answerScreen.classList.remove("hidden");
-  answerNotification.innerText = ""; // Xóa thông báo lỗi nếu có
-  currentAnswerPart = 1;
-
-  await loadAnswerImages();
-  await loadAnswerQuestions();
-  updateAnswerPartVisibility();
-}
-
-// Hàm tải hình ảnh cho màn hình đáp án
-async function loadAnswerImages() {
-  answerImageDisplay.innerHTML = "";
-  for (let part = 1; part <= 7; part++) {
-    const res = await fetch(`/images?part=${part}`);
-    const files = await res.json();
-    const section = document.createElement("div");
-    section.id = `answer-images-part${part}`;
-    section.className = part === 1 ? "" : "hidden";
-    section.innerHTML = `<h3 class="text-lg font-semibold mb-2">Part ${part}</h3>`;
-    files.forEach((url) => {
-      const isPDF = url.endsWith('.pdf');
-      if (isPDF) {
-        const embed = document.createElement("embed");
-        embed.src = url;
-        embed.type = "application/pdf";
-        embed.className = "w-full h-[600px] mb-4";
-        section.appendChild(embed);
-      } else {
-        const imgElement = document.createElement("img");
-        imgElement.src = url;
-        imgElement.alt = `Image for Part ${part}`;
-        section.appendChild(imgElement);
-      }
-    });
-    answerImageDisplay.appendChild(section);
-  }
-}
-
-// Hàm tải câu hỏi và đáp án
-async function loadAnswerQuestions() {
-  const questionSection = document.getElementById("answer-question-section");
-  questionSection.innerHTML = "";
-
-  const totalQuestions = Object.keys(answerKey).length;
-  const questionsPerPart = Math.ceil(totalQuestions / 7); // Chia đều cho 7 phần
-
-  for (let part = 1; part <= 7; part++) {
-    const partDiv = document.createElement("div");
-    partDiv.id = `answer-part${part}`;
-    partDiv.className = part === 1 ? "" : "hidden";
-    partDiv.innerHTML = `<h2 class="text-2xl font-semibold mb-2">Part ${part}</h2>`;
-    const sectionDiv = document.createElement("div");
-    sectionDiv.id = `answer-section${part}`;
-    sectionDiv.className = "space-y-4";
-
-    const start = (part - 1) * questionsPerPart + 1;
-    const end = Math.min(part * questionsPerPart, totalQuestions);
-
-    let correctCount = 0;
-    for (let i = start; i <= end; i++) {
-      const questionDiv = document.createElement("div");
-      questionDiv.className = "p-2 rounded";
-      const userAnswer = userAnswers[`q${i}`];
-      const correctAnswer = answerKey[`q${i}`];
-
-      const isCorrect = userAnswer === correctAnswer;
-      if (isCorrect) correctCount++;
-      questionDiv.classList.add(isCorrect ? "correct-answer" : "wrong-answer");
-
-      questionDiv.innerHTML = `
-        <p class="font-semibold">Câu ${i}: Đáp án của bạn: ${userAnswer || "Không chọn"}</p>
-        <p>Đáp án đúng: ${correctAnswer}</p>
-      `;
-      sectionDiv.appendChild(questionDiv);
-    }
-    partDiv.innerHTML += `<p class="text-sm text-gray-600 mt-2">Số câu đúng: ${correctCount}/${end - start + 1}</p>`;
-    partDiv.appendChild(sectionDiv);
-    questionSection.appendChild(partDiv);
-  }
-
-  const navDiv = document.createElement("div");
-  navDiv.className = "flex space-x-4 sticky bottom-0 bg-gray-100 p-4";
-  navDiv.innerHTML = `
-    <button type="button" onclick="prevAnswerPart(currentAnswerPart + 1)" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Phần trước</button>
-    <button type="button" onclick="nextAnswerPart(currentAnswerPart + 1)" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Phần tiếp theo</button>
-    <button onclick="showResultScreen()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
-  `;
-  questionSection.appendChild(navDiv);
 }
 
 // Hàm điều chỉnh hiển thị phần đáp án
@@ -280,7 +181,6 @@ function hideAllScreens() {
   historyScreen.classList.add("hidden");
   quizContainer.classList.add("hidden");
   resultScreen.classList.add("hidden");
-  answerScreen.classList.add("hidden");
   document.querySelectorAll(".admin-step").forEach(step => step.classList.add("hidden"));
 }
 
