@@ -64,8 +64,24 @@ function showResultScreen() {
 // Hàm hiển thị màn hình đáp án
 async function showAnswerScreen() {
   if (!userAnswers || !answerKey) {
-    answerNotification.innerText = "Không thể hiển thị đáp án. Dữ liệu không đầy đủ.";
-    return;
+    // Tải lại answerKey nếu chưa có
+    try {
+      const answerRes = await fetch("/answer-key");
+      if (!answerRes.ok) {
+        throw new Error("Không thể lấy đáp án đúng");
+      }
+      answerKey = await answerRes.json();
+    } catch (error) {
+      console.error("Error fetching answer key:", error);
+      answerNotification.innerText = "Không thể tải đáp án đúng. Vui lòng thử lại.";
+      return;
+    }
+
+    // Kiểm tra lại userAnswers
+    if (!userAnswers) {
+      answerNotification.innerText = "Không có đáp án của bạn để hiển thị.";
+      return;
+    }
   }
 
   hideAllScreens();
@@ -80,30 +96,48 @@ async function showAnswerScreen() {
 
 // Hàm tải hình ảnh cho màn hình đáp án
 async function loadAnswerImages() {
-  answerImageDisplay.innerHTML = "";
+  answerImageDisplay.innerHTML = `<h3 class="text-lg font-semibold mb-2">Part ${currentAnswerPart}</h3>`;
   for (let part = 1; part <= 7; part++) {
-    const res = await fetch(`/images?part=${part}`);
-    const files = await res.json();
-    const section = document.createElement("div");
-    section.id = `answer-images-part${part}`;
-    section.className = part === 1 ? "" : "hidden";
-    section.innerHTML = `<h3 class="text-lg font-semibold mb-2">Part ${part}</h3>`;
-    files.forEach((url) => {
-      const isPDF = url.endsWith('.pdf');
-      if (isPDF) {
-        const embed = document.createElement("embed");
-        embed.src = url;
-        embed.type = "application/pdf";
-        embed.className = "w-full h-[600px] mb-4";
-        section.appendChild(embed);
-      } else {
-        const imgElement = document.createElement("img");
-        imgElement.src = url;
-        imgElement.alt = `Image for Part ${part}`;
-        section.appendChild(imgElement);
+    try {
+      const res = await fetch(`/images?part=${part}`);
+      if (!res.ok) {
+        throw new Error(`Không thể tải hình ảnh cho Part ${part}`);
       }
-    });
-    answerImageDisplay.appendChild(section);
+      const files = await res.json();
+      const section = document.createElement("div");
+      section.id = `answer-images-part${part}`;
+      section.className = part === currentAnswerPart ? "" : "hidden";
+      section.innerHTML = `<h3 class="text-lg font-semibold mb-2">Part ${part}</h3>`;
+
+      if (files.length === 0) {
+        section.innerHTML += `<p>Không có hình ảnh hoặc PDF cho Part ${part}</p>`;
+      } else {
+        files.forEach((url) => {
+          const isPDF = url.endsWith('.pdf');
+          if (isPDF) {
+            const embed = document.createElement("embed");
+            embed.src = url;
+            embed.type = "application/pdf";
+            embed.className = "w-full h-[600px] mb-4";
+            section.appendChild(embed);
+          } else {
+            const imgElement = document.createElement("img");
+            imgElement.src = url;
+            imgElement.alt = `Image for Part ${part}`;
+            imgElement.className = "w-full max-w-[400px] mb-4 rounded";
+            section.appendChild(imgElement);
+          }
+        });
+      }
+      answerImageDisplay.appendChild(section);
+    } catch (error) {
+      console.error(`Error loading images for Part ${part}:`, error);
+      const section = document.createElement("div");
+      section.id = `answer-images-part${part}`;
+      section.className = part === currentAnswerPart ? "" : "hidden";
+      section.innerHTML = `<h3 class="text-lg font-semibold mb-2">Part ${part}</h3><p>Lỗi khi tải hình ảnh hoặc PDF cho Part ${part}</p>`;
+      answerImageDisplay.appendChild(section);
+    }
   }
 }
 
@@ -112,44 +146,42 @@ async function loadAnswerQuestions() {
   const questionSection = document.getElementById("answer-question-section");
   questionSection.innerHTML = "";
 
-  const totalQuestions = Object.keys(answerKey).length;
-  const questionsPerPart = Math.ceil(totalQuestions / 7); // Chia đều cho 7 phần
-
+  let questionIndex = 1; // Chỉ số câu hỏi bắt đầu từ 1
   for (let part = 1; part <= 7; part++) {
     const partDiv = document.createElement("div");
     partDiv.id = `answer-part${part}`;
-    partDiv.className = part === 1 ? "" : "hidden";
+    partDiv.className = part === currentAnswerPart ? "" : "hidden";
     partDiv.innerHTML = `<h2 class="text-2xl font-semibold mb-2">Part ${part}</h2>`;
     const sectionDiv = document.createElement("div");
     sectionDiv.id = `answer-section${part}`;
     sectionDiv.className = "space-y-4";
 
-    const start = (part - 1) * questionsPerPart + 1;
-    const end = Math.min(part * questionsPerPart, totalQuestions);
-
+    const questionCount = partAnswerCounts[part - 1]; // Số câu hỏi của phần này
     let correctCount = 0;
-    for (let i = start; i <= end; i++) {
+
+    for (let i = 0; i < questionCount; i++) {
+      const qId = `q${questionIndex}`;
       const questionDiv = document.createElement("div");
       questionDiv.className = "p-2 rounded";
-      const userAnswer = userAnswers[`q${i}`];
-      const correctAnswer = answerKey[`q${i}`];
+      const userAnswer = userAnswers[qId] || "Không chọn";
+      const correctAnswer = answerKey[qId] || "N/A";
 
       const isCorrect = userAnswer === correctAnswer;
-      if (isCorrect) correctCount++;
+      if (isCorrect && userAnswer !== "Không chọn") correctCount++;
       questionDiv.classList.add(isCorrect ? "correct-answer" : "wrong-answer");
 
       questionDiv.innerHTML = `
-        <p class="font-semibold">Câu ${i}: Đáp án của bạn: ${userAnswer || "Không chọn"}</p>
+        <p class="font-semibold">Câu ${questionIndex}: Đáp án của bạn: ${userAnswer}</p>
         <p>Đáp án đúng: ${correctAnswer}</p>
       `;
       sectionDiv.appendChild(questionDiv);
+      questionIndex++;
     }
-    partDiv.innerHTML += `<p class="text-sm text-gray-600 mt-2">Số câu đúng: ${correctCount}/${end - start + 1}</p>`;
+
+    partDiv.innerHTML += `<p class="text-sm text-gray-600 mt-2">Số câu đúng: ${correctCount}/${questionCount}</p>`;
     partDiv.appendChild(sectionDiv);
     questionSection.appendChild(partDiv);
   }
-
-  // Remove the redundant navigation bar creation since it's already in the HTML
 }
 
 
@@ -157,8 +189,14 @@ async function loadAnswerQuestions() {
 function updateAnswerPartVisibility() {
   for (let i = 1; i <= 7; i++) {
     document.getElementById(`answer-part${i}`).classList.toggle("hidden", i !== currentAnswerPart);
-    document.getElementById(`answer-images-part${i}`).classList.toggle("hidden", i !== currentAnswerPart);
-    document.querySelector(`#answer-image-display h3`).innerText = `Part ${currentAnswerPart}`;
+    const imageSection = document.getElementById(`answer-images-part${i}`);
+    if (imageSection) {
+      imageSection.classList.toggle("hidden", i !== currentAnswerPart);
+    }
+  }
+  const imageHeader = document.querySelector(`#answer-image-display h3`);
+  if (imageHeader) {
+    imageHeader.innerText = `Part ${currentAnswerPart}`;
   }
 }
 
@@ -1244,23 +1282,25 @@ async function saveQuiz() {
   }
 }
 
-function nextQuizPart() {
-  if (currentQuizPart <= 7) {
+async function nextQuizPart() {
+  if (currentQuizPart < 7) {
     document.getElementById(`quiz-part${currentQuizPart}`).classList.add("hidden");
     currentQuizPart++;
     document.getElementById(`quiz-part${currentQuizPart}`).classList.remove("hidden");
-    loadImages(currentQuizPart);
-    loadAudio(currentQuizPart);
+    await loadImages(currentQuizPart);
+    await loadAudio(currentQuizPart);
+    imageDisplay.querySelector("h3").innerText = `Part ${currentQuizPart}`; // Cập nhật tiêu đề
   }
 }
 
-function prevQuizPart() {
-  if (currentQuizPart >= 1) {
+async function prevQuizPart() {
+  if (currentQuizPart > 1) {
     document.getElementById(`quiz-part${currentQuizPart}`).classList.add("hidden");
     currentQuizPart--;
     document.getElementById(`quiz-part${currentQuizPart}`).classList.remove("hidden");
-    loadImages(currentQuizPart);
-    loadAudio(currentQuizPart);
+    await loadImages(currentQuizPart);
+    await loadAudio(currentQuizPart);
+    imageDisplay.querySelector("h3").innerText = `Part ${currentQuizPart}`; // Cập nhật tiêu đề
   }
 }
 
@@ -1289,7 +1329,7 @@ async function submitQuiz() {
     }
 
     const result = await res.json();
-    
+
     // Lấy đáp án đúng từ server
     const answerRes = await fetch("/answer-key");
     if (!answerRes.ok) {
