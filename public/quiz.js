@@ -63,152 +63,109 @@ function showResultScreen() {
 
 // Hàm hiển thị màn hình đáp án
 async function showAnswerScreen() {
-  const answerNotification = document.getElementById("answer-notification");
-  const answerScreen = document.getElementById("answer-screen");
-
   if (!userAnswers || !answerKey) {
     answerNotification.innerText = "Không thể hiển thị đáp án. Dữ liệu không đầy đủ.";
     return;
   }
 
-  try {
-    hideAllScreens();
-    answerScreen.classList.remove("hidden");
-    answerNotification.innerText = "";
-    currentAnswerPart = 1;
+  hideAllScreens();
+  answerScreen.classList.remove("hidden");
+  answerNotification.innerText = ""; // Xóa thông báo lỗi nếu có
+  currentAnswerPart = 1;
 
-    await loadAnswerImages();
-    await loadAnswerQuestions();
-    updateAnswerPartVisibility();
-  } catch (error) {
-    console.error("Error in showAnswerScreen:", error);
-    answerNotification.innerText = "Lỗi khi hiển thị màn hình đáp án. Vui lòng thử lại.";
-  }
+  await loadAnswerImages();
+  await loadAnswerQuestions();
+  updateAnswerPartVisibility();
 }
 
 // Hàm tải hình ảnh cho màn hình đáp án
 async function loadAnswerImages() {
-  const answerImageDisplay = document.getElementById("answer-image-display");
-  const answerNotification = document.getElementById("answer-notification");
-
-  try {
-    answerImageDisplay.innerHTML = "";
-    for (let part = 1; part <= 7; part++) {
-      const res = await fetch(`/images?part=${part}`);
-      if (!res.ok) {
-        throw new Error(`Không thể tải hình ảnh cho Part ${part}`);
+  answerImageDisplay.innerHTML = "";
+  for (let part = 1; part <= 7; part++) {
+    const res = await fetch(`/images?part=${part}`);
+    const files = await res.json();
+    const section = document.createElement("div");
+    section.id = `answer-images-part${part}`;
+    section.className = part === 1 ? "" : "hidden";
+    section.innerHTML = `<h3 class="text-lg font-semibold mb-2">Part ${part}</h3>`;
+    files.forEach((url) => {
+      const isPDF = url.endsWith('.pdf');
+      if (isPDF) {
+        const embed = document.createElement("embed");
+        embed.src = url;
+        embed.type = "application/pdf";
+        embed.className = "w-full h-[600px] mb-4";
+        section.appendChild(embed);
+      } else {
+        const imgElement = document.createElement("img");
+        imgElement.src = url;
+        imgElement.alt = `Image for Part ${part}`;
+        section.appendChild(imgElement);
       }
-      const files = await res.json();
-      const section = document.createElement("div");
-      section.id = `answer-images-part${part}`;
-      section.className = part === 1 ? "" : "hidden";
-      section.innerHTML = `<h3 class="text-lg font-semibold mb-2">Part ${part}</h3>`;
-      if (files.length === 0) {
-        section.innerHTML += `<p class="text-gray-500">Không có hình ảnh hoặc PDF cho Part ${part}</p>`;
-      }
-      files.forEach((url) => {
-        const isPDF = url.endsWith('.pdf');
-        if (isPDF) {
-          const embed = document.createElement("embed");
-          embed.src = url;
-          embed.type = "application/pdf";
-          embed.className = "w-full h-[600px] rounded mb-4";
-          section.appendChild(embed);
-        } else {
-          const imgElement = document.createElement("img");
-          imgElement.src = url;
-          imgElement.alt = `Image for Part ${part}`;
-          imgElement.className = "w-full max-w-[600px] mb-4 rounded";
-          section.appendChild(imgElement);
-        }
-      });
-      answerImageDisplay.appendChild(section);
-    }
-  } catch (error) {
-    console.error("Error in loadAnswerImages:", error);
-    answerNotification.innerText = `Lỗi khi tải hình ảnh/PDF: ${error.message}`;
+    });
+    answerImageDisplay.appendChild(section);
   }
 }
 
 // Hàm tải câu hỏi và đáp án
 async function loadAnswerQuestions() {
-  try {
-    const questionSection = document.getElementById("answer-question-section");
-    if (!questionSection) {
-      throw new Error("Phần tử answer-question-section không tồn tại");
+  const questionSection = document.getElementById("answer-question-section");
+  questionSection.innerHTML = "";
+
+  const totalQuestions = Object.keys(answerKey).length;
+  const questionsPerPart = Math.ceil(totalQuestions / 7); // Chia đều cho 7 phần
+
+  for (let part = 1; part <= 7; part++) {
+    const partDiv = document.createElement("div");
+    partDiv.id = `answer-part${part}`;
+    partDiv.className = part === 1 ? "" : "hidden";
+    partDiv.innerHTML = `<h2 class="text-2xl font-semibold mb-2">Part ${part}</h2>`;
+    const sectionDiv = document.createElement("div");
+    sectionDiv.id = `answer-section${part}`;
+    sectionDiv.className = "space-y-4";
+
+    const start = (part - 1) * questionsPerPart + 1;
+    const end = Math.min(part * questionsPerPart, totalQuestions);
+
+    let correctCount = 0;
+    for (let i = start; i <= end; i++) {
+      const questionDiv = document.createElement("div");
+      questionDiv.className = "p-2 rounded";
+      const userAnswer = userAnswers[`q${i}`];
+      const correctAnswer = answerKey[`q${i}`];
+
+      const isCorrect = userAnswer === correctAnswer;
+      if (isCorrect) correctCount++;
+      questionDiv.classList.add(isCorrect ? "correct-answer" : "wrong-answer");
+
+      questionDiv.innerHTML = `
+        <p class="font-semibold">Câu ${i}: Đáp án của bạn: ${userAnswer || "Không chọn"}</p>
+        <p>Đáp án đúng: ${correctAnswer}</p>
+      `;
+      sectionDiv.appendChild(questionDiv);
     }
-    questionSection.innerHTML = "";
-
-    let questionIndex = 1;
-    for (let part = 1; part <= 7; part++) {
-      const partDiv = document.createElement("div");
-      partDiv.id = `answer-part${part}`;
-      partDiv.className = part === 1 ? "" : "hidden";
-      partDiv.innerHTML = `<h2 class="text-2xl font-semibold mb-2">Part ${part}</h2>`;
-      const sectionDiv = document.createElement("div");
-      sectionDiv.id = `answer-section${part}`;
-      sectionDiv.className = "space-y-4";
-
-      const questionCount = partAnswerCounts[part - 1];
-      let correctCount = 0;
-
-      for (let j = 0; j < questionCount; j++) {
-        const qId = `q${questionIndex}`;
-        const questionDiv = document.createElement("div");
-        questionDiv.className = "p-2 rounded border";
-        const userAnswer = userAnswers[qId];
-        const correctAnswer = answerKey[qId];
-
-        const isCorrect = userAnswer === correctAnswer;
-        if (isCorrect && correctAnswer) correctCount++;
-        questionDiv.classList.add(isCorrect ? "bg-green-100" : "bg-red-100");
-
-        questionDiv.innerHTML = `
-          <p class="font-semibold">Câu ${questionIndex}: Đáp án của bạn: ${userAnswer || "Không chọn"}</p>
-          <p>Đáp án đúng: ${correctAnswer || "Không có"}</p>
-        `;
-        sectionDiv.appendChild(questionDiv);
-        questionIndex++;
-      }
-
-      partDiv.innerHTML += `<p class="text-sm text-gray-600 mt-2">Số câu đúng: ${correctCount}/${questionCount}</p>`;
-      partDiv.appendChild(sectionDiv);
-      questionSection.appendChild(partDiv);
-    }
-
-    const navDiv = document.createElement("div");
-    navDiv.className = "flex space-x-4 sticky bottom-0 bg-gray-100 p-4";
-    navDiv.innerHTML = `
-      <button type="button" onclick="prevAnswerPart()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Phần trước</button>
-      <button type="button" onclick="nextAnswerPart()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Phần tiếp theo</button>
-      <button onclick="showResultScreen()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
-    `;
-    questionSection.appendChild(navDiv);
-  } catch (error) {
-    console.error("Error in loadAnswerQuestions:", error);
-    answerNotification.innerText = `Lỗi khi tải câu hỏi: ${error.message}`;
+    partDiv.innerHTML += `<p class="text-sm text-gray-600 mt-2">Số câu đúng: ${correctCount}/${end - start + 1}</p>`;
+    partDiv.appendChild(sectionDiv);
+    questionSection.appendChild(partDiv);
   }
+
+  const navDiv = document.createElement("div");
+  navDiv.className = "flex space-x-4 sticky bottom-0 bg-gray-100 p-4";
+  navDiv.innerHTML = `
+    <button type="button" onclick="prevAnswerPart(currentAnswerPart + 1)" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Phần trước</button>
+    <button type="button" onclick="nextAnswerPart(currentAnswerPart + 1)" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Phần tiếp theo</button>
+    <button onclick="showResultScreen()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
+  `;
+  questionSection.appendChild(navDiv);
 }
 
 
 // Hàm điều chỉnh hiển thị phần đáp án
 function updateAnswerPartVisibility() {
-  try {
-    for (let i = 1; i <= 7; i++) {
-      const part = document.getElementById(`answer-part${i}`);
-      const imagePart = document.getElementById(`answer-images-part${i}`);
-      if (part) part.classList.toggle("hidden", i !== currentAnswerPart);
-      if (imagePart) imagePart.classList.toggle("hidden", i !== currentAnswerPart);
-    }
-    const h3 = document.querySelector("#answer-image-display h3");
-    if (h3) {
-      h3.innerText = `Part ${currentAnswerPart}`;
-    } else {
-      console.warn("h3 element in #answer-image-display not found");
-    }
-  } catch (error) {
-    console.error("Error in updateAnswerPartVisibility:", error);
-    answerNotification.innerText = "Lỗi khi cập nhật hiển thị phần đáp án.";
+  for (let i = 1; i <= 7; i++) {
+    document.getElementById(`answer-part${i}`).classList.toggle("hidden", i !== currentAnswerPart);
+    document.getElementById(`answer-images-part${i}`).classList.toggle("hidden", i !== currentAnswerPart);
+    document.querySelector(`#answer-image-display h3`).innerText = `Part ${currentAnswerPart}`;
   }
 }
 
@@ -1293,20 +1250,22 @@ async function saveQuiz() {
   }
 }
 
-function nextQuizPart(current) {
-  if (current >= 7) return;
-  document.getElementById(`quiz-part${current}`).classList.add("hidden");
-  document.getElementById(`quiz-part${current + 1}`).classList.remove("hidden");
-  currentQuizPart = current;
+let currentAnswerPart = 1; // Initialize global variable for answer screen
+
+function nextAnswerPart(current) {
+  if (current >= 7) return; // Prevent going beyond part 7
+  document.getElementById(`answer-part${current}`).classList.add("hidden");
+  document.getElementById(`answer-part${current + 1}`).classList.remove("hidden");
+  currentAnswerPart = current + 1; // Update global variable
   loadImages(current + 1);
   loadAudio(current + 1);
 }
 
-function prevQuizPart(current) {
-  if (current <= 1) return;
-  document.getElementById(`quiz-part${current}`).classList.add("hidden");
-  document.getElementById(`quiz-part${current - 1}`).classList.remove("hidden");
-  currentQuizPart = current - 1;
+function prevAnswerPart(current) {
+  if (current <= 1) return; // Prevent going below part 1
+  document.getElementById(`answer-part${current}`).classList.add("hidden");
+  document.getElementById(`answer-part${current - 1}`).classList.remove("hidden");
+  currentAnswerPart = current - 1; // Update global variable
   loadImages(current - 1);
   loadAudio(current - 1);
 }
