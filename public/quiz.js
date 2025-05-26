@@ -1244,24 +1244,24 @@ async function saveQuiz() {
   }
 }
 
-function nextQuizPart(current) {
-  if (current >= 7) return; // Prevent going beyond part 7
-  document.getElementById(`answer-part${current}`).classList.add("hidden");
-  document.getElementById(`answer-part${current + 1}`).classList.remove("hidden");
-  currentAnswerPart = current + 1; // Update global variable
-  // Optional: Load images or other content if needed
-  loadImages(current + 1);
-  loadAudio(current + 1);
+function nextQuizPart() {
+  if (currentQuizPart <= 7) {
+    document.getElementById(`quiz-part${currentQuizPart}`).classList.add("hidden");
+    currentQuizPart++;
+    document.getElementById(`quiz-part${currentQuizPart}`).classList.remove("hidden");
+    loadImages(currentQuizPart);
+    loadAudio(currentQuizPart);
+  }
 }
 
-function prevQuizPart(current) {
-  if (current <= 1) return; // Prevent going below part 1
-  document.getElementById(`answer-part${current}`).classList.add("hidden");
-  document.getElementById(`answer-part${current - 1}`).classList.remove("hidden");
-  currentAnswerPart = current - 1; // Update global variable
-  // Optional: Load images or other content if needed
-  loadImages(current - 1);
-  loadAudio(current - 1);
+function prevQuizPart() {
+  if (currentQuizPart >= 1) {
+    document.getElementById(`quiz-part${currentQuizPart}`).classList.add("hidden");
+    currentQuizPart--;
+    document.getElementById(`quiz-part${currentQuizPart}`).classList.remove("hidden");
+    loadImages(currentQuizPart);
+    loadAudio(currentQuizPart);
+  }
 }
 
 async function submitQuiz() {
