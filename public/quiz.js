@@ -652,23 +652,35 @@ async function loadQuizzes() {
   try {
     const res = await fetchWithRetry(url);
     const quizzes = await res.json();
-    let currentQuizId = selectedQuizId;
-    try {
-      const statusRes = await fetchWithRetry('/quiz-status');
-      const status = await statusRes.json();
-      currentQuizId = status.quizId || currentQuizId;
-      quizStatus.innerText = status.quizId ? `Đề thi hiện tại: ${status.quizName}` : "Chưa có đề thi được chọn.";
-    } catch (statusError) {
-      console.warn("Failed to fetch quiz status:", statusError);
-    }
     quizList.innerHTML = "";
+    
+    const directTestState = localStorage.getItem("directTestState");
+    const directTestNotice = document.getElementById("direct-test-notice");
+    const directTestMessage = document.getElementById("direct-test-message");
+    const joinDirectTestBtn = document.getElementById("join-direct-test-btn");
+    
+    if (!isAdmin && directTestState) {
+      const { isDirectTestMode, quizId, timeLimit, startTime } = JSON.parse(directTestState);
+      if (isDirectTestMode && !isTestEnded) {
+        const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+        const remainingTime = timeLimit - elapsedTime;
+        if (remainingTime > 0) {
+          directTestMessage.innerText = `Kiểm tra trực tiếp đang diễn ra! (Thời gian còn lại: ${Math.floor(remainingTime / 60)}:${remainingTime % 60 < 10 ? "0" : ""}${remainingTime % 60})`;
+          joinDirectTestBtn.onclick = () => joinDirectTest(quizId, remainingTime, startTime);
+          directTestNotice.classList.remove("hidden");
+        }
+      }
+    } else {
+      directTestNotice.classList.add("hidden");
+    }
+
     if (quizzes.length === 0) {
       quizList.innerHTML = "<p>Chưa có đề thi nào.</p>";
     } else {
       quizzes.forEach(quiz => {
         const div = document.createElement("div");
         div.className = "flex items-center space-x-2";
-        const isSelected = currentQuizId === quiz.quizId;
+        const isSelected = selectedQuizId === quiz.quizId;
         if (isAdmin) {
           div.innerHTML = `
             <span class="text-lg font-medium">${quiz.quizName}${isSelected ? ' ✅' : ''}</span>
@@ -687,8 +699,58 @@ async function loadQuizzes() {
     }
   } catch (error) {
     console.error("Error loading quizzes:", error);
-    notification.innerText = "Không thể tải danh sách đề thi. Vui lòng thử lại.";
-    quizList.innerHTML = "<p>Lỗi khi tải danh sách đề thi. Vui lòng làm mới trang.</p>";
+    notification.innerText = "Không thể tải danh sách đề thi.";
+    quizList.innerHTML = "<p>Lỗi khi tải danh sách đề thi.</p>";
+  }
+}
+
+async function joinDirectTest(quizId, remainingTime, startTime) {
+  try {
+    const res = await fetch("/select-quiz", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ quizId }),
+    });
+    const result = await res.json();
+    if (res.ok) {
+      isAdminControlled = true;
+      timeLeft = remainingTime;
+      selectedQuizId = quizId;
+      hideAllScreens();
+      quizContainer.classList.remove("hidden");
+      timerDisplay.classList.remove("hidden");
+      audio.classList.remove("hidden");
+
+      const savedAnswers = localStorage.getItem("userAnswers");
+      userAnswers = savedAnswers ? JSON.parse(savedAnswers) : {};
+
+      if (userAnswers) {
+        Object.keys(userAnswers).forEach(questionId => {
+          const radio = document.querySelector(`input[name="${questionId}"][value="${userAnswers[questionId]}"]`);
+          if (radio) radio.checked = true;
+        });
+      }
+
+      localStorage.setItem("selectedQuizId", quizId);
+      localStorage.setItem("currentScreen", "quiz-container");
+      localStorage.setItem("timeLeft", remainingTime);
+
+      await loadAudio(1);
+      await loadImages(1);
+      startTimer();
+      currentQuizPart = 0;
+      downloadNotice.classList.add("hidden");
+      notification.innerText = "Đã tham gia kiểm tra trực tiếp!";
+      
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: "joinDirectTest", username: user.name }));
+      }
+    } else {
+      notification.innerText = result.message;
+    }
+  } catch (error) {
+    console.error("Error joining direct test:", error);
+    notification.innerText = "Lỗi khi tham gia kiểm tra trực tiếp.";
   }
 }
 
@@ -775,14 +837,14 @@ async function assignQuiz() {
 
 async function startDirectTest() {
   if (!selectedQuizId) {
-    notification.innerText = "Vui lòng chọn một đề thi trước!";
+    notification.innerText = "Vui lòng chọn một đề!";
     return;
   }
   const timeLimit = prompt("Nhập thời gian làm bài (phút, tối đa 120):", "120");
-  if (timeLimit === null) return;
+  if (!timeLimit) return;
   let timeLimitSeconds = parseInt(timeLimit) * 60;
   if (isNaN(timeLimitSeconds) || timeLimitSeconds <= 0 || timeLimitSeconds > 7200) {
-    notification.innerText = "Thời gian không hợp lệ! Sử dụng mặc định 120 phút.";
+    notification.innerText = "Thời gian không hợp lệ! Mặc định 120 phút.";
     timeLimitSeconds = 7200;
   }
   try {
@@ -799,8 +861,22 @@ async function startDirectTest() {
       directTestScreen.classList.remove("hidden");
       directResultsTable.classList.add("hidden");
       endDirectTestBtn.disabled = false;
+      
+      const startTime = Date.now();
+      localStorage.setItem("directTestState", JSON.stringify({
+        isDirectTestMode: true,
+        quizId: selectedQuizId,
+        timeLimit: timeLimitSeconds,
+        startTime: startTime,
+      }));
+
       if (socket && socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({ type: "start", timeLimit: timeLimitSeconds }));
+        socket.send(JSON.stringify({ 
+          type: "start", 
+          quizId: selectedQuizId,
+          timeLimit: timeLimitSeconds,
+          startTime: startTime 
+        }));
       }
       notification.innerText = "Đã bắt đầu kiểm tra trực tiếp.";
       saveAdminState();
@@ -809,7 +885,7 @@ async function startDirectTest() {
     }
   } catch (error) {
     console.error("Error starting direct test:", error);
-    notification.innerText = "Lỗi khi bắt đầu kiểm tra trực tiếp. Vui lòng thử lại.";
+    notification.innerText = "Lỗi khi bắt đầu kiểm tra trực tiếp.";
   }
 }
 
@@ -818,15 +894,21 @@ async function endDirectTest() {
     notification.innerText = "Kiểm tra đã kết thúc!";
     return;
   }
-  if (socket && socket.readyState === WebSocket.OPEN) {
-    socket.send(JSON.stringify({ type: "end" }));
-    isTestEnded = true;
-    endDirectTestBtn.disabled = true;
-    await fetchDirectResults();
-    saveAdminState();
-  } else {
-    notification.innerText = "Không thể gửi tín hiệu kết thúc. Kết nối WebSocket không hoạt động.";
-    await fetchDirectResults();
+  try {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({ type: "end" }));
+      isTestEnded = true;
+      endDirectTestBtn.disabled = true;
+      localStorage.removeItem("directTest");
+      await fetchDirectResults();
+      saveAdminState();
+    } else {
+      notification.innerText = "Không thể gửi tín hiệu kết thúc.";
+      await fetchDirectResults();
+    }
+  } catch (error) {
+    console.error("Error ending direct test:", error);
+    notification.innerText = "Lỗi khi kết thúc kiểm tra.";
   }
 }
 
@@ -1389,11 +1471,21 @@ function handleWebSocketMessage(event) {
     } else if (message.type === "start") {
       isAdminControlled = true;
       timeLeft = message.timeLimit || 7200;
+      localStorage.setItem("directTestState", JSON.stringify({
+        isDirectTestMode: true,
+        quizId: message.quizId,
+        timeLimit: message.timeLimit,
+        startTime: message.startTime,
+      }));
       if (!isAdmin) {
         hideAllScreens();
         quizContainer.classList.remove("hidden");
         timerDisplay.classList.remove("hidden");
         audio.classList.remove("hidden");
+        selectedQuizId = message.quizId;
+        localStorage.setItem("selectedQuizId", message.quizId);
+        localStorage.setItem("currentScreen", "quiz-container");
+        localStorage.setItem("timeLeft", timeLeft);
         loadAudio(1);
         loadImages(1);
         startTimer();
@@ -1402,6 +1494,8 @@ function handleWebSocketMessage(event) {
         notification.innerText = "Bài thi đã bắt đầu!";
       }
     } else if (message.type === "end") {
+      isTestEnded = true;
+      localStorage.removeItem("directTestState");
       if (!isAdmin) {
         submitQuiz();
         notification.innerText = "Bài thi đã kết thúc!";
@@ -1413,7 +1507,7 @@ function handleWebSocketMessage(event) {
     }
   } catch (error) {
     console.error("Error handling WebSocket message:", error);
-    notification.innerText = "Lỗi khi xử lý thông tin từ server. Vui lòng kiểm tra kết nối.";
+    notification.innerText = "Lỗi khi xử lý thông tin từ server.";
   }
 }
 
@@ -1441,34 +1535,26 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (await restoreAdminState()) {
     console.log("Admin state restored");
   } else {
-    // Kiểm tra trạng thái học sinh
     const savedUser = localStorage.getItem("user");
     const savedAnswers = localStorage.getItem("userAnswers");
     const savedQuizId = localStorage.getItem("selectedQuizId");
     const savedScreen = localStorage.getItem("currentScreen");
+    const directTestState = localStorage.getItem("directTestState");
 
     if (savedUser && savedAnswers && savedQuizId && savedScreen === "quiz-container") {
       user = JSON.parse(savedUser);
       userAnswers = JSON.parse(savedAnswers);
       selectedQuizId = savedQuizId;
       isAdmin = false;
-
       hideAllScreens();
       quizContainer.classList.remove("hidden");
       timerDisplay.classList.remove("hidden");
       audio.classList.remove("hidden");
-
-      // Khôi phục các đáp án đã chọn
       Object.keys(userAnswers).forEach(questionId => {
         const radio = document.querySelector(`input[name="${questionId}"][value="${userAnswers[questionId]}"]`);
-        if (radio) {
-          radio.checked = true;
-        } else {
-          console.warn(`Radio button for ${questionId} with value ${userAnswers[questionId]} not found`);
-        }
+        if (radio) radio.checked = true;
+        else console.warn(`Radio button for ${questionId} with value ${userAnswers[questionId]} not found`);
       });
-
-      // Khôi phục thời gian còn lại
       timeLeft = parseInt(localStorage.getItem("timeLeft")) || 7200;
       await loadAudio(1);
       await loadImages(1);
@@ -1486,6 +1572,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       downloadNotice.classList.add("hidden");
       initializeWebSocket();
       await loadQuizzes();
+    } else if (directTestState && !savedUser) {
+      showStudentLogin();
+      notification.innerText = "Kiểm tra trực tiếp đang diễn ra. Vui lòng đăng nhập để tham gia.";
     } else {
       showWelcomeScreen();
     }
