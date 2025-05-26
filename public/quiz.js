@@ -60,31 +60,6 @@ function showResultScreen() {
   resultScreen.classList.remove("hidden");
 }
 
-// Hàm điều chỉnh hiển thị phần đáp án
-function updateAnswerPartVisibility() {
-  for (let i = 1; i <= 7; i++) {
-    document.getElementById(`answer-part${i}`).classList.toggle("hidden", i !== currentAnswerPart);
-    document.getElementById(`answer-images-part${i}`).classList.toggle("hidden", i !== currentAnswerPart);
-    document.querySelector(`#answer-image-display h3`).innerText = `Part ${currentAnswerPart}`;
-  }
-}
-
-// Hàm chuyển đến phần trước
-function prevAnswerPart(current) {
-  if (currentAnswerPart > 1) {
-    currentAnswerPart--;
-    updateAnswerPartVisibility();
-  }
-}
-
-// Hàm chuyển đến phần tiếp theo
-function nextAnswerPart(current) {
-  if (currentAnswerPart < 7) {
-    currentAnswerPart++;
-    updateAnswerPartVisibility();
-  }
-}
-
 function saveAdminState() {
   if (isAdmin && user) {
     localStorage.setItem("adminState", JSON.stringify({
@@ -109,7 +84,6 @@ function getCurrentScreen() {
   if (!historyScreen.classList.contains("hidden")) return "history-screen";
   if (!quizContainer.classList.contains("hidden")) return "quiz-container";
   if (!resultScreen.classList.contains("hidden")) return "result-screen";
-  if (!answerScreen.classList.contains("hidden")) return "answer-screen"; // Thêm điều kiện cho answer-screen
   if (!document.getElementById("admin-step-audio").classList.contains("hidden")) return "admin-step-audio";
   for (let i = 1; i <= 7; i++) {
     if (!document.getElementById(`admin-step-part${i}`).classList.contains("hidden")) {

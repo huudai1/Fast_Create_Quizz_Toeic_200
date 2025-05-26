@@ -344,51 +344,6 @@
   </div>
 </div>
 
-<div id="answer-screen" class="container mx-auto p-4 hidden">
-  <h1 class="text-3xl font-bold mb-4">Đáp án</h1>
-  <p id="answer-notification" class="text-red-500 mb-4"></p>
-  <div class="split-container">
-    <div class="image-section" id="answer-image-display">
-      <h3 class="text-lg font-semibold mb-2">Part 1</h3>
-    </div>
-    <div class="question-section" id="answer-question-section">
-      <div id="answer-part1">
-        <h2 class="text-2xl font-semibold mb-2">Part 1</h2>
-        <div id="answer-section1" class="space-y-4"></div>
-      </div>
-      <div id="answer-part2" class="hidden">
-        <h2 class="text-2xl font-semibold mb-2">Part 2</h2>
-        <div id="answer-section2" class="space-y-4"></div>
-      </div>
-      <div id="answer-part3" class="hidden">
-        <h2 class="text-2xl font-semibold mb-2">Part 3</h2>
-        <div id="answer-section3" class="space-y-4"></div>
-      </div>
-      <div id="answer-part4" class="hidden">
-        <h2 class="text-2xl font-semibold mb-2">Part 4</h2>
-        <div id="answer-section4" class="space-y-4"></div>
-      </div>
-      <div id="answer-part5" class="hidden">
-        <h2 class="text-2xl font-semibold mb-2">Part 5</h2>
-        <div id="answer-section5" class="space-y-4"></div>
-      </div>
-      <div id="answer-part6" class="hidden">
-        <h2 class="text-2xl font-semibold mb-2">Part 6</h2>
-        <div id="answer-section6" class="space-y-4"></div>
-      </div>
-      <div id="answer-part7" class="hidden">
-        <h2 class="text-2xl font-semibold mb-2">Part 7</h2>
-        <div id="answer-section7" class="space-y-4"></div>
-      </div>
-      <div class="flex space-x-4 sticky bottom-0 bg-gray-100 p-4">
-        <button type="button" onclick="prevAnswerPart(currentAnswerPart + 1)" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Phần trước</button>
-        <button type="button" onclick="nextAnswerPart(currentAnswerPart + 1)" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Phần tiếp theo</button>
-        <button onclick="showResultScreen()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
-      </div>
-    </div>
-  </div>
-</div>
-
   <div id="loading-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
   <div class="bg-white p-6 rounded-lg shadow-lg text-center max-w-md w-full">
     <p class="text-lg font-semibold mb-4">Đang xử lý đề...</p>
