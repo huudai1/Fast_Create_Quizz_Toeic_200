@@ -1250,7 +1250,6 @@ async function saveQuiz() {
   }
 }
 
-let currentAnswerPart = 1; // Initialize global variable for answer screen
 
 function nextAnswerPart(current) {
   if (current >= 7) return; // Prevent going beyond part 7
