@@ -20,7 +20,6 @@ const quizListScreen = document.getElementById("quiz-list-screen");
 const adminOptions = document.getElementById("admin-options");
 const adminControls = document.getElementById("admin-controls");
 const uploadQuizzesSection = document.getElementById("upload-quizzes");
-const historyScreen = document.getElementById("history-screen");
 const quizzesFileInput = document.getElementById("quizzes-file");
 const quizList = document.getElementById("quiz-list");
 const quizContainer = document.getElementById("quiz-container");
@@ -81,7 +80,6 @@ function getCurrentScreen() {
   if (!quizListScreen.classList.contains("hidden")) return "quiz-list-screen";
   if (!directTestScreen.classList.contains("hidden")) return "direct-test-screen";
   if (!uploadQuizzesSection.classList.contains("hidden")) return "upload-quizzes";
-  if (!historyScreen.classList.contains("hidden")) return "history-screen";
   if (!quizContainer.classList.contains("hidden")) return "quiz-container";
   if (!resultScreen.classList.contains("hidden")) return "result-screen";
   if (!document.getElementById("admin-step-audio").classList.contains("hidden")) return "admin-step-audio";
@@ -123,16 +121,6 @@ async function restoreAdminState() {
         }
       } else if (state.screen === "upload-quizzes") {
         uploadQuizzesSection.classList.remove("hidden");
-      } else if (state.screen === "history-screen") {
-        historyScreen.classList.remove("hidden");
-        await loadHistory();
-      } else if (state.screen === "answer-screen") { // Thêm điều kiện cho answer-screen
-        answerScreen.classList.remove("hidden");
-        // Khôi phục trạng thái nếu cần (ví dụ: hiển thị phần đáp án hiện tại)
-        currentAnswerPart = state.currentAnswerPart || 1;
-        await loadAnswerImages();
-        await loadAnswerQuestions();
-        updateAnswerPartVisibility();
       } else if (state.screen.startsWith("admin-step-")) {
         document.getElementById(state.screen).classList.remove("hidden");
       }
@@ -152,7 +140,6 @@ function hideAllScreens() {
   quizListScreen.classList.add("hidden");
   directTestScreen.classList.add("hidden");
   uploadQuizzesSection.classList.add("hidden");
-  historyScreen.classList.add("hidden");
   quizContainer.classList.add("hidden");
   resultScreen.classList.add("hidden");
   document.querySelectorAll(".admin-step").forEach(step => step.classList.add("hidden"));
@@ -213,12 +200,6 @@ function showWelcomeScreen() {
   startDownloadNotice();
 }
 
-function showHistoryScreen() {
-  hideAllScreens();
-  historyScreen.classList.remove("hidden");
-  loadHistory();
-  saveAdminState();
-}
 
 function initializeWebSocket() {
   try {
@@ -1200,57 +1181,6 @@ async function submitQuiz() {
   }
 }
 
-async function loadHistory() {
-  try {
-    const res = await fetch("/history");
-    const results = await res.json();
-    historyBody.innerHTML = "";
-    results.forEach(result => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td class="border p-2"><input type="checkbox" class="result-checkbox" data-id="${result.id}"></td>
-        <td class="border p-2">${result.username}</td>
-        <td class="border p-2">${result.score}</td>
-        <td class="border p-2">${new Date(result.submittedAt).toLocaleString()}</td>
-      `;
-      historyBody.appendChild(tr);
-    });
-  } catch (error) {
-    console.error("Error loading history:", error);
-    notification.innerText = "Lỗi khi tải lịch sử điểm. Vui lòng thử lại.";
-  }
-}
-
-async function deleteSelectedResults() {
-  const checkboxes = document.querySelectorAll(".result-checkbox:checked");
-  const ids = Array.from(checkboxes).map(cb => cb.dataset.id);
-  if (ids.length === 0) {
-    notification.innerText = "Vui lòng chọn ít nhất một kết quả để xóa!";
-    return;
-  }
-  if (!confirm(`Bạn có chắc muốn xóa ${ids.length} kết quả đã chọn?`)) return;
-  try {
-    const res = await fetch("/delete-results", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ids }),
-    });
-    const result = await res.json();
-    notification.innerText = result.message;
-    if (res.ok) {
-      loadHistory();
-    }
-  } catch (error) {
-    console.error("Error deleting results:", error);
-    notification.innerText = "Lỗi khi xóa kết quả. Vui lòng thử lại.";
-  }
-}
-
-function toggleSelectAll() {
-  const selectAll = document.getElementById("select-all");
-  const checkboxes = document.querySelectorAll(".result-checkbox");
-  checkboxes.forEach(cb => cb.checked = selectAll.checked);
-}
 
 async function fetchDirectResults() {
   const retries = 3;
