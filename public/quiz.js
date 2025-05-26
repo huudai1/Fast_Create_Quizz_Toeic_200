@@ -1307,7 +1307,7 @@ function nextQuizPart(current) {
   if (current >= 7) return;
   hideAllQuizParts(); // Ẩn tất cả các phần
   document.getElementById(`quiz-part${current + 1}`).classList.remove("hidden");
-  currentQuizPart = current + 1;
+  currentQuizPart = current;
   loadImages(current + 1);
   loadAudio(current + 1);
 }
@@ -1317,7 +1317,7 @@ function prevQuizPart(current) {
   if (current <= 1) return;
   hideAllQuizParts(); // Ẩn tất cả các phần
   document.getElementById(`quiz-part${current - 1}`).classList.remove("hidden");
-  currentQuizPart = current - 1;
+  currentQuizPart = current;
   loadImages(current - 1);
   loadAudio(current - 1);
 }
