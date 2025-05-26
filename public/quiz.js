@@ -1248,22 +1248,29 @@ async function saveQuiz() {
   }
 }
 
+function hideAllQuizParts() {
+  for (let i = 1; i <= 7; i++) {
+    const part = document.getElementById(`quiz-part${i}`);
+    if (part) part.classList.add("hidden");
+  }
+}
+
 function nextQuizPart(current) {
   if (current >= 7) return;
-  document.getElementById(`quiz-part${current}`).classList.add("hidden");
-  document.getElementById(`quiz-part${current + 1}`).classList.remove("hidden");
-  currentQuizPart = current;
-  loadImages(current + 1);
-  loadAudio(current + 1);
+  hideAllQuizParts(); // ✅ ẩn hết trước
+  currentQuizPart = current + 1;
+  document.getElementById(`quiz-part${currentQuizPart}`).classList.remove("hidden");
+  loadImages(currentQuizPart);
+  loadAudio(currentQuizPart);
 }
 
 function prevQuizPart(current) {
   if (current <= 1) return;
-  document.getElementById(`quiz-part${current}`).classList.add("hidden");
-  document.getElementById(`quiz-part${current - 1}`).classList.remove("hidden");
+  hideAllQuizParts(); // ✅ ẩn hết trước
   currentQuizPart = current - 1;
-  loadImages(current - 1);
-  loadAudio(current - 1);
+  document.getElementById(`quiz-part${currentQuizPart}`).classList.remove("hidden");
+  loadImages(currentQuizPart);
+  loadAudio(currentQuizPart);
 }
 
 async function submitQuiz() {
