@@ -88,6 +88,7 @@
 
   <div id="direct-test-screen" class="container mx-auto p-4 hidden">
     <h1 class="text-3xl font-bold mb-4">Kiểm tra trực tiếp</h1>
+    <p>Những người vào sau sẽ không thể làm bài!</p>
     <p id="notification" class="text-red-500 mb-4"></p>
     <p id="direct-participant-count" class="text-lg mb-4"></p>
     <p id="direct-submitted-count" class="text-lg mb-4"></p>
@@ -111,24 +112,6 @@
     <input id="quizzes-file" type="file" accept=".json,.zip" class="mb-4">
     <button onclick="uploadQuizzes()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Tải lên</button>
     <button onclick="backToQuizList()" class="mt-4 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
-  </div>
-
-  <div id="history-screen" class="container mx-auto p-4 hidden">
-    <h1 class="text-3xl font-bold mb-4">Lịch sử điểm(Hiện không khả dụng!)</h1>
-    <p id="notification" class="text-red-500 mb-4"></p>
-    <button onclick="deleteSelectedResults()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 mb-4">Xóa mục đã chọn</button>
-    <button onclick="backToQuizList()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
-    <table class="w-full border-collapse">
-      <thead>
-        <tr class="bg-gray-200">
-          <th class="border p-2"><input id="select-all" type="checkbox" onclick="toggleSelectAll()"></th>
-          <th class="border p-2">Tên</th>
-          <th class="border p-2">Điểm</th>
-          <th class="border p-2">Thời gian nộp</th>
-        </tr>
-      </thead>
-      <tbody id="history-body"></tbody>
-    </table>
   </div>
 
   <div id="admin-step-audio" class="container mx-auto p-4 hidden admin-step">
