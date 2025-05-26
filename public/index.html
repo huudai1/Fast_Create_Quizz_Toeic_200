@@ -47,23 +47,19 @@
       <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Đăng nhập</button>
     </form>
     <button onclick="showWelcomeScreen()" class="mt-4 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
+    <button id="continue-direct-test-btn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 mt-4 hidden">Tiếp tục làm bài</button>
   </div>
 
-<div id="quiz-list-screen" class="container mx-auto p-4 hidden">
-  <div class="flex justify-between items-center mb-4">
-    <h1 class="text-3xl font-bold">Danh sách đề thi</h1>
-    <button onclick="logout()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Đăng xuất</button>
-  </div>
-  <p id="notification" class="text-red-500 mb-4"></p>
-  <p id="quiz-status" class="text-lg mb-4"></p>
-  <p id="participant-count" class="text-lg mb-4"></p>
-  <p id="submitted-count" class="text-lg mb-4"></p>
-  <!-- Thêm thông báo và nút tham gia kiểm tra trực tiếp -->
-  <div id="direct-test-notice" class="bg-yellow-100 p-4 rounded mb-4 hidden">
-    <p id="direct-test-message" class="font-semibold text-lg"></p>
-    <button id="join-direct-test-btn" class="bg-green-500 text-white px-4 py-2 mt-2 rounded hover:bg-green-600">Tham gia kiểm tra</button>
-  </div>
-  <div id="admin-options" class="space-y-4 mb-4 hidden">
+  <div id="quiz-list-screen" class="container mx-auto p-4 hidden">
+    <div class="flex justify-between items-center mb-4">
+      <h1 class="text-3xl font-bold">Danh sách đề thi</h1>
+      <button onclick="logout()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Đăng xuất</button>
+    </div>
+    <p id="notification" class="text-red-500 mb-4"></p>
+    <p id="quiz-status" class="text-lg mb-4"></p>
+    <p id="participant-count" class="text-lg mb-4"></p>
+    <p id="submitted-count" class="text-lg mb-4"></p>
+    <div id="admin-options" class="space-y-4 mb-4 hidden">
       <button onclick="createNewQuiz()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Tạo đề thi mới</button>
       <button onclick="showUploadQuizzes()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Tải lên đề thi</button>
       <button onclick="showHistoryScreen()" class="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600">Xem lịch sử</button>
