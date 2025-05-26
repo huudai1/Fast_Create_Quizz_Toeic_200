@@ -416,6 +416,9 @@ studentNameForm.onsubmit = async (e) => {
 
   user = { name };
   isAdmin = false;
+  localStorage.setItem("user", JSON.stringify(user));
+  localStorage.setItem("currentScreen", "quiz-list-screen");
+
   hideAllScreens();
   quizListScreen.classList.remove("hidden");
   adminOptions.classList.add("hidden");
@@ -853,9 +856,16 @@ async function startQuiz(quizId) {
           const radio = document.querySelector(`input[name="${questionId}"][value="${userAnswers[questionId]}"]`);
           if (radio) {
             radio.checked = true;
+          } else {
+            console.warn(`Radio button for ${questionId} with value ${userAnswers[questionId]} not found`);
           }
         });
       }
+
+      // Lưu trạng thái bài thi
+      localStorage.setItem("selectedQuizId", quizId);
+      localStorage.setItem("currentScreen", "quiz-container");
+      localStorage.setItem("timeLeft", timeLeft);
 
       await loadAudio(1);
       await loadImages(1);
@@ -904,13 +914,15 @@ const createQuestion = (id, num, part) => {
     </div>
   `;
 
-  // Thêm sự kiện change cho các radio button
+  // Thêm sự kiện change cho radio buttons
   const radios = div.querySelectorAll(`input[name="${id}"]`);
   radios.forEach(radio => {
     radio.addEventListener("change", () => {
-      userAnswers = userAnswers || {};
+      if (!userAnswers) {
+        userAnswers = {}; // Khởi tạo nếu chưa có
+      }
       userAnswers[id] = radio.value;
-      saveUserAnswers();
+      saveUserAnswers(); // Lưu ngay sau khi chọn đáp án
     });
   });
 
@@ -946,6 +958,7 @@ function startTimer() {
     const seconds = timeLeft % 60;
     timerDisplay.innerText = `Thời gian còn lại: ${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
     timeLeft--;
+    localStorage.setItem("timeLeft", timeLeft); // Lưu thời gian còn lại
   }, 1000);
 }
 
@@ -1217,14 +1230,17 @@ async function submitQuiz() {
       socket.send(JSON.stringify({ type: "submitted", username: user.name }));
     }
 
-    // Xóa userAnswers khỏi localStorage sau khi nộp bài
+    // Xóa trạng thái bài thi sau khi nộp thành công
     clearUserAnswers();
+    localStorage.removeItem("selectedQuizId");
+    localStorage.removeItem("currentScreen");
+    localStorage.removeItem("timeLeft");
 
     downloadNotice.classList.remove("hidden");
     showDownloadNotice();
   } catch (error) {
     console.error("Error submitting quiz:", error);
-    notification.innerText = "Lỗi khi nộp bài. Vui lòng thử lại.";
+    notification.innerText = "Lỗi khi nộp bài. Đáp án của bạn vẫn được lưu. Vui lòng thử lại.";
   }
 }
 
@@ -1317,8 +1333,15 @@ async function fetchDirectResults() {
 }
 
 function saveUserAnswers() {
-  if (userAnswers) {
+  if (!userAnswers) {
+    userAnswers = {}; // Khởi tạo nếu chưa có
+  }
+  try {
     localStorage.setItem("userAnswers", JSON.stringify(userAnswers));
+    console.log("User answers saved:", userAnswers);
+  } catch (error) {
+    console.error("Error saving user answers to localStorage:", error);
+    notification.innerText = "Lỗi khi lưu đáp án. Vui lòng thử lại.";
   }
 }
 
@@ -1406,7 +1429,11 @@ async function logout() {
   } catch (error) {
     console.error("Error during logout:", error);
   }
-  clearUserAnswers(); // Xóa userAnswers khi đăng xuất
+  clearUserAnswers();
+  localStorage.removeItem("user");
+  localStorage.removeItem("selectedQuizId");
+  localStorage.removeItem("currentScreen");
+  localStorage.removeItem("timeLeft");
   showWelcomeScreen();
 }
 
@@ -1414,7 +1441,54 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (await restoreAdminState()) {
     console.log("Admin state restored");
   } else {
-    showWelcomeScreen();
+    // Kiểm tra trạng thái học sinh
+    const savedUser = localStorage.getItem("user");
+    const savedAnswers = localStorage.getItem("userAnswers");
+    const savedQuizId = localStorage.getItem("selectedQuizId");
+    const savedScreen = localStorage.getItem("currentScreen");
+
+    if (savedUser && savedAnswers && savedQuizId && savedScreen === "quiz-container") {
+      user = JSON.parse(savedUser);
+      userAnswers = JSON.parse(savedAnswers);
+      selectedQuizId = savedQuizId;
+      isAdmin = false;
+
+      hideAllScreens();
+      quizContainer.classList.remove("hidden");
+      timerDisplay.classList.remove("hidden");
+      audio.classList.remove("hidden");
+
+      // Khôi phục các đáp án đã chọn
+      Object.keys(userAnswers).forEach(questionId => {
+        const radio = document.querySelector(`input[name="${questionId}"][value="${userAnswers[questionId]}"]`);
+        if (radio) {
+          radio.checked = true;
+        } else {
+          console.warn(`Radio button for ${questionId} with value ${userAnswers[questionId]} not found`);
+        }
+      });
+
+      // Khôi phục thời gian còn lại
+      timeLeft = parseInt(localStorage.getItem("timeLeft")) || 7200;
+      await loadAudio(1);
+      await loadImages(1);
+      startTimer();
+      currentQuizPart = 0;
+      downloadNotice.classList.add("hidden");
+      initializeWebSocket();
+    } else if (savedUser) {
+      user = JSON.parse(savedUser);
+      isAdmin = false;
+      hideAllScreens();
+      quizListScreen.classList.remove("hidden");
+      adminOptions.classList.add("hidden");
+      adminControls.classList.add("hidden");
+      downloadNotice.classList.add("hidden");
+      initializeWebSocket();
+      await loadQuizzes();
+    } else {
+      showWelcomeScreen();
+    }
   }
   assignBtn.addEventListener("click", assignQuiz);
   directTestBtn.addEventListener("click", startDirectTest);
