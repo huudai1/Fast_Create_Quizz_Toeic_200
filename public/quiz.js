@@ -70,12 +70,12 @@ async function showAnswerScreen() {
 
   hideAllScreens();
   answerScreen.classList.remove("hidden");
-  answerNotification.innerText = ""; // Xóa thông báo lỗi nếu có
-  currentAnswerPart = 1;
-
+  answerNotification.innerText = "";
+  currentAnswerPart = 1; // Reset to part 1
   await loadAnswerImages();
   await loadAnswerQuestions();
   updateAnswerPartVisibility();
+  saveAdminState(); // Save state
 }
 
 // Hàm tải hình ảnh cho màn hình đáp án
@@ -149,14 +149,7 @@ async function loadAnswerQuestions() {
     questionSection.appendChild(partDiv);
   }
 
-  const navDiv = document.createElement("div");
-  navDiv.className = "flex space-x-4 sticky bottom-0 bg-gray-100 p-4";
-  navDiv.innerHTML = `
-    <button type="button" onclick="prevAnswerPart(currentAnswerPart + 1)" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Phần trước</button>
-    <button type="button" onclick="nextAnswerPart(currentAnswerPart + 1)" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Phần tiếp theo</button>
-    <button onclick="showResultScreen()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
-  `;
-  questionSection.appendChild(navDiv);
+  // Remove the redundant navigation bar creation since it's already in the HTML
 }
 
 
@@ -170,18 +163,19 @@ function updateAnswerPartVisibility() {
 }
 
 // Hàm chuyển đến phần trước
-function prevAnswerPart(current) {
-  if (currentAnswerPart > 1) {
-    currentAnswerPart--;
-    updateAnswerPartVisibility();
-  }
-}
-
-// Hàm chuyển đến phần tiếp theo
-function nextAnswerPart(current) {
+function nextAnswerPart() {
   if (currentAnswerPart < 7) {
     currentAnswerPart++;
     updateAnswerPartVisibility();
+    saveAdminState(); // Save state to persist currentAnswerPart
+  }
+}
+
+function prevAnswerPart() {
+  if (currentAnswerPart > 1) {
+    currentAnswerPart--;
+    updateAnswerPartVisibility();
+    saveAdminState(); // Save state to persist currentAnswerPart
   }
 }
 
@@ -1250,21 +1244,22 @@ async function saveQuiz() {
   }
 }
 
-
-function nextAnswerPart(current) {
+function nextQuizPart(current) {
   if (current >= 7) return; // Prevent going beyond part 7
   document.getElementById(`answer-part${current}`).classList.add("hidden");
   document.getElementById(`answer-part${current + 1}`).classList.remove("hidden");
   currentAnswerPart = current + 1; // Update global variable
+  // Optional: Load images or other content if needed
   loadImages(current + 1);
   loadAudio(current + 1);
 }
 
-function prevAnswerPart(current) {
+function prevQuizPart(current) {
   if (current <= 1) return; // Prevent going below part 1
   document.getElementById(`answer-part${current}`).classList.add("hidden");
   document.getElementById(`answer-part${current - 1}`).classList.remove("hidden");
   currentAnswerPart = current - 1; // Update global variable
+  // Optional: Load images or other content if needed
   loadImages(current - 1);
   loadAudio(current - 1);
 }
