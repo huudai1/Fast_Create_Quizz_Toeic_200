@@ -478,27 +478,34 @@ function checkDirectTestOnStudentLogin() {
   const directTestState = localStorage.getItem("directTestState");
   const continueBtn = document.getElementById("continue-direct-test-btn");
   if (directTestState) {
-    const { isDirectTestMode, quizId, timeLimit, startTime } = JSON.parse(directTestState);
-    if (isDirectTestMode && !isTestEnded) {
-      const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
-      const remainingTime = timeLimit - elapsedTime;
-      if (remainingTime > 0) {
-        continueBtn.classList.remove("hidden");
-        continueBtn.onclick = () => {
-          const nameInput = document.getElementById("student-name").value.trim();
-          if (!nameInput) {
-            notification.innerText = "Vui lòng nhập tên trước khi tiếp tục!";
-            return;
-          }
-          user = { name: nameInput };
-          localStorage.setItem("user", JSON.stringify(user));
-          joinDirectTest(quizId, remainingTime, startTime);
-        };
-      } else {
-        continueBtn.classList.add("hidden");
-        localStorage.removeItem("directTestState");
-        notification.innerText = "Kiểm tra trực tiếp đã kết thúc.";
+    try {
+      const { isDirectTestMode, quizId, timeLimit, startTime } = JSON.parse(directTestState);
+      if (isDirectTestMode && !isTestEnded) {
+        const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+        const remainingTime = timeLimit - elapsedTime;
+        if (remainingTime > 0) {
+          continueBtn.classList.remove("hidden");
+          notification.innerText = `Kiểm tra trực tiếp đang diễn ra. Thời gian còn lại: ${Math.floor(remainingTime / 60)}:${remainingTime % 60 < 10 ? "0" : ""}${remainingTime % 60}`;
+          continueBtn.onclick = () => {
+            const nameInput = document.getElementById("student-name").value.trim();
+            if (!nameInput) {
+              notification.innerText = "Vui lòng nhập tên trước khi tiếp tục!";
+              return;
+            }
+            user = { name: nameInput };
+            localStorage.setItem("user", JSON.stringify(user));
+            joinDirectTest(quizId, remainingTime, startTime);
+          };
+        } else {
+          continueBtn.classList.add("hidden");
+          localStorage.removeItem("directTestState");
+          notification.innerText = "Kiểm tra trực tiếp đã kết thúc.";
+        }
       }
+    } catch (error) {
+      console.error("Error parsing directTestState:", error);
+      localStorage.removeItem("directTestState");
+      continueBtn.classList.add("hidden");
     }
   } else {
     continueBtn.classList.add("hidden");
@@ -1572,71 +1579,95 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (await restoreAdminState()) {
     console.log("Admin state restored");
   } else {
-    const savedUser = localStorage.getItem("user");
-    const savedAnswers = localStorage.getItem("userAnswers");
-    const savedQuizId = localStorage.getItem("selectedQuizId");
-    const savedScreen = localStorage.getItem("currentScreen");
-    const directTestState = localStorage.getItem("directTestState");
+    let savedUser, savedAnswers, savedQuizId, savedScreen, directTestState;
+    // Safely parse localStorage to avoid JSON errors
+    try {
+      savedUser = localStorage.getItem("user");
+      savedAnswers = localStorage.getItem("userAnswers");
+      savedQuizId = localStorage.getItem("selectedQuizId");
+      savedScreen = localStorage.getItem("currentScreen");
+      directTestState = localStorage.getItem("directTestState");
+    } catch (error) {
+      console.error("Error reading localStorage:", error);
+      localStorage.clear(); // Clear corrupted localStorage
+      showWelcomeScreen();
+      notification.innerText = "Lỗi dữ liệu lưu trữ. Vui lòng đăng nhập lại.";
+      return;
+    }
 
     if (savedUser && savedAnswers && savedQuizId && savedScreen === "quiz-container") {
-      // Restore quiz-taking state
-      user = JSON.parse(savedUser);
-      userAnswers = JSON.parse(savedAnswers);
-      selectedQuizId = savedQuizId;
-      isAdmin = false;
-      hideAllScreens();
-      quizContainer.classList.remove("hidden");
-      timerDisplay.classList.remove("hidden");
-      audio.classList.remove("hidden");
-      Object.keys(userAnswers).forEach(questionId => {
-        const radio = document.querySelector(`input[name="${questionId}"][value="${userAnswers[questionId]}"]`);
-        if (radio) radio.checked = true;
-        else console.warn(`Radio button for ${questionId} with value ${userAnswers[questionId]} not found`);
-      });
-      timeLeft = parseInt(localStorage.getItem("timeLeft")) || 7200;
-      await loadAudio(1);
-      await loadImages(1);
-      startTimer();
-      currentQuizPart = 0;
-      downloadNotice.classList.add("hidden");
-      initializeWebSocket();
+      try {
+        user = JSON.parse(savedUser);
+        userAnswers = JSON.parse(savedAnswers);
+        selectedQuizId = savedQuizId;
+        isAdmin = false;
+        hideAllScreens();
+        quizContainer.classList.remove("hidden");
+        timerDisplay.classList.remove("hidden");
+        audio.classList.remove("hidden");
+        Object.keys(userAnswers).forEach(questionId => {
+          const radio = document.querySelector(`input[name="${questionId}"][value="${userAnswers[questionId]}"]`);
+          if (radio) radio.checked = true;
+          else console.warn(`Radio button for ${questionId} with value ${userAnswers[questionId]} not found`);
+        });
+        timeLeft = parseInt(localStorage.getItem("timeLeft")) || 7200;
+        await loadAudio(1);
+        await loadImages(1);
+        startTimer();
+        currentQuizPart = 0;
+        downloadNotice.classList.add("hidden");
+        initializeWebSocket();
+      } catch (error) {
+        console.error("Error restoring quiz state:", error);
+        notification.innerText = "Lỗi khi khôi phục bài thi. Vui lòng đăng nhập lại.";
+        showWelcomeScreen();
+        localStorage.clear();
+      }
     } else if (directTestState && savedUser) {
-      // Handle direct test state for logged-in students
-      user = JSON.parse(savedUser);
-      isAdmin = false;
-      const { isDirectTestMode, quizId, timeLimit, startTime } = JSON.parse(directTestState);
-      if (isDirectTestMode && !isTestEnded) {
-        const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
-        const remainingTime = timeLimit - elapsedTime;
-        if (remainingTime > 0) {
-          // Automatically resume direct test
-          selectedQuizId = quizId;
-          timeLeft = remainingTime;
-          hideAllScreens();
-          quizContainer.classList.remove("hidden");
-          timerDisplay.classList.remove("hidden");
-          audio.classList.remove("hidden");
-          userAnswers = savedAnswers ? JSON.parse(savedAnswers) : {};
-          Object.keys(userAnswers).forEach(questionId => {
-            const radio = document.querySelector(`input[name="${questionId}"][value="${userAnswers[questionId]}"]`);
-            if (radio) radio.checked = true;
-          });
-          localStorage.setItem("selectedQuizId", quizId);
-          localStorage.setItem("currentScreen", "quiz-container");
-          localStorage.setItem("timeLeft", remainingTime);
-          await loadAudio(1);
-          await loadImages(1);
-          startTimer();
-          currentQuizPart = 0;
-          downloadNotice.classList.add("hidden");
-          initializeWebSocket();
-          notification.innerText = "Đã khôi phục bài thi trực tiếp!";
-          if (socket && socket.readyState === WebSocket.OPEN) {
-            socket.send(JSON.stringify({ type: "joinDirectTest", username: user.name }));
+      try {
+        user = JSON.parse(savedUser);
+        const { isDirectTestMode, quizId, timeLimit, startTime } = JSON.parse(directTestState);
+        isAdmin = false;
+        if (isDirectTestMode && !isTestEnded) {
+          const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+          const remainingTime = timeLimit - elapsedTime;
+          if (remainingTime > 0) {
+            selectedQuizId = quizId;
+            timeLeft = remainingTime;
+            hideAllScreens();
+            quizContainer.classList.remove("hidden");
+            timerDisplay.classList.remove("hidden");
+            audio.classList.remove("hidden");
+            userAnswers = savedAnswers ? JSON.parse(savedAnswers) : {};
+            Object.keys(userAnswers).forEach(questionId => {
+              const radio = document.querySelector(`input[name="${questionId}"][value="${userAnswers[questionId]}"]`);
+              if (radio) radio.checked = true;
+            });
+            localStorage.setItem("selectedQuizId", quizId);
+            localStorage.setItem("currentScreen", "quiz-container");
+            localStorage.setItem("timeLeft", remainingTime);
+            await loadAudio(1);
+            await loadImages(1);
+            startTimer();
+            currentQuizPart = 0;
+            downloadNotice.classList.add("hidden");
+            initializeWebSocket();
+            notification.innerText = "Đã khôi phục bài thi trực tiếp!";
+            if (socket && socket.readyState === WebSocket.OPEN) {
+              socket.send(JSON.stringify({ type: "joinDirectTest", username: user.name }));
+            }
+          } else {
+            localStorage.removeItem("directTestState");
+            hideAllScreens();
+            quizListScreen.classList.remove("hidden");
+            adminOptions.classList.add("hidden");
+            adminControls.classList.add("hidden");
+            downloadNotice.classList.add("hidden");
+            initializeWebSocket();
+            await loadQuizzes();
+            notification.innerText = "Kiểm tra trực tiếp đã kết thúc.";
           }
         } else {
-          // Direct test has ended
-          localStorage.removeItem("directTestState");
           hideAllScreens();
           quizListScreen.classList.remove("hidden");
           adminOptions.classList.add("hidden");
@@ -1644,10 +1675,17 @@ document.addEventListener("DOMContentLoaded", async () => {
           downloadNotice.classList.add("hidden");
           initializeWebSocket();
           await loadQuizzes();
-          notification.innerText = "Kiểm tra trực tiếp đã kết thúc.";
         }
-      } else {
-        // Show quiz list if direct test is not active
+      } catch (error) {
+        console.error("Error restoring direct test state:", error);
+        notification.innerText = "Lỗi khi khôi phục kiểm tra trực tiếp. Vui lòng đăng nhập lại.";
+        showWelcomeScreen();
+        localStorage.clear();
+      }
+    } else if (savedUser) {
+      try {
+        user = JSON.parse(savedUser);
+        isAdmin = false;
         hideAllScreens();
         quizListScreen.classList.remove("hidden");
         adminOptions.classList.add("hidden");
@@ -1655,23 +1693,22 @@ document.addEventListener("DOMContentLoaded", async () => {
         downloadNotice.classList.add("hidden");
         initializeWebSocket();
         await loadQuizzes();
+      } catch (error) {
+        console.error("Error restoring user state:", error);
+        notification.innerText = "Lỗi khi khôi phục trạng thái người dùng. Vui lòng đăng nhập lại.";
+        showWelcomeScreen();
+        localStorage.clear();
       }
-    } else if (savedUser) {
-      // Show quiz list for logged-in students without direct test
-      user = JSON.parse(savedUser);
-      isAdmin = false;
-      hideAllScreens();
-      quizListScreen.classList.remove("hidden");
-      adminOptions.classList.add("hidden");
-      adminControls.classList.add("hidden");
-      downloadNotice.classList.add("hidden");
-      initializeWebSocket();
-      await loadQuizzes();
     } else if (directTestState && !savedUser) {
-      // Show login screen with direct test notification
-      showStudentLogin();
-      notification.innerText = "Kiểm tra trực tiếp đang diễn ra. Vui lòng đăng nhập để tham gia.";
-      checkDirectTestOnStudentLogin(); // Check and show continue button
+      try {
+        showStudentLogin();
+        notification.innerText = "Kiểm tra trực tiếp đang diễn ra. Vui lòng đăng nhập để tham gia.";
+        checkDirectTestOnStudentLogin();
+      } catch (error) {
+        console.error("Error handling direct test login:", error);
+        notification.innerText = "Lỗi khi kiểm tra trạng thái kiểm tra trực tiếp.";
+        showWelcomeScreen();
+      }
     } else {
       showWelcomeScreen();
     }
