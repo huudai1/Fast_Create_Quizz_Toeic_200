@@ -1293,31 +1293,20 @@ async function saveQuiz() {
   }
 }
 
-function hideAllQuizParts() {
-  for (let i = 1; i <= 7; i++) {
-    const part = document.getElementById(`quiz-part${i}`);
-    if (part) {
-      part.classList.add("hidden");
-    }
-  }
-}
-
-// Hàm chuyển đến phần tiếp theo
 function nextQuizPart(current) {
   if (current >= 7) return;
-  hideAllQuizParts(); // Ẩn tất cả các phần
+  document.getElementById(`quiz-part${current}`).classList.add("hidden");
   document.getElementById(`quiz-part${current + 1}`).classList.remove("hidden");
   currentQuizPart = current;
   loadImages(current + 1);
   loadAudio(current + 1);
 }
 
-// Hàm quay lại phần trước
 function prevQuizPart(current) {
   if (current <= 1) return;
-  hideAllQuizParts(); // Ẩn tất cả các phần
+  document.getElementById(`quiz-part${current}`).classList.add("hidden");
   document.getElementById(`quiz-part${current - 1}`).classList.remove("hidden");
-  currentQuizPart = current;
+  currentQuizPart = current - 1;
   loadImages(current - 1);
   loadAudio(current - 1);
 }
