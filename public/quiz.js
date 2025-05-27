@@ -51,7 +51,6 @@ const downloadNotice = document.getElementById("download-notice");
 const wsProtocol = location.protocol === 'https:' ? 'wss://' : 'ws://';
 let socket = null;
 let currentAdminStep = 0;
-let currentQuizPart = 0;
 const partAnswerCounts = [6, 25, 39, 30, 30, 16, 54];
 
 function showResultScreen() {
