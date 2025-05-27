@@ -9,7 +9,6 @@ let isDirectTestMode = false;
 let isTestEnded = false;
 let userAnswers = null; // Lưu đáp án người dùng
 let answerKey = null; // Lưu đáp án đúng
-let currentQuizPart = 1;
 const answerNotification = document.getElementById("answer-notification");
 const answerImageDisplay = document.getElementById("answer-image-display");
 const welcomeScreen = document.getElementById("welcome-screen");
@@ -51,6 +50,7 @@ const downloadNotice = document.getElementById("download-notice");
 const wsProtocol = location.protocol === 'https:' ? 'wss://' : 'ws://';
 let socket = null;
 let currentAdminStep = 0;
+let currentQuizPart = 1;
 const partAnswerCounts = [6, 25, 39, 30, 30, 16, 54];
 
 function showResultScreen() {
@@ -1102,26 +1102,22 @@ async function saveQuiz() {
   }
 }
 
-function nextQuizPart() {
-  if (currentQuizPart >= 7) return;
-  // Ẩn phần hiện tại
-  document.getElementById(`quiz-part${currentQuizPart}`).classList.add("hidden");
-  // Tăng currentQuizPart và hiển thị phần tiếp theo
-  currentQuizPart++;
-  document.getElementById(`quiz-part${currentQuizPart}`).classList.remove("hidden");
-  loadImages(currentQuizPart);
-  loadAudio(currentQuizPart);
+function nextQuizPart(current) {
+  if (current >= 7) return; // Không cho phép vượt quá phần 7
+  document.getElementById(`quiz-part${current}`).classList.add("hidden");
+  document.getElementById(`quiz-part${current + 1}`).classList.remove("hidden");
+  currentQuizPart = current + 1; // Cập nhật đúng phần hiện tại
+  loadImages(current + 1);
+  loadAudio(current + 1);
 }
 
-function prevQuizPart() {
-  if (currentQuizPart <= 1) return;
-  // Ẩn phần hiện tại
-  document.getElementById(`quiz-part${currentQuizPart}`).classList.add("hidden");
-  // Giảm currentQuizPart và hiển thị phần trước đó
-  currentQuizPart--;
-  document.getElementById(`quiz-part${currentQuizPart}`).classList.remove("hidden");
-  loadImages(currentQuizPart);
-  loadAudio(currentQuizPart);
+function prevQuizPart(current) {
+  if (current <= 1) return; // Không cho phép nhỏ hơn phần 1
+  document.getElementById(`quiz-part${current}`).classList.add("hidden");
+  document.getElementById(`quiz-part${current - 1}`).classList.remove("hidden");
+  currentQuizPart = current - 1; // Cập nhật đúng phần hiện tại
+  loadImages(current - 1);
+  loadAudio(current - 1);
 }
 
 async function submitQuiz() {
