@@ -188,7 +188,7 @@ function showWelcomeScreen() {
   isDirectTestMode = false;
   isTestEnded = false;
   currentAdminStep = 0;
-  currentQuizPart = 0;
+  currentQuizPart = 1;
   if (socket) {
     socket.close();
     socket = null;
@@ -592,7 +592,7 @@ async function joinDirectTest(quizId, remainingTime, startTime) {
       await loadAudio(1);
       await loadImages(1);
       startTimer();
-      currentQuizPart = 0;
+      currentQuizPart = 1;
       downloadNotice.classList.add("hidden");
       notification.innerText = "Đã tham gia kiểm tra trực tiếp!";
       
@@ -806,7 +806,7 @@ async function startQuiz(quizId) {
       await loadAudio(1);
       await loadImages(1);
       startTimer();
-      currentQuizPart = 0;
+      currentQuizPart = 1;
       downloadNotice.classList.add("hidden");
     } else {
       notification.innerText = result.message;
@@ -1292,7 +1292,7 @@ function handleWebSocketMessage(event) {
         loadAudio(1);
         loadImages(1);
         startTimer();
-        currentQuizPart = 0;
+        currentQuizPart = 1;
         downloadNotice.classList.add("hidden");
         notification.innerText = "Bài thi đã bắt đầu!";
       }
@@ -1362,7 +1362,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       await loadAudio(1);
       await loadImages(1);
       startTimer();
-      currentQuizPart = 0;
+      currentQuizPart = 1;
       downloadNotice.classList.add("hidden");
       initializeWebSocket();
     } else if (savedUser) {
