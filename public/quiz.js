@@ -1103,7 +1103,7 @@ async function saveQuiz() {
   }
 }
 
-ffunction nextQuizPart() {
+function nextQuizPart() {
   if (currentQuizPart >= 7) return;
   // Ẩn phần hiện tại
   document.getElementById(`quiz-part${currentQuizPart}`).classList.add("hidden");
