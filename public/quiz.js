@@ -9,7 +9,7 @@ let isDirectTestMode = false;
 let isTestEnded = false;
 let userAnswers = null; // Lưu đáp án người dùng
 let answerKey = null; // Lưu đáp án đúng
-let currentAnswerPart = 1; // Phần hiện tại trong màn hình đáp án
+let currentQuizPart = 1;
 const answerNotification = document.getElementById("answer-notification");
 const answerImageDisplay = document.getElementById("answer-image-display");
 const welcomeScreen = document.getElementById("welcome-screen");
@@ -1103,9 +1103,11 @@ async function saveQuiz() {
   }
 }
 
-function nextQuizPart() {
+ffunction nextQuizPart() {
   if (currentQuizPart >= 7) return;
+  // Ẩn phần hiện tại
   document.getElementById(`quiz-part${currentQuizPart}`).classList.add("hidden");
+  // Tăng currentQuizPart và hiển thị phần tiếp theo
   currentQuizPart++;
   document.getElementById(`quiz-part${currentQuizPart}`).classList.remove("hidden");
   loadImages(currentQuizPart);
@@ -1114,7 +1116,9 @@ function nextQuizPart() {
 
 function prevQuizPart() {
   if (currentQuizPart <= 1) return;
+  // Ẩn phần hiện tại
   document.getElementById(`quiz-part${currentQuizPart}`).classList.add("hidden");
+  // Giảm currentQuizPart và hiển thị phần trước đó
   currentQuizPart--;
   document.getElementById(`quiz-part${currentQuizPart}`).classList.remove("hidden");
   loadImages(currentQuizPart);
