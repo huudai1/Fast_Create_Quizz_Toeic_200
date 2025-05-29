@@ -5,45 +5,62 @@
   overflow: hidden;
 }
 
+/* Phần ảnh và câu hỏi */
 .image-section, .question-section {
-  width: 50%;
-  overflow-y: auto; /* Cho phép cuộn dọc */
   padding: 16px;
   box-sizing: border-box;
+  overflow-y: auto;
 }
 
+/* Desktop: chia đôi */
 .image-section {
-  border-right: 1px solid #ccc; /* Đường phân cách */
+  width: 50%;
+  border-right: 1px solid #ccc;
+  /* Cố định chiều cao để ảnh đủ lớn */
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .image-section img {
-  width: 100%;
-  max-width: 400px; /* Giới hạn chiều rộng ảnh */
-  margin-bottom: 16px;
-  border-radius: 8px;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
 }
 
 .question-section {
-  background-color: #f9fafb; /* Nền nhẹ để phân biệt */
+  width: 50%;
+  background-color: #f9fafb;
 }
 
 .question-section .bg-gray-50 {
   margin-bottom: 16px; /* Khoảng cách giữa các câu hỏi */
 }
 
-/* Responsive cho mobile */
+/* Mobile tối ưu */
 @media (max-width: 768px) {
   .split-container {
     flex-direction: column;
     height: auto;
   }
-  .image-section, .question-section {
-    width: 100%;
-    max-height: 50vh; /* Giới hạn chiều cao trên mobile */
-  }
+
   .image-section {
+    width: 100%;
+    height: 300px; /* Cố định chiều cao ảnh trên mobile */
     border-right: none;
     border-bottom: 1px solid #ccc;
+    flex-shrink: 0;
+  }
+
+  .image-section img {
+    max-height: 100%;
+    max-width: 100%;
+  }
+
+  .question-section {
+    width: 100%;
+    height: calc(100vh - 300px - 100px); /* trừ phần ảnh + header/timer nếu có */
+    overflow-y: auto; /* Cuộn câu hỏi */
   }
 }
 
