@@ -839,14 +839,26 @@ async function loadAudio(part) {
 
 const createQuestion = (id, num, part) => {
   const div = document.createElement("div");
-  div.className = "bg-gray-50 p-4 rounded border";
+  div.className = "question-block";
   div.innerHTML = `
-    <label class="font-semibold">Câu ${num} (Part ${part})</label>
-    <div class="mt-2 space-y-2">
-      <label class="block"><input type="radio" name="${id}" value="A" class="mr-2"> A</label>
-      <label class="block"><input type="radio" name="${id}" value="B" class="mr-2"> B</label>
-      <label class="block"><input type="radio" name="${id}" value="C" class="mr-2"> C</label>
-      <label class="block"><input type="radio" name="${id}" value="D" class="mr-2"> D</label>
+    <p class="question-text font-semibold">Câu ${num} (Part ${part})</p>
+    <div class="answer-options">
+      <label class="answer-item">
+        <input type="radio" name="${id}" value="A" />
+        <span>A</span>
+      </label>
+      <label class="answer-item">
+        <input type="radio" name="${id}" value="B" />
+        <span>B</span>
+      </label>
+      <label class="answer-item">
+        <input type="radio" name="${id}" value="C" />
+        <span>C</span>
+      </label>
+      <label class="answer-item">
+        <input type="radio" name="${id}" value="D" />
+        <span>D</span>
+      </label>
     </div>
   `;
 
