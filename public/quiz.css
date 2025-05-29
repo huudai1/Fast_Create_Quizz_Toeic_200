@@ -127,3 +127,27 @@ embed[type="application/pdf"] {
   background-color: #dbeafe; /* blue-100 */
   border-color: #3b82f6;     /* blue-500 */
 }
+
+
+
+/* Làm đẹp cho audio player */
+.sticky-audio {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background-color: #f8fafc; /* nền sáng */
+  padding: 12px;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Tuỳ chọn: thêm hiệu ứng hover */
+.sticky-audio:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Tùy chọn làm đẹp trình điều khiển (nếu được trình duyệt hỗ trợ) */
+.sticky-audio::-webkit-media-controls-panel {
+  background-color: #f1f5f9;
+  border-radius: 8px;
+}
