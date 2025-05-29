@@ -45,6 +45,16 @@
     border-right: none;
     border-bottom: 1px solid #ccc;
   }
+  #timer {
+    top: 8px;
+    font-size: 16px;
+    padding: 10px 16px;
+  }
+
+  #audio {
+    top: 60px; /* Điều chỉnh vị trí trên mobile */
+    max-width: 100%; /* Đảm bảo audio full width trên mobile */
+  }
 }
 
 .correct-answer {
@@ -130,24 +140,52 @@ embed[type="application/pdf"] {
 
 
 
-/* Làm đẹp cho audio player */
-.sticky-audio {
+
+
+/* Style cho timer */
+#timer {
   position: sticky;
-  top: 0;
-  z-index: 50;
-  background-color: #f8fafc; /* nền sáng */
+  top: 16px;
+  z-index: 10; /* Đảm bảo timer nằm trên các phần tử khác */
+  background-color: #ffffff;
+  padding: 12px 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937; /* gray-800 */
+  text-align: center;
+  margin-bottom: 16px;
+  border: 1px solid #e5e7eb; /* gray-200 */
+}
+
+/* Style cho audio */
+#audio {
+  position: sticky;
+  top: 70px; /* Đặt dưới timer, điều chỉnh nếu cần */
+  z-index: 10;
+  background-color: #ffffff;
   padding: 12px;
-  border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 16px;
+  border: 1px solid #e5e7eb; /* gray-200 */
+  width: 100%;
+  max-width: 400px; /* Giới hạn chiều rộng audio */
+  margin-left: auto;
+  margin-right: auto;
 }
 
-/* Tuỳ chọn: thêm hiệu ứng hover */
-.sticky-audio:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-/* Tùy chọn làm đẹp trình điều khiển (nếu được trình duyệt hỗ trợ) */
-.sticky-audio::-webkit-media-controls-panel {
-  background-color: #f1f5f9;
+/* Tùy chỉnh giao diện controls của audio */
+#audio::-webkit-media-controls-panel {
+  background-color: #f1f5f9; /* Nền nhẹ */
   border-radius: 8px;
 }
+
+#audio::-webkit-media-controls-play-button,
+#audio::-webkit-media-controls-volume-slider {
+  color: #3b82f6; /* Màu xanh cho nút điều khiển */
+}
+
+
+
