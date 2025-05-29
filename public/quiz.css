@@ -1,26 +1,34 @@
-/* quiz.css */
+/* Container chính */
 .split-container {
   display: flex;
-  height: calc(100vh - 200px); /* Trừ header, timer, audio, và padding */
+  height: calc(100vh - 250px); /* Giảm chiều cao để gọn hơn */
   overflow: hidden;
 }
 
 .image-section, .question-section {
   width: 50%;
   overflow-y: auto; /* Cho phép cuộn dọc */
-  padding: 16px;
+  padding: 12px; /* Giảm padding để tiết kiệm không gian */
   box-sizing: border-box;
 }
 
 .image-section {
   border-right: 1px solid #ccc; /* Đường phân cách */
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Căn giữa ảnh */
 }
 
 .image-section img {
   width: 100%;
-  max-width: 400px; /* Giới hạn chiều rộng ảnh */
-  margin-bottom: 16px;
+  max-width: 350px; /* Giảm max-width để ảnh nhỏ gọn hơn */
+  margin-bottom: 12px;
   border-radius: 8px;
+  transition: transform 0.3s ease; /* Hiệu ứng phóng to khi hover */
+}
+
+.image-section img:hover {
+  transform: scale(1.05); /* Phóng to nhẹ khi hover */
 }
 
 .question-section {
@@ -28,32 +36,39 @@
 }
 
 .question-section .bg-gray-50 {
-  margin-bottom: 16px; /* Khoảng cách giữa các câu hỏi */
+  margin-bottom: 12px; /* Giảm khoảng cách giữa các câu hỏi */
 }
 
 /* Responsive cho mobile */
 @media (max-width: 768px) {
   .split-container {
     flex-direction: column;
-    height: auto;
+    height: auto; /* Chuyển sang auto để phù hợp nội dung */
+    max-height: calc(100vh - 150px); /* Giới hạn chiều cao trên mobile */
   }
   .image-section, .question-section {
     width: 100%;
-    max-height: 50vh; /* Giới hạn chiều cao trên mobile */
+    max-height: 40vh; /* Giảm chiều cao để ảnh và câu hỏi dễ nhìn */
+    padding: 8px; /* Giảm padding trên mobile */
   }
   .image-section {
     border-right: none;
     border-bottom: 1px solid #ccc;
+    align-items: center;
+  }
+  .image-section img {
+    max-width: 300px; /* Ảnh nhỏ hơn trên mobile */
+    margin: 8px auto;
   }
   #timer {
     top: 8px;
-    font-size: 16px;
-    padding: 10px 16px;
+    font-size: 14px; /* Giảm font size trên mobile */
+    padding: 8px 12px;
   }
-
   #audio {
-    top: 60px; /* Điều chỉnh vị trí trên mobile */
-    max-width: 100%; /* Đảm bảo audio full width trên mobile */
+    top: 50px; /* Điều chỉnh vị trí audio trên mobile */
+    max-width: 100%;
+    padding: 8px;
   }
 }
 
