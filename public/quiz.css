@@ -237,3 +237,31 @@ embed[type="application/pdf"] {
 #audio::-webkit-media-controls-volume-slider {
   color: #3b82f6;
 }
+
+/* dark mode */
+body {
+  background-color: #ffffff;
+  color: #1f2937;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+/* Khi có class dark-mode */
+body.dark-mode {
+  background-color: #1a1a1a;
+  color: #f1f1f1;
+}
+
+.question-block {
+  background-color: #fff;
+}
+body.dark-mode .question-block {
+  background-color: #2a2a2a;
+}
+
+.toggle-dark-mode{
+  position: fixed; 
+  top: 10px; 
+  left: 50%; 
+  transform: translateX(-50%); 
+  z-index: 999;
+}

@@ -1551,6 +1551,28 @@ async function logout() {
   showWelcomeScreen();
 }
 
+document.addEventListener('DOMContentLoaded', function () {
+  const toggleBtn = document.getElementById('toggle-dark-mode');
+  const body = document.body;
+
+  // Nếu có lưu theme trước đó
+  if (localStorage.getItem('theme') === 'dark') {
+    body.classList.add('dark-mode');
+  }
+
+  toggleBtn.addEventListener('click', function () {
+    body.classList.toggle('dark-mode');
+
+    const theme = body.classList.contains('dark-mode') ? 'dark' : 'light';
+    localStorage.setItem('theme', theme);
+
+    // Gọi hàm saveStage nếu bạn muốn lưu trạng thái
+    if (typeof saveAdminState === 'function') {
+      saveAdminState(theme);
+    }
+  });
+});
+
 document.addEventListener("DOMContentLoaded", async () => {
   if (await restoreAdminState()) {
     console.log("Admin state restored");
