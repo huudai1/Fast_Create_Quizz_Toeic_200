@@ -47,6 +47,7 @@ const resultScreen = document.getElementById("result-screen");
 const resultScore = document.getElementById("result-score");
 const resultTime = document.getElementById("result-time");
 const downloadNotice = document.getElementById("download-notice");
+const reviewScreen = document.getElementById("review-answers");
 
 const wsProtocol = location.protocol === 'https:' ? 'wss://' : 'ws://';
 let socket = null;

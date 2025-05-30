@@ -337,7 +337,7 @@
 </div>
 
 <div id="review-answers" class="container mx-auto p-4 hidden">
-  <h1 class="text-3xl font-bold mb-4">Xem Đáp Án</h1>
+  <h1 class="text-3xl font-bold mb-4">Xem đáp án</h1>
   <p id="notification" class="text-red-500 mb-4"></p>
   <p id="review-score" class="text-lg mb-2"></p>
   <p id="review-time" class="text-lg mb-2"></p>
@@ -374,12 +374,12 @@
         <h2 class="text-2xl font-semibold mb-2">Part 7</h2>
         <div id="review-section7" class="space-y-4"></div>
       </div>
+      <div class="flex space-x-4 sticky bottom-0 bg-gray-100 p-4">
+        <button type="button" onclick="prevReviewPart(currentReviewPart)" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Phần trước</button>
+        <button type="button" onclick="nextReviewPart(currentReviewPart)" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Phần tiếp theo</button>
+        <button onclick="showWelcomeScreen()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
+      </div>
     </div>
-  </div>
-  <div class="flex space-x-4 sticky bottom-0 bg-gray-100 p-4">
-    <button type="button" id="review-prev-button" onclick="prevReviewPart(currentReviewPart)" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Phần trước</button>
-    <button type="button" id="review-next-button" onclick="nextReviewPart(currentReviewPart)" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Phần tiếp theo</button>
-    <button onclick="showResultScreen()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại kết quả</button>
   </div>
 </div>
 
