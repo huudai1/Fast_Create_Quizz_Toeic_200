@@ -1165,11 +1165,18 @@ async function submitQuiz() {
     const result = await res.json();
     
     // Lấy đáp án đúng từ server
-    const answerRes = await fetch("/answer-key");
-    if (!answerRes.ok) {
-      throw new Error("Không thể lấy đáp án đúng");
+    try {
+      const answerRes = await fetch("/answer-key");
+      if (!answerRes.ok) {
+        console.error("Failed to fetch answer key, status:", answerRes.status);
+        throw new Error("Không thể lấy đáp án đúng");
+      }
+      answerKey = await answerRes.json();
+      console.log("Answer key loaded:", answerKey); // Log để kiểm tra
+    } catch (error) {
+      console.error("Error fetching answer key:", error);
+      throw error;
     }
-    answerKey = await answerRes.json();
 
     hideAllScreens();
     resultScreen.classList.remove("hidden");
@@ -1184,8 +1191,8 @@ async function submitQuiz() {
       socket.send(JSON.stringify({ type: "submitted", username: user.name }));
     }
 
-    // Xóa trạng thái bài thi sau khi nộp thành công
-    clearUserAnswers();
+    // KHÔNG xóa userAnswers ngay lập tức, chỉ lưu lại để xem đáp án
+    localStorage.setItem("userAnswers", JSON.stringify(userAnswers)); // Đảm bảo dữ liệu được lưu
     localStorage.removeItem("selectedQuizId");
     localStorage.removeItem("currentScreen");
     localStorage.removeItem("timeLeft");
@@ -1334,14 +1341,31 @@ function handleWebSocketMessage(event) {
 
 async function showReviewAnswers() {
   try {
-    // Ensure we have the answer key and user answers
+    // Kiểm tra sự tồn tại của phần tử review-answers
+    const reviewScreen = document.getElementById("review-answers");
+    if (!reviewScreen) {
+      console.error("Element with ID 'review-answers' not found in DOM");
+      notification.innerText = "Lỗi: Không tìm thấy màn hình xem đáp án.";
+      return;
+    }
+
+    // Kiểm tra và khôi phục userAnswers từ localStorage nếu cần
+    if (!userAnswers) {
+      const savedAnswers = localStorage.getItem("userAnswers");
+      if (savedAnswers) {
+        userAnswers = JSON.parse(savedAnswers);
+        console.log("User answers restored from localStorage:", userAnswers);
+      }
+    }
+
+    // Kiểm tra dữ liệu
     if (!answerKey || !userAnswers) {
+      console.error("Missing data - answerKey:", answerKey, "userAnswers:", userAnswers);
       notification.innerText = "Lỗi: Không thể tải đáp án hoặc câu trả lời của bạn.";
       return;
     }
 
     hideAllScreens();
-    const reviewScreen = document.getElementById("review-answers");
     reviewScreen.classList.remove("hidden");
     document.getElementById("review-score").innerText = resultScore.innerText;
     document.getElementById("review-time").innerText = resultTime.innerText;
@@ -1365,6 +1389,10 @@ async function showReviewAnswers() {
 
     parts.forEach(({ id, count, part }) => {
       const section = document.getElementById(id);
+      if (!section) {
+        console.error(`Section with ID '${id}' not found`);
+        return;
+      }
       section.innerHTML = ""; // Clear previous content
       for (let i = 1; i <= count; i++) {
         const qId = `q${questionIndex}`;
@@ -1389,38 +1417,17 @@ async function showReviewAnswers() {
     });
 
     // Show the first part by default
-    document.getElementById("review-part1").classList.remove("hidden");
+    const firstPart = document.getElementById("review-part1");
+    if (!firstPart) {
+      console.error("Element with ID 'review-part1' not found");
+      notification.innerText = "Lỗi: Không thể hiển thị phần đầu tiên.";
+      return;
+    }
+    firstPart.classList.remove("hidden");
     downloadNotice.classList.add("hidden");
   } catch (error) {
     console.error("Error showing review answers:", error);
     notification.innerText = "Lỗi khi hiển thị đáp án. Vui lòng thử lại.";
-  }
-}
-
-async function loadReviewImages(part) {
-  try {
-    const res = await fetch(`/images?part=${part}`);
-    const files = await res.json();
-    const reviewImageDisplay = document.getElementById("review-image-display");
-    reviewImageDisplay.innerHTML = `<h3 class="text-lg font-semibold mb-2">Part ${part}</h3>`;
-    files.forEach(url => {
-      const isPDF = url.endsWith('.pdf');
-      if (isPDF) {
-        const embed = document.createElement("embed");
-        embed.src = url;
-        embed.type = "application/pdf";
-        embed.className = "w-full h-[600px] mb-4";
-        reviewImageDisplay.appendChild(embed);
-      } else {
-        const img = document.createElement("img");
-        img.src = url;
-        img.className = "w-full max-w-[400px] mb-4 rounded";
-        reviewImageDisplay.appendChild(img);
-      }
-    });
-  } catch (error) {
-    console.error("Error loading review images:", error);
-    notification.innerText = `Lỗi khi tải ảnh hoặc PDF cho Part ${part}.`;
   }
 }
 
