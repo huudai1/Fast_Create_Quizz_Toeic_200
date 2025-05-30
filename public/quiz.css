@@ -170,17 +170,17 @@ embed[type="application/pdf"] {
 }
 
 .question-block {
-  background-color: #fff;
+  background-color: #1f2937; /* Dark gray background for the block */
   padding: 16px;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3); /* Stronger shadow for depth on dark bg */
   margin-bottom: 16px;
 }
 
 .question-text {
   font-size: 16px;
   font-weight: 600;
-  color: #1f2937;
+  color: #f9fafb; /* Light gray/white for text to contrast with dark bg */
   margin-bottom: 12px;
 }
 
