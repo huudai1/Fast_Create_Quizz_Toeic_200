@@ -1,37 +1,35 @@
 /* Container chính */
 .split-container {
   display: flex;
-  height: calc(100vh - 10px); /* Giảm chiều cao để chừa chỗ cho timer và audio */
+  height: calc(100vh - 50px);
   overflow: hidden;
 }
 
 .image-section, .question-section {
-  overflow-y: auto; /* Cho phép cuộn dọc */
-  padding: 12px;
+  overflow-y: auto;
+  padding: 10px;
   box-sizing: border-box;
 }
 
 .image-section {
-  width: 60%; /* 3/5 màn hình cho ảnh */
-  border-right: 1px solid #ccc;
+  width: 60%;
+  border-right: 1px solid #fff;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
 .question-section {
-  width: 40%; /* 2/5 màn hình cho câu hỏi */
-  background-color: #f9fafb;
+  width: 40%;
+  background-color: #f9f8fb;
 }
 
 .image-section img {
   width: 100%;
-  max-width: 1000px; /* Tăng max-width để ảnh to hơn */
-  max-height: 80vh; /* Tăng chiều cao để ảnh nổi bật */
+  max-width: 1400px;
+  /* Tăng thêm để ảnh lớn hơn */
+  max-height: 80vh;
   margin-bottom: 16px;
-  border-radius: 8px;
-  transition: transform 0.3s ease;
-  object-fit: contain;
 }
 
 .image-section img:hover {
@@ -40,24 +38,23 @@
 
 embed[type="application/pdf"] {
   width: 100%;
-  max-width: 1000px; /* Tăng chiều rộng cho PDF */
-  height: 85vh; /* Tăng chiều cao PDF */
-  max-height: 85vh;
+  max-width: 1000px;
+  height: 85vh;
+  max-height: 100%;
   border: 1px solid #ccc;
-  border-radius: 4px;
   margin-bottom: 16px;
 }
 
 /* Style cho timer */
 #timer {
   position: fixed;
-  top: 10px;
+  top: 140px;
   right: 10px;
-  z-index: 10;
+  z-index: 100;
   background-color: #ffffff;
   padding: 8px 12px;
   border-radius: 6px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   font-size: 16px;
   font-weight: 600;
   color: #1f2937;
@@ -69,111 +66,119 @@ embed[type="application/pdf"] {
 
 /* Style cho audio */
 #audio {
-  position: fixed; /* Đổi sang fixed để căn cùng hàng với timer trên mobile */
-  top: 10px; /* Cùng top với timer trên mobile */
-  left: 10px; /* Căn sát trái trên mobile */
-  z-index: 10;
+  position: fixed;
+  /* Dùng fixed để căn chính xác */
+  top: 140px; /* Cùng hàng với timer trên mobile */
+  left: 10px; /* Sát trái */
+  z-index: 2;
   background-color: #ffffff;
-  padding: 8px; /* Giảm padding để nhỏ gọn */
+  padding: 8px;
   border-radius: 6px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   margin-bottom: 16px;
   border: 1px solid #e5e7eb;
   width: 100%;
-  max-width: 200px; /* Giảm chiều rộng audio để gọn */
+  max-width: 200px; /* Chiều rộng mặc định trên desktop */
+  transition: max-width 0.3s ease; /* Hiệu ứng chuyển đổi mượt mà */
+}
+
+#audio:hover {
+  max-width: 300px; /* Dài ra khi hover trên desktop */
 }
 
 /* Responsive cho mobile */
-@media (max-width: 768px) {
+@media (max-width: 600px) {
   .split-container {
-    flex-direction: column; /* Ảnh trên, câu hỏi dưới */
+    flex-direction: column;
     height: auto;
-    max-height: calc(100vh - 100px); /* Giảm để chừa chỗ cho timer và audio */
+    max-height: calc(100vh - 100px);
   }
   .image-section {
     width: 100%;
-    max-height: 60vh; /* 3/5 chiều cao cho ảnh */
+    max-height: 60vh;
+    margin: auto 0;
     padding: 10px;
     border-right: none;
     border-bottom: 1px solid #ccc;
     align-items: center;
-    order: 1; /* Ảnh lên trên */
+    order: 2;
   }
   .question-section {
     width: 100%;
-    max-height: 40vh; /* 2/5 chiều cao cho câu hỏi */
+    max-height: 40vh;
     padding: 10px;
-    order: 2; /* Câu hỏi xuống dưới */
+    order: 1;
   }
   .image-section img {
-    max-width: 95vw; /* Tăng để ảnh to hơn */
-    max-height: 55vh; /* Tăng chiều cao ảnh trên mobile */
+    max-width: 100%;
+    max-height: 55vh;
     margin: 10px auto;
-    object-fit: contain;
+    object-fit: auto;
   }
   embed[type="application/pdf"] {
-    max-width: 95vw;
+    max-width: 100%;
     height: 55vh;
     max-height: 55vh;
     margin: 10px auto;
   }
   #timer {
-    top: 5px;
+    top: 140px;
     right: 5px;
-    font-size: 12px;
+    font-size: 18px;
     padding: 6px 10px;
     min-width: 80px;
     border-radius: 4px;
   }
   #audio {
-    top: 5px; /* Cùng hàng với timer */
+    top: 140px; /* Cùng hàng với timer */
     left: 5px; /* Sát trái */
-    max-width: 150px; /* Nhỏ hơn trên mobile */
+    max-width: 180px; /* Tăng chiều dài mặc định trên mobile */
     padding: 6px;
+    transition: none; /* Tắt hiệu ứng trên mobile vì không hover */
   }
   /* Giảm kích thước chữ "Bài thi" */
-  .quiz-title { /* Giả sử class của tiêu đề bài thi là quiz-title */
-    font-size: 16px; /* Giảm từ kích thước lớn hơn trước */
+  .quiz-title {
+    font-size: 16px;
     font-weight: 600;
     margin-bottom: 8px;
   }
-  /* Giảm kích thước nút "Nộp bài", "Phần trước", "Phần sau" */
-  button.submit-btn, button.prev-part, button.next-part { /* Giả sử class tương ứng */
-    font-size: 14px; /* Giảm font size */
-    padding: 8px 16px; /* Giảm padding */
+  /* Giảm kích thước nút */
+  button.submit-btn, button.prev-part-btn, button.next-part-btn {
+    font-size: 14px;
+    padding: 8px 16px;
     border-radius: 6px;
   }
 }
 
-/* Giữ nguyên các kiểu khác */
+/* Các kiểu khác */
 .correct-answer {
-  background-color: rgba(0, 128, 0, 0.1);
-  border-left: 4px solid #008000;
+  background-color: rgba(0, 255, 0, 0.2);
+  border-left: 4px solid #00ff00;
   padding: 8px;
 }
 
 .wrong-answer {
-  background-color: rgba(255, 0, 0, 0.1);
+  background-color: rgba(255, 0, 0, 0.2);
   border-left: 4px solid #ff0000;
   padding: 8px;
 }
 
 .unselected-answer {
-  background-color: rgba(255, 255, 0, 0.1);
+  background-color: rgba(255, 255, 0.2);
   border-left: 4px solid #ffff00;
   padding: 8px;
 }
 
 .question-block {
   background-color: #fff;
-  padding: 16px; /* Giảm nhẹ padding để gọn trên mobile */
+  padding: 16px;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  margin-bottom: 16px; /* Giảm margin để tiết kiệm không gian */
+  margin-bottom: 16px;
 }
 
 .question-text {
-  font-size: 16px; /* Giảm font size để gọn trên mobile */
+  font-size: 16px;
   font-weight: 600;
   color: #1f2937;
   margin-bottom: 12px;
@@ -191,7 +196,7 @@ embed[type="application/pdf"] {
   background-color: #f1f5f9;
   border: 2px solid transparent;
   border-radius: 8px;
-  padding: 10px 16px; /* Giảm padding để gọn */
+  padding: 10px 16px;
   cursor: pointer;
   transition: all 0.3s ease;
 }
@@ -210,7 +215,7 @@ embed[type="application/pdf"] {
   flex: 1;
   text-align: center;
   font-weight: 500;
-  font-size: 14px; /* Giảm font size để gọn */
+  font-size: 14px;
 }
 
 .answer-item:has(input[type="radio"]:checked) {

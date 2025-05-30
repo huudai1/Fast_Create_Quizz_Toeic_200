@@ -523,7 +523,7 @@ async function loadQuizzes() {
         const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
         const remainingTime = timeLimit - elapsedTime;
         if (remainingTime > 0) {
-          directTestMessage.innerText = `Kiểm tra trực tiếp đang diễn ra! (Thời gian còn lại: ${Math.floor(remainingTime / 60)}:${remainingTime % 60 < 10 ? "0" : ""}${remainingTime % 60})`;
+          directTestMessage.innerText = `Kiểm tra trực tiếp đang diễn ra! (Còn: ${Math.floor(remainingTime / 60)}:${remainingTime % 60 < 10 ? "0" : ""}${remainingTime % 60})`;
           joinDirectTestBtn.onclick = () => joinDirectTest(quizId, remainingTime, startTime);
           directTestNotice.classList.remove("hidden");
         }
