@@ -141,6 +141,7 @@ function hideAllScreens() {
   uploadQuizzesSection.classList.add("hidden");
   quizContainer.classList.add("hidden");
   resultScreen.classList.add("hidden");
+  document.getElementById("review-answers").classList.add("hidden");
   document.querySelectorAll(".admin-step").forEach(step => step.classList.add("hidden"));
 }
 
@@ -743,6 +744,8 @@ async function startDirectTest() {
   }
 }
 
+
+
 async function endDirectTest() {
   if (isTestEnded) {
     notification.innerText = "Kiểm tra đã kết thúc!";
@@ -1324,6 +1327,114 @@ function handleWebSocketMessage(event) {
     console.error("Error handling WebSocket message:", error);
     notification.innerText = "Lỗi khi xử lý thông tin từ server.";
   }
+}
+
+async function showReviewAnswers() {
+  try {
+    // Ensure we have the answer key and user answers
+    if (!answerKey || !userAnswers) {
+      notification.innerText = "Lỗi: Không thể tải đáp án hoặc câu trả lời của bạn.";
+      return;
+    }
+
+    hideAllScreens();
+    const reviewScreen = document.getElementById("review-answers");
+    reviewScreen.classList.remove("hidden");
+    document.getElementById("review-score").innerText = resultScore.innerText;
+    document.getElementById("review-time").innerText = resultTime.innerText;
+    notification.innerText = "";
+
+    // Load images for the first part
+    await loadReviewImages(1);
+    currentReviewPart = 1;
+
+    // Populate each part with questions and answers
+    const parts = [
+      { id: "review-section1", count: 6, part: 1 },
+      { id: "review-section2", count: 25, part: 2 },
+      { id: "review-section3", count: 39, part: 3 },
+      { id: "review-section4", count: 30, part: 4 },
+      { id: "review-section5", count: 30, part: 5 },
+      { id: "review-section6", count: 16, part: 6 },
+      { id: "review-section7", count: 54, part: 7 },
+    ];
+    let questionIndex = 1;
+
+    parts.forEach(({ id, count, part }) => {
+      const section = document.getElementById(id);
+      section.innerHTML = ""; // Clear previous content
+      for (let i = 1; i <= count; i++) {
+        const qId = `q${questionIndex}`;
+        const userAnswer = userAnswers[qId] || "Chưa chọn";
+        const correctAnswer = answerKey[qId] || "N/A";
+        const isCorrect = userAnswer === correctAnswer && userAnswer !== "Chưa chọn";
+
+        const div = document.createElement("div");
+        div.className = "question-block";
+        div.innerHTML = `
+          <p class="question-text font-semibold">Câu ${questionIndex} (Part ${part})</p>
+          <div class="answer-options">
+            <div class="${isCorrect ? 'correct-answer' : userAnswer !== 'Chưa chọn' ? 'wrong-answer' : ''}">
+              <p>Đáp án của bạn: ${userAnswer}</p>
+              <p>Đáp án đúng: ${correctAnswer}</p>
+            </div>
+          </div>
+        `;
+        section.appendChild(div);
+        questionIndex++;
+      }
+    });
+
+    // Show the first part by default
+    document.getElementById("review-part1").classList.remove("hidden");
+    downloadNotice.classList.add("hidden");
+  } catch (error) {
+    console.error("Error showing review answers:", error);
+    notification.innerText = "Lỗi khi hiển thị đáp án. Vui lòng thử lại.";
+  }
+}
+
+async function loadReviewImages(part) {
+  try {
+    const res = await fetch(`/images?part=${part}`);
+    const files = await res.json();
+    const reviewImageDisplay = document.getElementById("review-image-display");
+    reviewImageDisplay.innerHTML = `<h3 class="text-lg font-semibold mb-2">Part ${part}</h3>`;
+    files.forEach(url => {
+      const isPDF = url.endsWith('.pdf');
+      if (isPDF) {
+        const embed = document.createElement("embed");
+        embed.src = url;
+        embed.type = "application/pdf";
+        embed.className = "w-full h-[600px] mb-4";
+        reviewImageDisplay.appendChild(embed);
+      } else {
+        const img = document.createElement("img");
+        img.src = url;
+        img.className = "w-full max-w-[400px] mb-4 rounded";
+        reviewImageDisplay.appendChild(img);
+      }
+    });
+  } catch (error) {
+    console.error("Error loading review images:", error);
+    notification.innerText = `Lỗi khi tải ảnh hoặc PDF cho Part ${part}.`;
+  }
+}
+
+function nextReviewPart(current) {
+  if (current >= 7) return;
+  document.getElementById(`review-part${current}`).classList.add("hidden");
+  document.getElementById(`review-part${current + 1}`).classList.remove("hidden");
+  currentReviewPart = current + 1;
+  loadReviewImages(current + 1);
+}
+
+function prevReviewPart(current) {
+  if (current <= 1) return;
+  document.getElementById(`review-part${current}`).classList.add("hidden");
+  document.getElementById(`review-part${current - 1}`).classList.remove("hidden");
+  currentReviewPart = current - 1;
+  loadReviewImages(current - 1);
 }
 
 async function logout() {
