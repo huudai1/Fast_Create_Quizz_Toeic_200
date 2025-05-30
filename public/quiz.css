@@ -48,7 +48,7 @@ embed[type="application/pdf"] {
 /* Style cho timer */
 #timer {
   position: fixed;
-  top: 140px;
+  top: 5px;
   right: 10px;
   z-index: 100;
   background-color: #ffffff;
@@ -68,8 +68,8 @@ embed[type="application/pdf"] {
 #audio {
   position: fixed;
   /* Dùng fixed để căn chính xác */
-  top: 140px; /* Cùng hàng với timer trên mobile */
-  left: 10px; /* Sát trái */
+  top: 5px; /* Cùng hàng với timer trên mobile */
+  left: 150px; /* Sát trái */
   z-index: 2;
   background-color: #ffffff;
   padding: 8px;
@@ -101,13 +101,13 @@ embed[type="application/pdf"] {
     border-right: none;
     border-bottom: 1px solid #ccc;
     align-items: center;
-    order: 2;
+    order: 1;
   }
   .question-section {
     width: 100%;
     max-height: 40vh;
     padding: 10px;
-    order: 1;
+    order: 2;
   }
   .image-section img {
     max-width: 100%;
