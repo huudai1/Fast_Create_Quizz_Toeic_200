@@ -1552,23 +1552,33 @@ async function logout() {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-  const toggleBtn = document.getElementById('toggle-dark-mode');
+  const toggleBtn = document.getElementById('toggle-dark-mode'); // Nút dạng <button>
+  const icon = document.querySelector('#toggle-dark-mode .icon'); // Nếu là dạng thanh gạt thì điều chỉnh selector
   const body = document.body;
 
-  // Nếu có lưu theme trước đó
-  if (localStorage.getItem('theme') === 'dark') {
+  // Load từ localStorage
+  const savedTheme = localStorage.getItem('theme');
+  if (savedTheme === 'dark') {
     body.classList.add('dark-mode');
+    if (icon) icon.textContent = '🌙';
+  } else {
+    if (icon) icon.textContent = '🌞';
   }
 
   toggleBtn.addEventListener('click', function () {
     body.classList.toggle('dark-mode');
 
-    const theme = body.classList.contains('dark-mode') ? 'dark' : 'light';
-    localStorage.setItem('theme', theme);
+    const isDark = body.classList.contains('dark-mode');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
 
-    // Gọi hàm saveStage nếu bạn muốn lưu trạng thái
+    // Cập nhật biểu tượng nếu có
+    if (icon) {
+      icon.textContent = isDark ? '🌙' : '🌞';
+    }
+
+    // Gọi hàm bạn tự định nghĩa
     if (typeof saveAdminState === 'function') {
-      saveAdminState(theme);
+      saveAdminState(isDark ? 'dark' : 'light');
     }
   });
 });
