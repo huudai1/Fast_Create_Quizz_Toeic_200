@@ -69,7 +69,7 @@ embed[type="application/pdf"] {
   position: fixed;
   /* Dùng fixed để căn chính xác */
   top: 5px; /* Cùng hàng với timer trên mobile */
-  left: 150px; /* Sát trái */
+  left: 500px; /* Sát trái */
   z-index: 2;
   background-color: #ffffff;
   padding: 8px;
