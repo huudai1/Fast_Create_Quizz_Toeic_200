@@ -910,7 +910,7 @@ function startTimer() {
     }
     const minutes = Math.floor(timeLeft / 60);
     const seconds = timeLeft % 60;
-    timerDisplay.innerText = `Thời gian còn lại: ${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+    timerDisplay.innerText = `còn: ${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
     timeLeft--;
     localStorage.setItem("timeLeft", timeLeft); // Lưu thời gian còn lại
   }, 1000);

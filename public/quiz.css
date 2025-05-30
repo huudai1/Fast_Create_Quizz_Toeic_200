@@ -1,57 +1,60 @@
 /* Container chính */
-.split-container {
+#container {
   display: flex;
-  height: calc(100vh - 50px);
+  height: calc(100vh - 80px);
   overflow: hidden;
 }
 
-.image-section, .question-section {
+.image-section, .quiz-section {
   overflow-y: auto;
-  padding: 10px;
-  box-sizing: border-box;
+  padding-bottom:  10px;
+  box-sizing:  border-box;
 }
 
-.image-section {
+#image-section {
   width: 60%;
-  border-right: 1px solid #fff;
-  display: flex;
+  border-right:  1px solid transparent;
+  display:  flex;
   flex-direction: column;
   align-items: center;
 }
 
-.question-section {
+#quiz-section {
   width: 40%;
   background-color: #f9f8fb;
 }
 
-.image-section img {
-  width: 100%;
-  max-width: 1400px;
-  /* Tăng thêm để ảnh lớn hơn */
+#image-section img {
+  {
+  width:  100%;
+  max-width:  1400px;
   max-height: 80vh;
   margin-bottom: 16px;
+  border-radius: 2px;
+  transition: transform 0.3s ease;
+  object-fit: cover;
 }
 
-.image-section img:hover {
-  transform: scale(1.1);
+#image-section img:hover {
+  transform: scale(1.95);
 }
 
-embed[type="application/pdf"] {
+embed[type="img"] {
   width: 100%;
   max-width: 1000px;
   height: 85vh;
   max-height: 100%;
-  border: 1px solid #ccc;
+  border: 16px solid #000;
   margin-bottom: 16px;
 }
 
 /* Style cho timer */
 #timer {
-  position: fixed;
-  top: 140px;
-  right: 10px;
-  z-index: 100;
-  background-color: #ffffff;
+  position: absolute;
+  top: 5px; /* Đẩy sát mép trên */
+  right:  margin-right: 10px;
+  z-index: 10;
+  background-color: #fff;
   padding: 8px 12px;
   border-radius: 6px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -67,74 +70,72 @@ embed[type="application/pdf"] {
 /* Style cho audio */
 #audio {
   position: fixed;
-  /* Dùng fixed để căn chính xác */
-  top: 140px; /* Cùng hàng với timer trên mobile */
+  top: 5px; /* Đẩy sát mép trên, cùng hàng với timer */
   left: 10px; /* Sát trái */
-  z-index: 2;
+  z-index: 10;
   background-color: #ffffff;
   padding: 8px;
   border-radius: 6px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   margin-bottom: 16px;
   border: 1px solid #e5e7eb;
   width: 100%;
   max-width: 200px; /* Chiều rộng mặc định trên desktop */
-  transition: max-width 0.3s ease; /* Hiệu ứng chuyển đổi mượt mà */
+  transition: max-width 0.3s ease;
 }
 
 #audio:hover {
-  max-width: 300px; /* Dài ra khi hover trên desktop */
+  max-width: 300px; /* Dài ra khi hover */
 }
 
 /* Responsive cho mobile */
 @media (max-width: 600px) {
-  .split-container {
+  #container {
     flex-direction: column;
     height: auto;
-    max-height: calc(100vh - 100px);
+    max-height: calc(100vh - 80px); /* Chừa chỗ cho timer và audio */
   }
-  .image-section {
+  #image-section {
     width: 100%;
-    max-height: 60vh;
-    margin: auto 0;
+    max-height: 60vh; /* 3/5 chiều cao cho ảnh */
     padding: 10px;
     border-right: none;
     border-bottom: 1px solid #ccc;
     align-items: center;
-    order: 2;
+    order: 1; /* Ảnh ở trên */
   }
-  .question-section {
+  #quiz-section {
     width: 100%;
-    max-height: 40vh;
+    max-height: 40vh; /* 2/5 chiều cao cho đáp án */
     padding: 10px;
-    order: 1;
+    order: 2; /* Đáp án ở dưới */
   }
-  .image-section img {
+  #image-section img {
     max-width: 100%;
     max-height: 55vh;
     margin: 10px auto;
-    object-fit: auto;
+    object-fit: cover;
   }
-  embed[type="application/pdf"] {
+  embed[type="img"] {
     max-width: 100%;
     height: 55vh;
     max-height: 55vh;
     margin: 10px auto;
   }
   #timer {
-    top: 140px;
+    top: 2px; /* Sát mép trên hơn */
     right: 5px;
-    font-size: 18px;
+    font-size: 12px;
     padding: 6px 10px;
     min-width: 80px;
     border-radius: 4px;
   }
   #audio {
-    top: 140px; /* Cùng hàng với timer */
-    left: 5px; /* Sát trái */
-    max-width: 180px; /* Tăng chiều dài mặc định trên mobile */
+    top: 2px; /* Sát mép trên, cùng hàng với timer */
+    left: 5px;
+    max-width: 180px; /* Dài hơn trên mobile */
     padding: 6px;
-    transition: none; /* Tắt hiệu ứng trên mobile vì không hover */
+    transition: none;
   }
   /* Giảm kích thước chữ "Bài thi" */
   .quiz-title {
@@ -164,7 +165,7 @@ embed[type="application/pdf"] {
 }
 
 .unselected-answer {
-  background-color: rgba(255, 255, 0.2);
+  background-color: rgba(255, 255, 0, 0.2);
   border-left: 4px solid #ffff00;
   padding: 8px;
 }
