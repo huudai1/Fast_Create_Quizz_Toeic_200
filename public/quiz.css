@@ -1,18 +1,18 @@
 /* Container chính */
 .split-container {
   display: flex;
-  height: calc(100vh - 200px);
+  height: calc(100vh - 10px); /* Giảm chiều cao để chừa chỗ cho timer và audio */
   overflow: hidden;
 }
 
 .image-section, .question-section {
-  overflow-y: auto;
+  overflow-y: auto; /* Cho phép cuộn dọc */
   padding: 12px;
   box-sizing: border-box;
 }
 
 .image-section {
-  width: 60%;
+  width: 60%; /* 3/5 màn hình cho ảnh */
   border-right: 1px solid #ccc;
   display: flex;
   flex-direction: column;
@@ -20,14 +20,14 @@
 }
 
 .question-section {
-  width: 40%;
+  width: 40%; /* 2/5 màn hình cho câu hỏi */
   background-color: #f9fafb;
 }
 
 .image-section img {
   width: 100%;
-  max-width: 800px;
-  max-height: 70vh;
+  max-width: 1000px; /* Tăng max-width để ảnh to hơn */
+  max-height: 80vh; /* Tăng chiều cao để ảnh nổi bật */
   margin-bottom: 16px;
   border-radius: 8px;
   transition: transform 0.3s ease;
@@ -40,9 +40,9 @@
 
 embed[type="application/pdf"] {
   width: 100%;
-  max-width: 800px;
-  height: 80vh;
-  max-height: 80vh;
+  max-width: 1000px; /* Tăng chiều rộng cho PDF */
+  height: 85vh; /* Tăng chiều cao PDF */
+  max-height: 85vh;
   border: 1px solid #ccc;
   border-radius: 4px;
   margin-bottom: 16px;
@@ -50,81 +50,98 @@ embed[type="application/pdf"] {
 
 /* Style cho timer */
 #timer {
-  position: fixed; /* Đổi sang fixed để căn sát rìa chính xác */
-  top: 10px; /* Đặt gần đỉnh màn hình hơn */
-  right: 10px; /* Căn sát rìa phải, cách 10px */
-  z-index: 10; /* Đảm bảo timer nằm trên các phần tử khác */
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  z-index: 10;
   background-color: #ffffff;
-  padding: 8px 12px; /* Giảm padding để timer nhỏ gọn hơn */
-  border-radius: 6px; /* Bo góc nhỏ hơn cho gọn gàng */
+  padding: 8px 12px;
+  border-radius: 6px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  font-size: 16px; /* Giảm font size để nhỏ hơn */
+  font-size: 16px;
   font-weight: 600;
   color: #1f2937;
   text-align: center;
   border: 1px solid #e5e7eb;
-  width: auto; /* Để chiều rộng tự động theo nội dung */
-  min-width: 100px; /* Đảm bảo không quá nhỏ */
+  width: auto;
+  min-width: 100px;
 }
 
 /* Style cho audio */
 #audio {
-  position: sticky;
-  top: 70px;
+  position: fixed; /* Đổi sang fixed để căn cùng hàng với timer trên mobile */
+  top: 10px; /* Cùng top với timer trên mobile */
+  left: 10px; /* Căn sát trái trên mobile */
   z-index: 10;
   background-color: #ffffff;
-  padding: 12px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 8px; /* Giảm padding để nhỏ gọn */
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   margin-bottom: 16px;
   border: 1px solid #e5e7eb;
   width: 100%;
-  max-width: 400px;
-  margin-left: auto;
-  margin-right: auto;
+  max-width: 200px; /* Giảm chiều rộng audio để gọn */
 }
 
 /* Responsive cho mobile */
 @media (max-width: 768px) {
   .split-container {
-    flex-direction: column;
+    flex-direction: column; /* Ảnh trên, câu hỏi dưới */
     height: auto;
-    max-height: calc(100vh - 120px);
-  }
-  .image-section, .question-section {
-    width: 100%;
-    max-height: 50vh;
-    padding: 10px;
+    max-height: calc(100vh - 100px); /* Giảm để chừa chỗ cho timer và audio */
   }
   .image-section {
+    width: 100%;
+    max-height: 60vh; /* 3/5 chiều cao cho ảnh */
+    padding: 10px;
     border-right: none;
     border-bottom: 1px solid #ccc;
     align-items: center;
+    order: 1; /* Ảnh lên trên */
+  }
+  .question-section {
+    width: 100%;
+    max-height: 40vh; /* 2/5 chiều cao cho câu hỏi */
+    padding: 10px;
+    order: 2; /* Câu hỏi xuống dưới */
   }
   .image-section img {
-    max-width: 90vw;
-    max-height: 45vh;
+    max-width: 95vw; /* Tăng để ảnh to hơn */
+    max-height: 55vh; /* Tăng chiều cao ảnh trên mobile */
     margin: 10px auto;
     object-fit: contain;
   }
   embed[type="application/pdf"] {
-    max-width: 90vw;
-    height: 50vh;
-    max-height: 50vh;
+    max-width: 95vw;
+    height: 55vh;
+    max-height: 55vh;
     margin: 10px auto;
   }
   #timer {
-    top: 5px; /* Đặt sát đỉnh hơn trên mobile */
-    right: 5px; /* Căn sát rìa phải, cách 5px */
-    font-size: 12px; /* Giảm font size nhỏ hơn cho mobile */
-    padding: 6px 10px; /* Giảm padding để nhỏ gọn */
-    min-width: 80px; /* Kích thước tối thiểu nhỏ hơn trên mobile */
-    border-radius: 4px; /* Bo góc nhỏ hơn */
+    top: 5px;
+    right: 5px;
+    font-size: 12px;
+    padding: 6px 10px;
+    min-width: 80px;
+    border-radius: 4px;
   }
   #audio {
-    top: 50px;
-    max-width: 100%;
-    padding: 8px;
+    top: 5px; /* Cùng hàng với timer */
+    left: 5px; /* Sát trái */
+    max-width: 150px; /* Nhỏ hơn trên mobile */
+    padding: 6px;
+  }
+  /* Giảm kích thước chữ "Bài thi" */
+  .quiz-title { /* Giả sử class của tiêu đề bài thi là quiz-title */
+    font-size: 16px; /* Giảm từ kích thước lớn hơn trước */
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  /* Giảm kích thước nút "Nộp bài", "Phần trước", "Phần sau" */
+  button.submit-btn, button.prev-part, button.next-part { /* Giả sử class tương ứng */
+    font-size: 14px; /* Giảm font size */
+    padding: 8px 16px; /* Giảm padding */
+    border-radius: 6px;
   }
 }
 
@@ -149,23 +166,23 @@ embed[type="application/pdf"] {
 
 .question-block {
   background-color: #fff;
-  padding: 20px;
+  padding: 16px; /* Giảm nhẹ padding để gọn trên mobile */
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  margin-bottom: 24px;
+  margin-bottom: 16px; /* Giảm margin để tiết kiệm không gian */
 }
 
 .question-text {
-  font-size: 18px;
+  font-size: 16px; /* Giảm font size để gọn trên mobile */
   font-weight: 600;
   color: #1f2937;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .answer-options {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .answer-item {
@@ -174,7 +191,7 @@ embed[type="application/pdf"] {
   background-color: #f1f5f9;
   border: 2px solid transparent;
   border-radius: 8px;
-  padding: 12px 20px;
+  padding: 10px 16px; /* Giảm padding để gọn */
   cursor: pointer;
   transition: all 0.3s ease;
 }
@@ -185,7 +202,7 @@ embed[type="application/pdf"] {
 }
 
 .answer-item input[type="radio"] {
-  margin-right: 12px;
+  margin-right: 10px;
   accent-color: #3b82f6;
 }
 
@@ -193,6 +210,7 @@ embed[type="application/pdf"] {
   flex: 1;
   text-align: center;
   font-weight: 500;
+  font-size: 14px; /* Giảm font size để gọn */
 }
 
 .answer-item:has(input[type="radio"]:checked) {
@@ -207,7 +225,7 @@ embed[type="application/pdf"] {
 /* Tùy chỉnh giao diện controls của audio */
 #audio::-webkit-media-controls-panel {
   background-color: #f1f5f9;
-  border-radius: 8px;
+  border-radius: 6px;
 }
 
 #audio::-webkit-media-controls-play-button,
