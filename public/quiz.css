@@ -311,6 +311,79 @@ body.dark-mode #audio::-webkit-media-controls-panel {
   color: #3b82f6;
 }
 
+/* Button sections (Quiz and Review) */
+.flex.space-x-4.sticky.bottom-0 {
+  background-color: #f3f4f6; /* Light gray background by default */
+  padding: 16px;
+}
+
+body.dark-mode .flex.space-x-4.sticky.bottom-0 {
+  background-color: #1f2937; /* Dark background in dark mode */
+}
+
+/* Buttons */
+button.bg-gray-500 {
+  background-color: #6b7280; /* Default gray */
+  color: #ffffff;
+}
+
+button.bg-gray-500:hover {
+  background-color: #4b5563; /* Darker gray on hover */
+}
+
+body.dark-mode button.bg-gray-500 {
+  background-color: #4b5563; /* Darker gray in dark mode */
+}
+
+body.dark-mode button.bg-gray-500:hover {
+  background-color: #374151; /* Even darker gray on hover in dark mode */
+}
+
+button.bg-blue-500 {
+  background-color: #3b82f6; /* Default blue */
+  color: #ffffff;
+}
+
+button.bg-blue-500:hover {
+  background-color: #2563eb; /* Darker blue on hover */
+}
+
+button.bg-green-500 {
+  background-color: #10b981; /* Default green */
+  color: #ffffff;
+}
+
+button.bg-green-500:hover {
+  background-color: #059669; /* Darker green on hover */
+}
+
+/* Loading Modal */
+#loading-modal {
+  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black overlay */
+}
+
+#loading-modal > div {
+  background-color: #ffffff; /* White background by default */
+  color: #1f2937; /* Dark text by default */
+}
+
+body.dark-mode #loading-modal > div {
+  background-color: #2a2a2a; /* Dark background in dark mode */
+  color: #e5e7eb; /* Light text in dark mode */
+}
+
+#loading-modal .bg-gray-200 {
+  background-color: #e5e7eb; /* Light gray progress bar track by default */
+}
+
+body.dark-mode #loading-modal .bg-gray-200 {
+  background-color: #4b5563; /* Dark gray progress bar track in dark mode */
+}
+
+#loading-modal .bg-blue-600 {
+  background-color: #3b82f6; /* Blue progress bar */
+}
+
 /* dark mode */
 body {
   background-color: #ffffff; /* White background by default */
