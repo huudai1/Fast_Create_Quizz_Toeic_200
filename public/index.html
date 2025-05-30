@@ -35,12 +35,6 @@
     </div>
     <div class="g_id_signin" data-type="standard" data-size="large" data-theme="outline" data-text="sign_in_with" data-shape="rectangular" data-logo_alignment="left"></div>
     <button onclick="showWelcomeScreen()" class="mt-4 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
-    <label class="toggle-dark-mode">
-  <input type="checkbox" id="toggle-dark-mode-checkbox">
-  <span class="slider">
-    <span class="icon">🌞</span>
-  </span>
-</label>
   </div>
 
   <div id="student-login" class="container mx-auto p-4 hidden">
@@ -60,6 +54,11 @@
   <div class="flex justify-between items-center mb-4">
     <h1 class="text-3xl font-bold">Danh sách đề thi</h1>
     <button onclick="logout()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Đăng xuất</button>
+    <label class="switch">
+    <input type="checkbox" id="toggle-dark-mode">
+    <span class="slider"></span>
+</label>
+</label>
   </div>
   <p id="notification" class="text-red-500 mb-4"></p>
   <p id="quiz-status" class="text-lg mb-4"></p>
@@ -82,7 +81,7 @@
     <div id="quiz-list" class="space-y-4"></div>
     <table id="results-table" class="w-full border-collapse hidden">
       <thead>
-        <tr class="bg-gray-200">
+        <tr class="bg-gray-200 dark:bg-gray-700 text-black dark:text-white">
           <th class="border p-2">Tên</th>
           <th class="border p-2">Điểm</th>
           <th class="border p-2">Thời gian nộp</th>

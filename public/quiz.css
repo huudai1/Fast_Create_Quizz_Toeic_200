@@ -261,7 +261,7 @@ body.dark-mode .question-block {
 
 
 /* thanh truot */
-.toggle-dark-mode {
+.switch {
   position: fixed;
   top: 10px;
   left: 50%;
@@ -272,56 +272,38 @@ body.dark-mode .question-block {
   height: 34px;
 }
 
-.toggle-dark-mode input {
+/* Ẩn checkbox mặc định */
+.switch input {
   opacity: 0;
   width: 0;
   height: 0;
 }
 
+/* Thanh gạt */
 .slider {
   position: absolute;
   cursor: pointer;
   top: 0; left: 0; right: 0; bottom: 0;
   background-color: #ccc;
-  transition: 0.4s;
+  transition: .4s;
   border-radius: 34px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 0 5px;
 }
 
-.slider::before {
-  content: "";
-  height: 26px;
-  width: 26px;
-  background-color: white;
-  border-radius: 50%;
-  transition: 0.4s;
+.slider:before {
   position: absolute;
-  left: 4px;
-  bottom: 4px;
+  content: "";
+  height: 26px; width: 26px;
+  left: 4px; bottom: 4px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
 }
 
-.icon {
-  z-index: 1;
-  font-size: 16px;
-  transition: 0.4s;
-  position: relative;
-  left: 4px;
-}
-
-/* Khi bật (dark mode) */
+/* Khi bật */
 input:checked + .slider {
-  background-color: #666;
-  justify-content: flex-end;
+  background-color: #2196F3;
 }
 
-input:checked + .slider::before {
+input:checked + .slider:before {
   transform: translateX(26px);
-}
-
-input:checked + .slider .icon {
-  content: "🌙";
-  left: -4px;
 }
