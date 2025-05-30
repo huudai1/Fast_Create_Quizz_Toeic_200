@@ -1358,6 +1358,24 @@ async function showReviewAnswers() {
       }
     }
 
+    // Kiểm tra và log answerKey
+    console.log("Current answerKey:", answerKey);
+    if (!answerKey) {
+      console.warn("Answer key is not loaded, attempting to fetch...");
+      try {
+        const answerRes = await fetch("/answer-key");
+        if (!answerRes.ok) {
+          console.error("Failed to fetch answer key, status:", answerRes.status);
+          throw new Error("Không thể lấy đáp án đúng");
+        }
+        answerKey = await answerRes.json();
+        console.log("Answer key fetched successfully:", answerKey);
+      } catch (fetchError) {
+        console.error("Error fetching answer key:", fetchError);
+        throw new Error("Không thể tải đáp án đúng từ server");
+      }
+    }
+
     // Kiểm tra dữ liệu
     if (!answerKey || !userAnswers) {
       console.error("Missing data - answerKey:", answerKey, "userAnswers:", userAnswers);
@@ -1400,14 +1418,16 @@ async function showReviewAnswers() {
         const correctAnswer = answerKey[qId] || "N/A";
         const isCorrect = userAnswer === correctAnswer && userAnswer !== "Chưa chọn";
 
+        console.log(`Question ${qId}: User answer = ${userAnswer}, Correct answer = ${correctAnswer}, Is correct = ${isCorrect}`);
+
         const div = document.createElement("div");
         div.className = "question-block";
         div.innerHTML = `
           <p class="question-text font-semibold">Câu ${questionIndex} (Part ${part})</p>
           <div class="answer-options">
             <div class="${isCorrect ? 'correct-answer' : userAnswer !== 'Chưa chọn' ? 'wrong-answer' : ''}">
-              <p>Đáp án của bạn: ${userAnswer}</p>
-              <p>Đáp án đúng: ${correctAnswer}</p>
+              <p>Đáp án của bạn: <span class="font-bold">${userAnswer}</span></p>
+              <p>Đáp án đúng: <span class="font-bold">${correctAnswer}</span></p>
             </div>
           </div>
         `;
@@ -1445,6 +1465,62 @@ function prevReviewPart(current) {
   document.getElementById(`review-part${current - 1}`).classList.remove("hidden");
   currentReviewPart = current - 1;
   loadReviewImages(current - 1);
+}
+
+async function loadReviewImages(part) {
+  try {
+    const res = await fetch(`/images?part=${part}`);
+    if (!res.ok) {
+      console.error(`Failed to fetch images for Part ${part}, status: ${res.status}`);
+      throw new Error(`Không thể tải ảnh hoặc PDF cho Part ${part}`);
+    }
+    const files = await res.json();
+    console.log(`Images/PDFs for Part ${part}:`, files); // Log để kiểm tra danh sách file
+
+    const reviewImageDisplay = document.getElementById("review-image-display");
+    if (!reviewImageDisplay) {
+      console.error("Element with ID 'review-image-display' not found");
+      throw new Error("Không tìm thấy khu vực hiển thị ảnh");
+    }
+    reviewImageDisplay.innerHTML = `<h3 class="text-lg font-semibold mb-2">Part ${part}</h3>`;
+
+    if (!files || files.length === 0) {
+      console.warn(`No images or PDFs found for Part ${part}`);
+      reviewImageDisplay.innerHTML += `<p>Không có ảnh hoặc PDF cho Part ${part}</p>`;
+      return;
+    }
+
+    files.forEach(url => {
+      console.log(`Processing file: ${url}`); // Log từng URL
+      const isPDF = url.endsWith('.pdf');
+      if (isPDF) {
+        const embed = document.createElement("embed");
+        embed.src = url;
+        embed.type = "application/pdf";
+        embed.className = "w-full h-[600px] mb-4";
+        embed.onerror = () => {
+          console.error(`Failed to load PDF: ${url}`);
+          notification.innerText = `Lỗi khi tải PDF: ${url}`;
+        };
+        reviewImageDisplay.appendChild(embed);
+      } else {
+        const img = document.createElement("img");
+        img.src = url;
+        img.className = "w-full max-w-[400px] mb-4 rounded";
+        img.onerror = () => {
+          console.error(`Failed to load image: ${url}`);
+          notification.innerText = `Lỗi khi tải ảnh: ${url}`;
+        };
+        img.onload = () => {
+          console.log(`Image loaded successfully: ${url}`);
+        };
+        reviewImageDisplay.appendChild(img);
+      }
+    });
+  } catch (error) {
+    console.error("Error loading review images:", error);
+    notification.innerText = `Lỗi khi tải ảnh hoặc PDF cho Part ${part}: ${error.message}`;
+  }
 }
 
 async function logout() {
