@@ -84,6 +84,12 @@
   padding: 8px;
 }
 
+.unselected-answer{
+  background-color: rgba(255, 255, 0, 0.1); /* Nền vàng nhạt */
+  border-left: 4px solid #ffff00;          /* Viền vàng */
+  padding: 8px;
+}
+
 embed[type="application/pdf"] {
   width: 100%;
   height: 600px;

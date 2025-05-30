@@ -1417,15 +1417,24 @@ async function showReviewAnswers() {
         const userAnswer = userAnswers[qId] || "Chưa chọn";
         const correctAnswer = answerKey[qId] || "N/A";
         const isCorrect = userAnswer === correctAnswer && userAnswer !== "Chưa chọn";
+        // Xác định lớp CSS dựa trên trạng thái
+        let answerClass = "";
+        if (isCorrect) {
+          answerClass = "correct-answer";
+        } else if (userAnswer === "Chưa chọn") {
+          answerClass = "unselected-answer";
+        } else {
+          answerClass = "wrong-answer";
+        }
 
-        console.log(`Question ${qId}: User answer = ${userAnswer}, Correct answer = ${correctAnswer}, Is correct = ${isCorrect}`);
+        console.log(`Question ${qId}: User answer = ${userAnswer}, Correct answer = ${correctAnswer}, Class = ${answerClass}`);
 
         const div = document.createElement("div");
         div.className = "question-block";
         div.innerHTML = `
           <p class="question-text font-semibold">Câu ${questionIndex} (Part ${part})</p>
           <div class="answer-options">
-            <div class="${isCorrect ? 'correct-answer' : userAnswer !== 'Chưa chọn' ? 'wrong-answer' : ''}">
+            <div class="${answerClass}">
               <p>Đáp án của bạn: <span class="font-bold">${userAnswer}</span></p>
               <p>Đáp án đúng: <span class="font-bold">${correctAnswer}</span></p>
             </div>
@@ -1450,7 +1459,6 @@ async function showReviewAnswers() {
     notification.innerText = "Lỗi khi hiển thị đáp án. Vui lòng thử lại.";
   }
 }
-
 function nextReviewPart(current) {
   if (current >= 7) return;
   document.getElementById(`review-part${current}`).classList.add("hidden");
