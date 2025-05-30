@@ -13,21 +13,34 @@
 
 .image-section {
   width: 60%;
-  border-right: 1px solid #fff;
+  border-right: 1px solid #4b5563; /* Darker border for dark mode */
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
 .question-section {
-  width: 40%;
-  background-color: #f9f8fb;
+  background-color: #1a1a1a; /* Darker background for consistency */
+  padding: 20px;
+  border-radius: 12px;
+}
+
+.question-section h2 {
+  font-size: 1.5rem; /* text-2xl */
+  font-weight: 600; /* font-semibold */
+  color: #e5e7eb; /* Light gray for high contrast */
+  margin-bottom: 0.5rem; /* mb-2 */
+  border-bottom: 2px solid #3b82f6; /* Blue underline for emphasis */
+  padding-bottom: 4px;
+}
+
+.space-y-4 > * + * {
+  margin-top: 1rem; /* Tailwind's space-y-4 equivalent */
 }
 
 .image-section img {
   width: 100%;
   max-width: 1400px;
-  /* Tăng thêm để ảnh lớn hơn */
   max-height: 80vh;
   margin-bottom: 16px;
 }
@@ -41,7 +54,7 @@ embed[type="application/pdf"] {
   max-width: 1000px;
   height: 85vh;
   max-height: 100%;
-  border: 1px solid #ccc;
+  border: 1px solid #4b5563; /* Darker border for dark mode */
   margin-bottom: 16px;
 }
 
@@ -51,15 +64,15 @@ embed[type="application/pdf"] {
   top: 5px;
   right: 10px;
   z-index: 100;
-  background-color: #ffffff;
+  background-color: #2a2a2a; /* Dark background for timer */
   padding: 8px 12px;
   border-radius: 6px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   font-size: 16px;
   font-weight: 600;
-  color: #1f2937;
+  color: #e5e7eb; /* Light text for contrast */
   text-align: center;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #4b5563; /* Darker border */
   width: auto;
   min-width: 100px;
 }
@@ -67,23 +80,22 @@ embed[type="application/pdf"] {
 /* Style cho audio */
 #audio {
   position: fixed;
-  /* Dùng fixed để căn chính xác */
-  top: 5px; /* Cùng hàng với timer trên mobile */
-  left: 500px; /* Sát trái */
+  top: 5px;
+  left: 500px;
   z-index: 2;
-  background-color: #ffffff;
+  background-color: #2a2a2a; /* Dark background for audio */
   padding: 8px;
   border-radius: 6px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   margin-bottom: 16px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #4b5563; /* Darker border */
   width: 100%;
-  max-width: 200px; /* Chiều rộng mặc định trên desktop */
-  transition: max-width 0.3s ease; /* Hiệu ứng chuyển đổi mượt mà */
+  max-width: 200px;
+  transition: max-width 0.3s ease;
 }
 
 #audio:hover {
-  max-width: 300px; /* Dài ra khi hover trên desktop */
+  max-width: 300px;
 }
 
 /* Responsive cho mobile */
@@ -99,7 +111,7 @@ embed[type="application/pdf"] {
     margin: auto 0;
     padding: 10px;
     border-right: none;
-    border-bottom: 1px solid #ccc;
+    border-bottom: 1px solid #4b5563; /* Darker border */
     align-items: center;
     order: 1;
   }
@@ -130,19 +142,17 @@ embed[type="application/pdf"] {
     border-radius: 4px;
   }
   #audio {
-    top: 5px; /* Cùng hàng với timer */
-    left: 5px; /* Sát trái */
-    max-width: 180px; /* Tăng chiều dài mặc định trên mobile */
+    top: 5px;
+    left: 5px;
+    max-width: 180px;
     padding: 6px;
-    transition: none; /* Tắt hiệu ứng trên mobile vì không hover */
+    transition: none;
   }
-  /* Giảm kích thước chữ "Bài thi" */
   .quiz-title {
     font-size: 16px;
     font-weight: 600;
     margin-bottom: 8px;
   }
-  /* Giảm kích thước nút */
   button.submit-btn, button.prev-part-btn, button.next-part-btn {
     font-size: 14px;
     padding: 8px 16px;
@@ -170,17 +180,17 @@ embed[type="application/pdf"] {
 }
 
 .question-block {
-  background-color: #1f2937; /* Dark gray background */
+  background-color: #2a2a2a; /* Darker background for dark mode */
   padding: 16px;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3); /* Stronger shadow */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   margin-bottom: 16px;
 }
 
 .question-text {
   font-size: 16px;
   font-weight: 600;
-  color: #e5e7eb; /* Lighter gray for better contrast */
+  color: #e5e7eb;
   margin-bottom: 12px;
 }
 
@@ -193,7 +203,7 @@ embed[type="application/pdf"] {
 .answer-item {
   display: flex;
   align-items: center;
-  background-color: #374151; /* Darker gray for dark theme */
+  background-color: #374151;
   border: 2px solid transparent;
   border-radius: 8px;
   padding: 10px 16px;
@@ -202,13 +212,13 @@ embed[type="application/pdf"] {
 }
 
 .answer-item:hover {
-  background-color: #4b5563; /* Slightly lighter gray on hover */
-  border-color: #38bdf8; /* Light blue border on hover */
+  background-color: #4b5563;
+  border-color: #38bdf8;
 }
 
 .answer-item input[type="radio"] {
   margin-right: 10px;
-  accent-color: #3b82f6; /* Blue radio button */
+  accent-color: #3b82f6;
 }
 
 .answer-item span {
@@ -216,13 +226,13 @@ embed[type="application/pdf"] {
   text-align: center;
   font-weight: 500;
   font-size: 14px;
-  color: #f9fafb; /* White text for readability */
+  color: #f9fafb;
 }
 
 .answer-item:has(input[type="radio"]:checked) {
-  background-color: #3b82f6; /* Blue background for selected */
-  border-color: #3b82f6; /* Matching blue border */
-  color: #ffffff; /* White text for selected option */
+  background-color: #3b82f6;
+  border-color: #3b82f6;
+  color: #ffffff;
 }
 
 .hidden {
@@ -231,7 +241,7 @@ embed[type="application/pdf"] {
 
 /* Tùy chỉnh giao diện controls của audio */
 #audio::-webkit-media-controls-panel {
-  background-color: #f1f5f9;
+  background-color: #2a2a2a; /* Dark background for controls */
   border-radius: 6px;
 }
 
@@ -247,20 +257,10 @@ body {
   transition: background-color 0.3s, color 0.3s;
 }
 
-/* Khi có class dark-mode */
 body.dark-mode {
   background-color: #1a1a1a;
   color: #f1f1f1;
 }
-
-.question-block {
-  background-color: #fff;
-}
-body.dark-mode .question-block {
-  background-color: #2a2a2a;
-}
-
-
 
 /* thanh truot */
 .switch {
@@ -274,19 +274,20 @@ body.dark-mode .question-block {
   height: 34px;
 }
 
-/* Ẩn checkbox mặc định */
 .switch input {
   opacity: 0;
   width: 0;
   height: 0;
 }
 
-/* Thanh gạt */
 .slider {
   position: absolute;
   cursor: pointer;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-color: #ccc;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #4b5563; /* Darker gray for dark mode */
   transition: .4s;
   border-radius: 34px;
 }
@@ -294,14 +295,15 @@ body.dark-mode .question-block {
 .slider:before {
   position: absolute;
   content: "";
-  height: 26px; width: 26px;
-  left: 4px; bottom: 4px;
-  background-color: white;
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: #e5e7eb; /* Light gray for switch */
   transition: .4s;
   border-radius: 50%;
 }
 
-/* Khi bật */
 input:checked + .slider {
   background-color: #2196F3;
 }
