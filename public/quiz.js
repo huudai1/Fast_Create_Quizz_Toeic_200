@@ -9,6 +9,7 @@ let isDirectTestMode = false;
 let isTestEnded = false;
 let userAnswers = null; // Lưu đáp án người dùng
 let answerKey = null; // Lưu đáp án đúng
+let currentReviewPart = 1;
 const answerNotification = document.getElementById("answer-notification");
 const answerImageDisplay = document.getElementById("answer-image-display");
 const welcomeScreen = document.getElementById("welcome-screen");
@@ -141,7 +142,8 @@ function hideAllScreens() {
   uploadQuizzesSection.classList.add("hidden");
   quizContainer.classList.add("hidden");
   resultScreen.classList.add("hidden");
-  document.getElementById("review-answers").classList.add("hidden");
+  const reviewScreen = document.getElementById("review-answers");
+  if (reviewScreen) reviewScreen.classList.add("hidden");
   document.querySelectorAll(".admin-step").forEach(step => step.classList.add("hidden"));
 }
 
