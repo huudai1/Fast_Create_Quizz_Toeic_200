@@ -170,17 +170,17 @@ embed[type="application/pdf"] {
 }
 
 .question-block {
-  background-color: #1f2937; /* Dark gray background for the block */
+  background-color: #1f2937; /* Dark gray background */
   padding: 16px;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3); /* Stronger shadow for depth on dark bg */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3); /* Stronger shadow */
   margin-bottom: 16px;
 }
 
 .question-text {
   font-size: 16px;
   font-weight: 600;
-  color: #f9fafb; /* Light gray/white for text to contrast with dark bg */
+  color: #e5e7eb; /* Lighter gray for better contrast */
   margin-bottom: 12px;
 }
 
@@ -193,7 +193,7 @@ embed[type="application/pdf"] {
 .answer-item {
   display: flex;
   align-items: center;
-  background-color: #f1f5f9;
+  background-color: #374151; /* Darker gray for dark theme */
   border: 2px solid transparent;
   border-radius: 8px;
   padding: 10px 16px;
@@ -202,13 +202,13 @@ embed[type="application/pdf"] {
 }
 
 .answer-item:hover {
-  background-color: #e0f2fe;
-  border-color: #38bdf8;
+  background-color: #4b5563; /* Slightly lighter gray on hover */
+  border-color: #38bdf8; /* Light blue border on hover */
 }
 
 .answer-item input[type="radio"] {
   margin-right: 10px;
-  accent-color: #3b82f6;
+  accent-color: #3b82f6; /* Blue radio button */
 }
 
 .answer-item span {
@@ -216,11 +216,13 @@ embed[type="application/pdf"] {
   text-align: center;
   font-weight: 500;
   font-size: 14px;
+  color: #f9fafb; /* White text for readability */
 }
 
 .answer-item:has(input[type="radio"]:checked) {
-  background-color: #dbeafe;
-  border-color: #3b82f6;
+  background-color: #3b82f6; /* Blue background for selected */
+  border-color: #3b82f6; /* Matching blue border */
+  color: #ffffff; /* White text for selected option */
 }
 
 .hidden {
