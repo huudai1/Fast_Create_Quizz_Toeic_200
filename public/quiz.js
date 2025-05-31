@@ -377,10 +377,6 @@ async function uploadQuizzes() {
       throw new Error("Phản hồi server không hợp lệ");
     }
 
-    // Hiển thị thông báo thành công
-    notificationElement.innerText = result.message || "Tải lên đề thi thành công!";
-    if (res.ok) {
-      console.log("Upload successful, calling backToQuizList()");
       backToQuizList();
       
       // Thêm thông báo reload nếu chưa thấy đề
