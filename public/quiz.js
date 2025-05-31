@@ -134,40 +134,57 @@ async function restoreAdminState() {
   return false;
 }
 
-function hideAllScreens() {
+function hideAllScreens(excludeScreenId = null) {
   console.log("Hiding all screens at", new Date().toLocaleString());
   const screens = [
-    welcomeScreen,
-    adminLogin,
-    studentLogin,
-    quizListScreen,
-    directTestScreen,
-    uploadQuizzesSection,
-    quizContainer,
-    resultScreen,
-    reviewScreen,
-    document.getElementById("admin-step-audio"),
-    document.getElementById("admin-step-part1"),
-    document.getElementById("admin-step-part2"),
-    document.getElementById("admin-step-part3"),
-    document.getElementById("admin-step-part4"),
-    document.getElementById("admin-step-part5"),
-    document.getElementById("admin-step-part6"),
-    document.getElementById("admin-step-part7"),
+    { id: "welcome-screen", element: welcomeScreen },
+    { id: "admin-login", element: adminLogin },
+    { id: "student-login", element: studentLogin },
+    { id: "quiz-list-screen", element: quizListScreen },
+    { id: "direct-test-screen", element: directTestScreen },
+    { id: "upload-quizzes", element: uploadQuizzesSection },
+    { id: "quiz-container", element: quizContainer },
+    { id: "result-screen", element: resultScreen },
+    { id: "review-screen", element: reviewScreen },
+    { id: "admin-step-audio", element: document.getElementById("admin-step-audio") },
+    { id: "admin-step-part1", element: document.getElementById("admin-step-part1") },
+    { id: "admin-step-part2", element: document.getElementById("admin-step-part2") },
+    { id: "admin-step-part3", element: document.getElementById("admin-step-part3") },
+    { id: "admin-step-part4", element: document.getElementById("admin-step-part4") },
+    { id: "admin-step-part5", element: document.getElementById("admin-step-part5") },
+    { id: "admin-step-part6", element: document.getElementById("admin-step-part6") },
+    { id: "admin-step-part7", element: document.getElementById("admin-step-part7") },
   ];
-  screens.forEach(screen => {
-    if (screen) {
-      screen.classList.add("hidden");
-      screen.style.display = "none";
-      console.log(`Hid screen: ${screen.id}`);
+
+  screens.forEach(({ id, element }) => {
+    if (element && id !== excludeScreenId) {
+      element.classList.add("hidden");
+      element.style.display = "none";
+      element.style.zIndex = "-1";
+      console.log(`Hid screen: ${id}, classList: ${element.classList.toString()}`);
+    } else if (!element) {
+      console.warn(`Element not found: ${id}`);
     }
   });
-  // Ẩn thêm bất kỳ phần tử nào có class .admin-step
+
+  // Ẩn thêm .admin-step
   document.querySelectorAll(".admin-step").forEach(step => {
-    step.classList.add("hidden");
-    step.style.display = "none";
-    console.log(`Hid admin-step: ${step.id}`);
+    if (step.id !== excludeScreenId) {
+      step.classList.add("hidden");
+      step.style.display = "none";
+      step.style.zIndex = "-1";
+      console.log(`Hid admin-step: ${step.id}`);
+    }
   });
+
+  // Ẩn loading-modal
+  const modal = document.getElementById("loading-modal");
+  if (modal) {
+    modal.classList.add("hidden");
+    modal.style.display = "none";
+    modal.style.zIndex = "-1";
+    console.log("Hid loading-modal");
+  }
 }
 
 function clearState() {
@@ -319,20 +336,28 @@ async function backToQuizList() {
   console.log("Starting backToQuizList at", new Date().toLocaleString());
   console.log("isAdmin:", isAdmin, "selectedQuizId:", selectedQuizId);
 
-  // Ẩn tất cả màn hình
-  hideAllScreens();
+  // Ẩn tất cả trừ quiz-list-screen
+  hideAllScreens("quiz-list-screen");
   console.log("hideAllScreens completed");
 
-  // Hiển thị quizListScreen
+  // Kiểm tra và hiển thị quizListScreen
   if (!quizListScreen) {
     console.error("quizListScreen is not defined or not found in DOM");
+    if (notification) {
+      notification.innerText = "Lỗi: Không tìm thấy màn hình danh sách quiz.";
+    }
     throw new Error("Không tìm thấy quizListScreen");
   }
   quizListScreen.classList.remove("hidden");
   quizListScreen.style.display = "block";
   quizListScreen.style.zIndex = "10";
+  quizListScreen.style.position = "relative";
   console.log("quizListScreen shown, classList:", quizListScreen.classList.toString());
-  console.log("quizListScreen style:", { display: quizListScreen.style.display, zIndex: quizListScreen.style.zIndex });
+  console.log("quizListScreen style:", {
+    display: quizListScreen.style.display,
+    zIndex: quizListScreen.style.zIndex,
+    position: quizListScreen.style.position
+  });
 
   // Cập nhật giao diện admin
   if (isAdmin) {
@@ -414,6 +439,10 @@ async function backToQuizList() {
 
   // Lưu trạng thái admin
   if (isAdmin) {
+    if (typeof saveAdminState !== 'function') {
+      console.error("saveAdminState is not a function");
+      throw new Error("saveAdminState không được định nghĩa");
+    }
     saveAdminState();
     console.log("saveAdminState called");
   }
@@ -429,7 +458,7 @@ function createNewQuiz() {
 
 function showUploadQuizzes() {
   console.log("Showing upload quizzes screen at", new Date().toLocaleString());
-  hideAllScreens();
+  hideAllScreens("upload-quizzes");
   if (!uploadQuizzesSection) {
     console.error("uploadQuizzesSection is not defined or not found in DOM");
     if (notification) {
@@ -440,24 +469,25 @@ function showUploadQuizzes() {
   uploadQuizzesSection.classList.remove("hidden");
   uploadQuizzesSection.style.display = "block";
   uploadQuizzesSection.style.zIndex = "10";
+  uploadQuizzesSection.style.position = "relative";
   console.log("uploadQuizzesSection shown, classList:", uploadQuizzesSection.classList.toString());
   if (downloadNotice) {
     downloadNotice.classList.add("hidden");
     downloadNotice.style.display = "none";
   }
-  // Đặt lại file input
   if (quizzesFileInput) {
     quizzesFileInput.value = "";
     console.log("quizzesFileInput reset");
   }
-  // Xóa thông báo
   if (notification) {
     notification.innerText = "";
   }
   if (document.getElementById("notification-upload")) {
     document.getElementById("notification-upload").innerText = "";
   }
-  saveAdminState();
+  if (isAdmin) {
+    saveAdminState();
+  }
 }
 
 async function uploadQuizzes() {
@@ -468,11 +498,11 @@ async function uploadQuizzes() {
 
   console.log("Selected file:", file ? file.name : null);
   if (!file) {
-    notificationElement.innerText = "Vui lòng chọn file (.json hoặc .zip)!";
+    if (notificationElement) notificationElement.innerText = "Vui lòng chọn file (.json hoặc .zip)!";
     return;
   }
   if (!user || !user.email) {
-    notificationElement.innerText = "Lỗi: Vui lòng đăng nhập lại!";
+    if (notificationElement) notificationElement.innerText = "Lỗi: Vui lòng đăng nhập lại!";
     return;
   }
 
@@ -521,7 +551,6 @@ async function uploadQuizzes() {
             notificationElement.innerText = "";
           }
         }, 1000);
-        // Đặt lại file input để cho phép upload đề mới
         if (quizzesFileInput) {
           quizzesFileInput.value = "";
           console.log("quizzesFileInput reset");
