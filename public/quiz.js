@@ -333,7 +333,7 @@ function showUploadQuizzes() {
 
 async function uploadQuizzes() {
   const notificationElement = document.getElementById("notification-upload");
-  const uploadButton = document.querySelector('#upload-quizzes button[onclick="uploadQuizzes()"]');
+  const uploadButton = document.querySelector('#upload-quizzes button');
   const modal = document.getElementById("loading-modal");
   const file = quizzesFileInput.files[0];
 
@@ -352,13 +352,12 @@ async function uploadQuizzes() {
   formData.append("createdBy", user.email);
   console.log("FormData prepared, createdBy:", user.email);
 
-  // Hiển thị modal và vô hiệu hóa nút Tải lên
   modal.classList.remove("hidden");
   uploadButton.disabled = true;
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 60000); // Timeout 60 giây
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
     const endpoint = file.name.endsWith('.zip') ? '/upload-quizzes-zip' : '/upload-quizzes';
     const res = await fetch(endpoint, {
       method: "POST",
@@ -377,18 +376,15 @@ async function uploadQuizzes() {
       throw new Error("Phản hồi server không hợp lệ");
     }
 
-      backToQuizList();
+    notificationElement.innerText = result.message || "Tải lên đề thi thành công!";
+    if (res.ok) {
+      console.log("Upload successful, calling backToQuizList()");
+      backToQuizList(); // Gọi hàm để hiển thị danh sách quiz
       
-      // Thêm thông báo reload nếu chưa thấy đề
+      // Hiển thị thông báo thành công và gợi ý làm mới
       setTimeout(() => {
         notificationElement.innerText = "Đã tải lên thành công! Nếu chưa thấy đề, vui lòng làm mới trang.";
-        // Tự động reload sau 5 giây nếu người dùng không thao tác
-        setTimeout(() => {
-          if (confirm("Bạn có muốn làm mới trang để xem đề thi mới?")) {
-            window.location.reload();
-          }
-        }, 5000);
-      }, 1000); // Hiển thị thông báo sau 1 giây để tránh chồng lấn
+      }, 1000); // Chờ 1 giây để thông báo "Tải lên đề thi thành công!" được nhìn thấy trước
     } else {
       throw new Error(result.message || "Server returned an error");
     }
@@ -396,7 +392,6 @@ async function uploadQuizzes() {
     console.error("Error uploading quizzes:", error);
     notificationElement.innerText = `Lỗi khi tải lên đề thi: ${error.message}. Vui lòng thử lại.`;
   } finally {
-    // Ẩn modal và kích hoạt lại nút Tải lên
     modal.classList.add("hidden");
     uploadButton.disabled = false;
   }
