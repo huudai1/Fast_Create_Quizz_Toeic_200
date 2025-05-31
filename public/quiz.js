@@ -293,28 +293,128 @@ studentNameForm.onsubmit = async (e) => {
   }
 };
 
-function backToQuizList() {
+async function backToQuizList() {
+  console.log("Starting backToQuizList at", new Date().toLocaleString());
+  console.log("isAdmin:", isAdmin, "selectedQuizId:", selectedQuizId);
+
+  // Kiểm tra và gọi hideAllScreens
+  if (typeof hideAllScreens !== 'function') {
+    console.error("hideAllScreens is not a function");
+    throw new Error("hideAllScreens không được định nghĩa");
+  }
   hideAllScreens();
+  console.log("hideAllScreens completed");
+
+  // Đảm bảo uploadQuizzesSection ẩn
+  if (uploadQuizzesSection) {
+    uploadQuizzesSection.classList.add("hidden");
+    uploadQuizzesSection.style.display = "none";
+    console.log("uploadQuizzesSection hidden, classList:", uploadQuizzesSection.classList.toString());
+  }
+
+  // Kiểm tra và hiển thị quizListScreen
+  if (!quizListScreen) {
+    console.error("quizListScreen is not defined or not found in DOM");
+    throw new Error("Không tìm thấy quizListScreen");
+  }
   quizListScreen.classList.remove("hidden");
+  quizListScreen.style.display = "block";
+  quizListScreen.style.zIndex = "10";
+  console.log("quizListScreen shown, classList:", quizListScreen.classList.toString());
+  console.log("quizListScreen style:", { display: quizListScreen.style.display, zIndex: quizListScreen.style.zIndex });
+
+  // Cập nhật giao diện admin
   if (isAdmin) {
-    adminOptions.classList.remove("hidden");
-    adminControls.classList.remove("hidden");
+    console.log("User is admin");
+    if (adminOptions) {
+      adminOptions.classList.remove("hidden");
+      adminOptions.style.display = "block";
+      console.log("adminOptions shown, classList:", adminOptions.classList.toString());
+    }
+    if (adminControls) {
+      adminControls.classList.remove("hidden");
+      adminControls.style.display = "block";
+      console.log("adminControls shown, classList:", adminControls.classList.toString());
+    }
     if (selectedQuizId) {
-      assignBtn.classList.remove("hidden");
-      directTestBtn.classList.remove("hidden");
+      console.log("selectedQuizId exists");
+      if (assignBtn) {
+        assignBtn.classList.remove("hidden");
+        assignBtn.style.display = "block";
+        console.log("assignBtn shown, classList:", assignBtn.classList.toString());
+      }
+      if (directTestBtn) {
+        directTestBtn.classList.remove("hidden");
+        directTestBtn.style.display = "block";
+        console.log("directTestBtn shown, classList:", directTestBtn.classList.toString());
+      }
     }
   } else {
-    adminOptions.classList.add("hidden");
-    adminControls.classList.add("hidden");
+    console.log("User is not admin");
+    if (adminOptions) {
+      adminOptions.classList.add("hidden");
+      adminOptions.style.display = "none";
+      console.log("adminOptions hidden");
+    }
+    if (adminControls) {
+      adminControls.classList.add("hidden");
+      adminControls.style.display = "none";
+      console.log("adminControls hidden");
+    }
   }
-  notification.innerText = "";
+
+  // Xóa thông báo
+  if (notification) {
+    notification.innerText = "";
+    console.log("Notification cleared");
+  }
+
+  // Đặt lại trạng thái
   isDirectTestMode = false;
   isTestEnded = false;
-  endDirectTestBtn.disabled = false;
-  directResultsTable.classList.add("hidden");
-  downloadNotice.classList.add("hidden");
-  loadQuizzes();
-  if (isAdmin) saveAdminState();
+  if (endDirectTestBtn) {
+    endDirectTestBtn.disabled = false;
+    console.log("endDirectTestBtn enabled");
+  }
+  if (directResultsTable) {
+    directResultsTable.classList.add("hidden");
+    directResultsTable.style.display = "none";
+    console.log("directResultsTable hidden");
+  }
+  if (downloadNotice) {
+    downloadNotice.classList.add("hidden");
+    downloadNotice.style.display = "none";
+    console.log("downloadNotice hidden");
+  }
+
+  // Tải danh sách quiz
+  if (typeof loadQuizzes !== 'function') {
+    console.error("loadQuizzes is not a function");
+    throw new Error("loadQuizzes không được định nghĩa");
+  }
+  try {
+    await loadQuizzes();
+    console.log("loadQuizzes completed");
+    if (quizList) {
+      console.log("quizList content:", quizList.innerHTML);
+    }
+  } catch (error) {
+    console.error("Error in loadQuizzes:", error);
+    if (notification) {
+      notification.innerText = "Lỗi khi tải danh sách quiz: " + error.message;
+    }
+  }
+
+  // Lưu trạng thái admin
+  if (isAdmin) {
+    if (typeof saveAdminState !== 'function') {
+      console.error("saveAdminState is not a function");
+      throw new Error("saveAdminState không được định nghĩa");
+    }
+    saveAdminState();
+    console.log("saveAdminState called");
+  }
+  console.log("backToQuizList finished at", new Date().toLocaleString());
 }
 
 function createNewQuiz() {
@@ -352,7 +452,8 @@ async function uploadQuizzes() {
   formData.append("createdBy", user.email);
   console.log("FormData prepared, createdBy:", user.email);
 
-  modal.classList.remove("hidden");
+  if (modal) modal.classList.remove("hidden");
+  else console.error("loading-modal not found");
   uploadButton.disabled = true;
 
   try {
@@ -376,32 +477,38 @@ async function uploadQuizzes() {
       throw new Error("Phản hồi server không hợp lệ");
     }
 
-    // Hiển thị thông báo trên notification-upload
-    notificationElement.innerText = result.message || "Tải lên đề thi thành công!";
+    if (notificationElement) {
+      notificationElement.innerText = result.message || "Tải lên đề thi thành công!";
+    }
     if (res.ok) {
       console.log("Upload successful, calling backToQuizList()");
       try {
-        backToQuizList(); // Gọi hàm để chuyển về danh sách quiz
+        await backToQuizList();
         console.log("backToQuizList completed");
-        // Chuyển thông báo sang notification sau khi back lại
         setTimeout(() => {
           if (notification) {
             notification.innerText = "Đã tải lên thành công! Nếu chưa thấy đề, vui lòng làm mới trang.";
           }
-          notificationElement.innerText = ""; // Xóa thông báo ở upload section
-        }, 1000); // Chờ 1 giây để thông báo đầu tiên được thấy
+          if (notificationElement) {
+            notificationElement.innerText = "";
+          }
+        }, 1000);
       } catch (error) {
         console.error("Error in backToQuizList:", error);
-        notificationElement.innerText = `Lỗi khi chuyển về danh sách quiz: ${error.message}`;
+        if (notificationElement) {
+          notificationElement.innerText = `Lỗi khi chuyển về danh sách quiz: ${error.message}`;
+        }
       }
     } else {
       throw new Error(result.message || "Server returned an error");
     }
   } catch (error) {
     console.error("Error uploading quizzes:", error);
-    notificationElement.innerText = `Lỗi khi tải lên đề thi: ${error.message}. Vui lòng thử lại.`;
+    if (notificationElement) {
+      notificationElement.innerText = `Lỗi khi tải lên đề thi: ${error.message}. Vui lòng thử lại.`;
+    }
   } finally {
-    modal.classList.add("hidden");
+    if (modal) modal.classList.add("hidden");
     uploadButton.disabled = false;
   }
 }

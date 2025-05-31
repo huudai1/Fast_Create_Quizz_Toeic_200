@@ -453,3 +453,37 @@ input:checked + .slider {
 input:checked + .slider:before {
   transform: translateX(26px);
 }
+
+/* Đảm bảo quiz-list-screen hiển thị */
+#quiz-list-screen:not(.hidden) {
+  display: block !important;
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  height: 100%;
+  background-color: #ffffff; /* White background by default */
+}
+
+body.dark-mode #quiz-list-screen:not(.hidden) {
+  background-color: #1a1a1a; /* Dark background in dark mode */
+}
+
+/* Đảm bảo upload-quizzes ẩn */
+#upload-quizzes.hidden {
+  display: none !important;
+  z-index: -1;
+}
+
+/* Đảm bảo quiz-list chứa nội dung */
+#quiz-list {
+  display: block;
+  width: 100%;
+  padding: 16px;
+}
+
+/* Đảm bảo các div quiz hiển thị */
+#quiz-list > div {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
