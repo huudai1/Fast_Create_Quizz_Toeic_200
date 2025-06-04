@@ -761,7 +761,9 @@ async function endDirectTest() {
       isTestEnded = true;
       endDirectTestBtn.disabled = true;
       localStorage.removeItem("directTestState");
-      await fetchDirectResults(); // Hiển thị kết quả ngay sau khi kết thúc
+      hideAllScreens();
+      directTestScreen.classList.remove("hidden");
+      await fetchDirectResults();
       saveAdminState();
     } else {
       notification.innerText = "Không thể gửi tín hiệu kết thúc.";
@@ -1140,7 +1142,6 @@ function prevQuizPart(current) {
 }
 
 async function submitQuiz() {
-  // Kiểm tra người dùng
   if (!user || !user.name) {
     console.error("No user logged in");
     notification.innerText = "Lỗi: Vui lòng đăng nhập lại.";
@@ -1154,7 +1155,7 @@ async function submitQuiz() {
   formData.forEach((val, key) => (userAnswers[key] = val));
   console.log("User answers collected:", userAnswers);
 
-  // Lưu đáp án vào localStorage ngay lập tức
+  // Lưu đáp án vào localStorage
   try {
     saveUserAnswers();
   } catch (error) {
@@ -1212,6 +1213,7 @@ async function submitQuiz() {
         username: user.name,
         score: result.score,
         submittedAt: new Date().toISOString(),
+        quizId: selectedQuizId, // Thêm quizId để server xác định bài thi
       };
       if (!isAdminControlled) {
         submissionData.immediateDisplay = true; // Hiển thị ngay cho giao bài
@@ -1226,6 +1228,19 @@ async function submitQuiz() {
     localStorage.removeItem("selectedQuizId");
     localStorage.removeItem("currentScreen");
     localStorage.removeItem("timeLeft");
+
+    // Chuyển admin về quiz-list-screen để xem kết quả ngay trong chế độ giao bài
+    if (isAdmin && !isAdminControlled) {
+      hideAllScreens();
+      quizListScreen.classList.remove("hidden");
+      adminOptions.classList.remove("hidden");
+      adminControls.classList.remove("hidden");
+      if (selectedQuizId) {
+        assignBtn.classList.remove("hidden");
+        directTestBtn.classList.remove("hidden");
+      }
+      await loadQuizzes();
+    }
 
     downloadNotice.classList.remove("hidden");
     showDownloadNotice();
@@ -1254,7 +1269,7 @@ async function fetchDirectResults() {
         directResultsBody.innerHTML = "<tr><td colspan='3' class='border p-2 text-center'>Chưa có kết quả nào.</td></tr>";
       } else {
         results.forEach(result => {
-          const resultKey = `${result.username}-${result.submittedAt}`;
+          const resultKey = `${result.username}-${result.submittedAt}-${result.quizId || 'unknown'}`;
           if (!displayedResults.has(resultKey)) {
             const tr = document.createElement("tr");
             tr.innerHTML = `
@@ -1264,6 +1279,8 @@ async function fetchDirectResults() {
             `;
             directResultsBody.appendChild(tr);
             displayedResults.add(resultKey);
+          } else {
+            console.log("Duplicate direct result skipped:", resultKey);
           }
         });
       }
@@ -1323,24 +1340,31 @@ function handleWebSocketMessage(event) {
       const count = message.count !== undefined ? message.count : 0;
       submittedCount.innerText = `Số bài đã nộp: ${count}`;
       directSubmittedCount.innerText = `Số bài đã nộp: ${count}`;
+
       if (isAdmin && message.results && message.immediateDisplay) {
         // Hiển thị kết quả ngay trên results-table cho giao bài
-        resultsBody.innerHTML = "";
-        displayedResults.clear();
-        message.results.forEach(result => {
-          const resultKey = `${result.username}-${result.submittedAt}`;
-          if (!displayedResults.has(resultKey)) {
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-              <td class="border p-2">${result.username || 'Unknown'}</td>
-              <td class="border p-2">${result.score || 0}</td>
-              <td class="border p-2">${result.submittedAt ? new Date(result.submittedAt).toLocaleString() : 'N/A'}</td>
-            `;
-            resultsBody.appendChild(tr);
-            displayedResults.add(resultKey);
-          }
-        });
-        resultsTable.classList.remove("hidden");
+        if (!quizListScreen.classList.contains("hidden")) {
+          resultsBody.innerHTML = ""; // Xóa bảng cũ
+          displayedResults.clear(); // Xóa cache
+          message.results.forEach(result => {
+            const resultKey = `${result.username}-${result.submittedAt}-${result.quizId || 'unknown'}`;
+            if (!displayedResults.has(resultKey)) {
+              const tr = document.createElement("tr");
+              tr.innerHTML = `
+                <td class="border p-2">${result.username || 'Unknown'}</td>
+                <td class="border p-2">${result.score || 0}</td>
+                <td class="border p-2">${result.submittedAt ? new Date(result.submittedAt).toLocaleString() : 'N/A'}</td>
+              `;
+              resultsBody.appendChild(tr);
+              displayedResults.add(resultKey);
+            } else {
+              console.log("Duplicate result skipped:", resultKey);
+            }
+          });
+          resultsTable.classList.remove("hidden");
+        } else {
+          console.log("quiz-list-screen is hidden, skipping results display");
+        }
       }
     } else if (message.type === "start") {
       isAdminControlled = true;
