@@ -49,11 +49,6 @@ const resultTime = document.getElementById("result-time");
 const downloadNotice = document.getElementById("download-notice");
 const reviewScreen = document.getElementById("review-answers");
 
-const topScorersOverlay = document.getElementById("top-scorers-overlay");
-const top1List = document.getElementById("top-1-list");
-const top2List = document.getElementById("top-2-list");
-const top3List = document.getElementById("top-3-list");
-
 const wsProtocol = location.protocol === 'https:' ? 'wss://' : 'ws://';
 let socket = null;
 let currentAdminStep = 0;
@@ -63,10 +58,6 @@ const partAnswerCounts = [6, 25, 39, 30, 30, 16, 54];
 function showResultScreen() {
   hideAllScreens();
   resultScreen.classList.remove("hidden");
-}
-
-function closeTopScorersOverlay() {
-  topScorersOverlay.classList.add("hidden");
 }
 
 function saveAdminState() {
@@ -101,85 +92,6 @@ function getCurrentScreen() {
   return "welcome-screen";
 }
 
-async function fetchDirectResults() {
-  const retries = 3;
-  const delay = 2000;
-  for (let i = 0; i < retries; i++) {
-    try {
-      const res = await fetch("/direct-results");
-      if (!res.ok) {
-        throw new Error(`HTTP error! Status: ${res.status}`);
-      }
-      const results = await res.json();
-      directResultsBody.innerHTML = "";
-      top1List.innerHTML = "";
-      top2List.innerHTML = "";
-      top3List.innerHTML = "";
-
-      if (results.length === 0) {
-        directResultsBody.innerHTML = "<tr><td colspan='3' class='border p-2 text-center'>Chưa có kết quả nào.</td></tr>";
-        top1List.innerHTML = "<p class='text-center'>Chưa có kết quả</p>";
-        top2List.innerHTML = "<p class='text-center'>Chưa có kết quả</p>";
-        top3List.innerHTML = "<p class='text-center'>Chưa có kết quả</p>";
-      } else {
-        // Sort results by score (descending) and submission time (ascending for ties)
-        results.sort((a, b) => {
-          if (b.score !== a.score) {
-            return b.score - a.score; // Higher score first
-          }
-          return new Date(a.submittedAt) - new Date(b.submittedAt); // Earlier submission first
-        });
-
-        // Group results by rank
-        let top1 = [], top2 = [], top3 = [];
-        let currentRank = 1;
-        let lastScore = results[0]?.score;
-
-        results.forEach((result, index) => {
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td class="border p-2">${result.username || 'Unknown'}</td>
-            <td class="border p-2">${result.score || 0}</td>
-            <td class="border p-2">${result.submittedAt ? new Date(result.submittedAt).toLocaleString() : 'N/A'}</td>
-          `;
-          directResultsBody.appendChild(tr);
-
-          // Assign ranks based on score
-          if (index > 0 && result.score < lastScore) {
-            currentRank++;
-            lastScore = result.score;
-          }
-
-          const entry = `<p>${result.username || 'Unknown'} - ${result.score} điểm (${result.submittedAt ? new Date(result.submittedAt).toLocaleString() : 'N/A'})</p>`;
-          
-          if (currentRank === 1) {
-            top1.push(entry);
-          } else if (currentRank === 2) {
-            top2.push(entry);
-          } else if (currentRank === 3) {
-            top3.push(entry);
-          }
-        });
-
-        // Populate the overlay lists
-        top1List.innerHTML = top1.length > 0 ? top1.join("") : "<p class='text-center'>Chưa có kết quả</p>";
-        top2List.innerHTML = top2.length > 0 ? top2.join("") : "<p class='text-center'>Chưa có kết quả</p>";
-        top3List.innerHTML = top3.length > 0 ? top3.join("") : "<p class='text-center'>Chưa có kết quả</p>";
-      }
-
-      directResultsTable.classList.remove("hidden");
-      topScorersOverlay.classList.remove("hidden"); // Show the overlay
-      return;
-    } catch (error) {
-      console.error(`Attempt ${i + 1} failed:`, error);
-      if (i === retries - 1) {
-        notification.innerText = "Lỗi khi tải kết quả kiểm tra trực tiếp. Vui lòng kiểm tra kết nối và thử lại.";
-      }
-      await new Promise(resolve => setTimeout(resolve, delay));
-    }
-  }
-}
-
 async function restoreAdminState() {
   const adminState = localStorage.getItem("adminState");
   if (adminState) {
@@ -193,9 +105,6 @@ async function restoreAdminState() {
       currentAdminStep = state.currentAdminStep;
 
       hideAllScreens();
-      topScorersOverlay.classList.add("hidden"); // Force hide overlay
-      console.log("Overlay state after restoreAdminState:", topScorersOverlay.classList.contains("hidden") ? "Hidden" : "Visible");
-
       if (state.screen === "quiz-list-screen") {
         quizListScreen.classList.remove("hidden");
         adminOptions.classList.remove("hidden");
@@ -209,14 +118,7 @@ async function restoreAdminState() {
         directTestScreen.classList.remove("hidden");
         endDirectTestBtn.disabled = isTestEnded;
         if (isTestEnded) {
-          try {
-            console.log("Restoring direct test results, fetching without overlay");
-            await fetchDirectResults(false); // Fetch results without showing overlay
-            console.log("fetchDirectResults called in restoreAdminState with showOverlay: false");
-          } catch (error) {
-            console.error("Error fetching direct results during state restoration:", error);
-            notification.innerText = "Lỗi khi khôi phục kết quả kiểm tra trực tiếp.";
-          }
+          await fetchDirectResults();
         }
       } else if (state.screen === "upload-quizzes") {
         uploadQuizzesSection.classList.remove("hidden");
@@ -241,9 +143,8 @@ function hideAllScreens() {
   uploadQuizzesSection.classList.add("hidden");
   quizContainer.classList.add("hidden");
   resultScreen.classList.add("hidden");
-  reviewScreen.classList.add("hidden");
-  topScorersOverlay.classList.add("hidden"); // Hide overlay
-  console.log("hideAllScreens called, overlay hidden");
+  const reviewScreen = document.getElementById("review-answers");
+  if (reviewScreen) reviewScreen.classList.add("hidden");
   document.querySelectorAll(".admin-step").forEach(step => step.classList.add("hidden"));
 }
 
@@ -858,12 +759,12 @@ async function endDirectTest() {
       socket.send(JSON.stringify({ type: "end" }));
       isTestEnded = true;
       endDirectTestBtn.disabled = true;
-      localStorage.removeItem("directTestState");
-      await fetchDirectResults(true); // Show overlay
+      localStorage.removeItem("directTest");
+      await fetchDirectResults();
       saveAdminState();
     } else {
       notification.innerText = "Không thể gửi tín hiệu kết thúc.";
-      await fetchDirectResults(true); // Still show overlay
+      await fetchDirectResults();
     }
   } catch (error) {
     console.error("Error ending direct test:", error);
@@ -1305,8 +1206,7 @@ async function submitQuiz() {
 }
 
 
-async function fetchDirectResults(showOverlay = false) {
-  console.log("fetchDirectResults called with showOverlay:", showOverlay);
+async function fetchDirectResults() {
   const retries = 3;
   const delay = 2000;
   for (let i = 0; i < retries; i++) {
@@ -1317,28 +1217,10 @@ async function fetchDirectResults(showOverlay = false) {
       }
       const results = await res.json();
       directResultsBody.innerHTML = "";
-      top1List.innerHTML = "";
-      top2List.innerHTML = "";
-      top3List.innerHTML = "";
-
       if (results.length === 0) {
         directResultsBody.innerHTML = "<tr><td colspan='3' class='border p-2 text-center'>Chưa có kết quả nào.</td></tr>";
-        top1List.innerHTML = "<p class='text-center'>Chưa có kết quả</p>";
-        top2List.innerHTML = "<p class='text-center'>Chưa có kết quả</p>";
-        top3List.innerHTML = "<p class='text-center'>Chưa có kết quả</p>";
       } else {
-        results.sort((a, b) => {
-          if (b.score !== a.score) {
-            return b.score - a.score;
-          }
-          return new Date(a.submittedAt) - new Date(b.submittedAt);
-        });
-
-        let top1 = [], top2 = [], top3 = [];
-        let currentRank = 1;
-        let lastScore = results[0]?.score;
-
-        results.forEach((result, index) => {
+        results.forEach(result => {
           const tr = document.createElement("tr");
           tr.innerHTML = `
             <td class="border p-2">${result.username || 'Unknown'}</td>
@@ -1346,36 +1228,9 @@ async function fetchDirectResults(showOverlay = false) {
             <td class="border p-2">${result.submittedAt ? new Date(result.submittedAt).toLocaleString() : 'N/A'}</td>
           `;
           directResultsBody.appendChild(tr);
-
-          if (index > 0 && result.score < lastScore) {
-            currentRank++;
-            lastScore = result.score;
-          }
-
-          const entry = `<p>${result.username || 'Unknown'} - ${result.score} điểm (${result.submittedAt ? new Date(result.submittedAt).toLocaleString() : 'N/A'})</p>`;
-          
-          if (currentRank === 1) {
-            top1.push(entry);
-          } else if (currentRank === 2) {
-            top2.push(entry);
-          } else if (currentRank === 3) {
-            top3.push(entry);
-          }
         });
-
-        top1List.innerHTML = top1.length > 0 ? top1.join("") : "<p class='text-center'>Chưa có kết quả</p>";
-        top2List.innerHTML = top2.length > 0 ? top2.join("") : "<p class='text-center'>Chưa có kết quả</p>";
-        top3List.innerHTML = top3.length > 0 ? top3.join("") : "<p class='text-center'>Chưa có kết quả</p>";
       }
-
       directResultsTable.classList.remove("hidden");
-      if (showOverlay) {
-        topScorersOverlay.classList.remove("hidden");
-        console.log("Overlay shown in fetchDirectResults");
-      } else {
-        topScorersOverlay.classList.add("hidden");
-        console.log("Overlay hidden in fetchDirectResults");
-      }
       return;
     } catch (error) {
       console.error(`Attempt ${i + 1} failed:`, error);
@@ -1413,7 +1268,6 @@ function handleWebSocketMessage(event) {
       return;
     }
     const message = JSON.parse(event.data);
-    console.log("WebSocket message received:", message);
     if (message.type === "quizStatus") {
       quizStatus.innerText = message.quizId ? `Đề thi hiện tại: ${message.quizName}` : "Chưa có đề thi được chọn.";
       selectedQuizId = message.quizId;
@@ -1474,8 +1328,7 @@ function handleWebSocketMessage(event) {
         submitQuiz();
         notification.innerText = "Bài thi đã kết thúc!";
       } else {
-        fetchDirectResults(false); // Do not show overlay
-        console.log("WebSocket 'end' message processed, overlay should remain hidden");
+        fetchDirectResults();
       }
     } else if (message.type === "error") {
       notification.innerText = message.message;
@@ -1720,16 +1573,6 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // Ensure overlay is hidden on page load
-  topScorersOverlay.classList.add("hidden");
-  console.log("Overlay initial state on DOMContentLoaded:", topScorersOverlay.classList.contains("hidden") ? "Hidden" : "Visible");
-
-  // Failsafe: Hide overlay after 1 second to catch async issues
-  setTimeout(() => {
-    topScorersOverlay.classList.add("hidden");
-    console.log("Failsafe: Overlay forced hidden after 1s:", topScorersOverlay.classList.contains("hidden") ? "Hidden" : "Visible");
-  }, 1000);
-
   if (await restoreAdminState()) {
     console.log("Admin state restored");
   } else {
