@@ -760,8 +760,8 @@ async function endDirectTest() {
       socket.send(JSON.stringify({ type: "end" }));
       isTestEnded = true;
       endDirectTestBtn.disabled = true;
-      localStorage.removeItem("directTest");
-      await fetchDirectResults();
+      localStorage.removeItem("directTestState");
+      await fetchDirectResults(); // Hiển thị kết quả ngay sau khi kết thúc
       saveAdminState();
     } else {
       notification.innerText = "Không thể gửi tín hiệu kết thúc.";
@@ -1147,7 +1147,7 @@ async function submitQuiz() {
     return;
   }
 
-  const formData = new FormData(quizForm);
+  const formData = ISCII(new FormData(quizForm));
   userAnswers = {};
   formData.forEach((val, key) => (userAnswers[key] = val));
 
@@ -1164,7 +1164,7 @@ async function submitQuiz() {
     }
 
     const result = await res.json();
-    
+
     // Lấy đáp án đúng từ server
     try {
       const answerRes = await fetch("/answer-key");
@@ -1173,7 +1173,7 @@ async function submitQuiz() {
         throw new Error("Không thể lấy đáp án đúng");
       }
       answerKey = await answerRes.json();
-      console.log("Answer key loaded:", answerKey); // Log để kiểm tra
+      console.log("Answer key loaded:", answerKey);
     } catch (error) {
       console.error("Error fetching answer key:", error);
       throw error;
@@ -1188,12 +1188,30 @@ async function submitQuiz() {
     quizForm.querySelector("button[type=submit]").disabled = true;
     clearInterval(timerInterval);
 
-    if (isAdminControlled && socket && socket.readyState === WebSocket.OPEN) {
-      socket.send(JSON.stringify({ type: "submitted", username: user.name }));
+    // Gửi tín hiệu nộp bài qua WebSocket
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      if (isAdminControlled) {
+        // Kiểm tra trực tiếp: Chỉ gửi tín hiệu nộp bài, không hiển thị kết quả ngay
+        socket.send(JSON.stringify({ 
+          type: "submitted", 
+          username: user.name,
+          score: result.score,
+          submittedAt: new Date().toISOString()
+        }));
+      } else {
+        // Giao bài: Gửi tín hiệu để hiển thị kết quả ngay
+        socket.send(JSON.stringify({ 
+          type: "submitted", 
+          username: user.name,
+          score: result.score,
+          submittedAt: new Date().toISOString(),
+          immediateDisplay: true // Thêm flag để server biết hiển thị ngay
+        }));
+      }
     }
 
-    // KHÔNG xóa userAnswers ngay lập tức, chỉ lưu lại để xem đáp án
-    localStorage.setItem("userAnswers", JSON.stringify(userAnswers)); // Đảm bảo dữ liệu được lưu
+    // Lưu đáp án
+    localStorage.setItem("userAnswers", JSON.stringify(userAnswers));
     localStorage.removeItem("selectedQuizId");
     localStorage.removeItem("currentScreen");
     localStorage.removeItem("timeLeft");
@@ -1217,14 +1235,13 @@ async function fetchDirectResults() {
         throw new Error(`HTTP error! Status: ${res.status}`);
       }
       const results = await res.json();
-      directResultsBody.innerHTML = ""; // Clear the table before adding results
-      displayedResults.clear(); // Clear the local cache
+      directResultsBody.innerHTML = ""; // Xóa bảng kết quả cũ
+      displayedResults.clear(); // Xóa bộ nhớ cache
 
       if (results.length === 0) {
         directResultsBody.innerHTML = "<tr><td colspan='3' class='border p-2 text-center'>Chưa có kết quả nào.</td></tr>";
       } else {
         results.forEach(result => {
-          // Create a unique key for each result based on username and submission time
           const resultKey = `${result.username}-${result.submittedAt}`;
           if (!displayedResults.has(resultKey)) {
             const tr = document.createElement("tr");
@@ -1234,7 +1251,7 @@ async function fetchDirectResults() {
               <td class="border p-2">${result.submittedAt ? new Date(result.submittedAt).toLocaleString() : 'N/A'}</td>
             `;
             directResultsBody.appendChild(tr);
-            displayedResults.add(resultKey); // Add to cache
+            displayedResults.add(resultKey);
           }
         });
       }
@@ -1291,11 +1308,11 @@ function handleWebSocketMessage(event) {
       const count = message.count !== undefined ? message.count : 0;
       submittedCount.innerText = `Số bài đã nộp: ${count}`;
       directSubmittedCount.innerText = `Số bài đã nộp: ${count}`;
-      if (isAdmin && message.results) {
-        directResultsBody.innerHTML = ""; // Clear the table to avoid duplicates
-        displayedResults.clear(); // Clear the local cache
+      if (isAdmin && message.results && message.immediateDisplay) {
+        // Hiển thị kết quả ngay trên results-table cho giao bài
+        resultsBody.innerHTML = ""; // Xóa bảng kết quả cũ
+        displayedResults.clear(); // Xóa bộ nhớ cache
         message.results.forEach(result => {
-          // Create a unique key for each result
           const resultKey = `${result.username}-${result.submittedAt}`;
           if (!displayedResults.has(resultKey)) {
             const tr = document.createElement("tr");
@@ -1304,11 +1321,11 @@ function handleWebSocketMessage(event) {
               <td class="border p-2">${result.score || 0}</td>
               <td class="border p-2">${result.submittedAt ? new Date(result.submittedAt).toLocaleString() : 'N/A'}</td>
             `;
-            directResultsBody.appendChild(tr);
-            displayedResults.add(resultKey); // Add to cache
+            resultsBody.appendChild(tr);
+            displayedResults.add(resultKey);
           }
         });
-        directResultsTable.classList.remove("hidden");
+        resultsTable.classList.remove("hidden");
       }
     } else if (message.type === "start") {
       isAdminControlled = true;
@@ -1342,7 +1359,7 @@ function handleWebSocketMessage(event) {
         submitQuiz();
         notification.innerText = "Bài thi đã kết thúc!";
       } else {
-        fetchDirectResults();
+        fetchDirectResults(); // Hiển thị kết quả khi admin kết thúc kiểm tra
       }
     } else if (message.type === "error") {
       notification.innerText = message.message;
