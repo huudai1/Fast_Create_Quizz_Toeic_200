@@ -49,6 +49,11 @@ const resultTime = document.getElementById("result-time");
 const downloadNotice = document.getElementById("download-notice");
 const reviewScreen = document.getElementById("review-answers");
 
+const topScorersOverlay = document.getElementById("top-scorers-overlay");
+const top1List = document.getElementById("top-1-list");
+const top2List = document.getElementById("top-2-list");
+const top3List = document.getElementById("top-3-list");
+
 const wsProtocol = location.protocol === 'https:' ? 'wss://' : 'ws://';
 let socket = null;
 let currentAdminStep = 0;
@@ -58,6 +63,10 @@ const partAnswerCounts = [6, 25, 39, 30, 30, 16, 54];
 function showResultScreen() {
   hideAllScreens();
   resultScreen.classList.remove("hidden");
+}
+
+function closeTopScorersOverlay() {
+  topScorersOverlay.classList.add("hidden");
 }
 
 function saveAdminState() {
@@ -90,6 +99,85 @@ function getCurrentScreen() {
     }
   }
   return "welcome-screen";
+}
+
+async function fetchDirectResults() {
+  const retries = 3;
+  const delay = 2000;
+  for (let i = 0; i < retries; i++) {
+    try {
+      const res = await fetch("/direct-results");
+      if (!res.ok) {
+        throw new Error(`HTTP error! Status: ${res.status}`);
+      }
+      const results = await res.json();
+      directResultsBody.innerHTML = "";
+      top1List.innerHTML = "";
+      top2List.innerHTML = "";
+      top3List.innerHTML = "";
+
+      if (results.length === 0) {
+        directResultsBody.innerHTML = "<tr><td colspan='3' class='border p-2 text-center'>Chưa có kết quả nào.</td></tr>";
+        top1List.innerHTML = "<p class='text-center'>Chưa có kết quả</p>";
+        top2List.innerHTML = "<p class='text-center'>Chưa có kết quả</p>";
+        top3List.innerHTML = "<p class='text-center'>Chưa có kết quả</p>";
+      } else {
+        // Sort results by score (descending) and submission time (ascending for ties)
+        results.sort((a, b) => {
+          if (b.score !== a.score) {
+            return b.score - a.score; // Higher score first
+          }
+          return new Date(a.submittedAt) - new Date(b.submittedAt); // Earlier submission first
+        });
+
+        // Group results by rank
+        let top1 = [], top2 = [], top3 = [];
+        let currentRank = 1;
+        let lastScore = results[0]?.score;
+
+        results.forEach((result, index) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td class="border p-2">${result.username || 'Unknown'}</td>
+            <td class="border p-2">${result.score || 0}</td>
+            <td class="border p-2">${result.submittedAt ? new Date(result.submittedAt).toLocaleString() : 'N/A'}</td>
+          `;
+          directResultsBody.appendChild(tr);
+
+          // Assign ranks based on score
+          if (index > 0 && result.score < lastScore) {
+            currentRank++;
+            lastScore = result.score;
+          }
+
+          const entry = `<p>${result.username || 'Unknown'} - ${result.score} điểm (${result.submittedAt ? new Date(result.submittedAt).toLocaleString() : 'N/A'})</p>`;
+          
+          if (currentRank === 1) {
+            top1.push(entry);
+          } else if (currentRank === 2) {
+            top2.push(entry);
+          } else if (currentRank === 3) {
+            top3.push(entry);
+          }
+        });
+
+        // Populate the overlay lists
+        top1List.innerHTML = top1.length > 0 ? top1.join("") : "<p class='text-center'>Chưa có kết quả</p>";
+        top2List.innerHTML = top2.length > 0 ? top2.join("") : "<p class='text-center'>Chưa có kết quả</p>";
+        top3List.innerHTML = top3.length > 0 ? top3.join("") : "<p class='text-center'>Chưa có kết quả</p>";
+      }
+
+      directResultsTable.classList.remove("hidden");
+      topScorersOverlay.classList.remove("hidden"); // Show the overlay
+      return;
+    } catch (error) {
+      console.error(`Attempt ${i + 1} failed:`, error);
+      if (i === retries - 1) {
+        notification.innerText = "Lỗi khi tải kết quả kiểm tra trực tiếp. Vui lòng kiểm tra kết nối và thử lại.";
+      }
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
 }
 
 async function restoreAdminState() {
