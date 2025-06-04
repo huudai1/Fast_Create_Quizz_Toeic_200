@@ -112,25 +112,22 @@
 
   <!-- New Overlay for Top Scorers -->
   <div id="top-scorers-overlay" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center hidden z-50">
-    <div class="w-full h-full flex">
-      <!-- Top 2 (Left, Silver Border) -->
-      <div id="top-2-section" class="w-1/3 bg-gray-800 text-white p-6 flex flex-col items-center justify-center border-r-4 border-silver">
-        <h2 class="text-2xl font-bold mb-4">Top 2</h2>
-        <div id="top-2-list" class="space-y-2 text-center"></div>
-      </div>
-      <!-- Top 1 (Center, Gold Border) -->
-      <div id="top-1-section" class="w-1/3 bg-gray-800 text-white p-6 flex flex-col items-center justify-center border-x-4 border-gold">
-        <h2 class="text-3xl font-bold mb-4">Top 1</h2>
-        <div id="top-1-list" class="space-y-2 text-center"></div>
-      </div>
-      <!-- Top 3 (Right, Bronze Border) -->
-      <div id="top-3-section" class="w-1/3 bg-gray-800 text-white p-6 flex flex-col items-center justify-center border-l-4 border-bronze">
-        <h2 class="text-2xl font-bold mb-4">Top 3</h2>
-        <div id="top-3-list" class="space-y-2 text-center"></div>
-      </div>
+  <div class="w-full h-full flex">
+    <div id="top-2-section" class="w-1/3 bg-gray-800 text-white p-6 flex flex-col items-center justify-center border-r-4 border-silver">
+      <h2 class="text-2xl font-bold mb-4">Top 2</h2>
+      <div id="top-2-list" class="space-y-2 text-center"></div>
     </div>
-    <button onclick="closeTopScorersOverlay()" class="absolute top-4 right-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Đóng</button>
+    <div id="top-1-section" class="w-1/3 bg-gray-800 text-white p-6 flex flex-col items-center justify-center border-x-4 border-gold">
+      <h2 class="text-3xl font-bold mb-4">Top 1</h2>
+      <div id="top-1-list" class="space-y-2 text-center"></div>
+    </div>
+    <div id="top-3-section" class="w-1/3 bg-gray-800 text-white p-6 flex flex-col items-center justify-center border-l-4 border-bronze">
+      <h2 class="text-2xl font-bold mb-4">Top 3</h2>
+      <div id="top-3-list" class="space-y-2 text-center"></div>
+    </div>
   </div>
+  <button onclick="closeTopScorersOverlay()" class="absolute top-4 right-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Đóng</button>
+</div>
 </div>
 
   <div id="upload-quizzes" class="container mx-auto p-4 hidden">

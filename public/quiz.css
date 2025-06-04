@@ -537,6 +537,10 @@ input:checked + .slider:before {
   z-index: 50;
 }
 
+#top-scorers-overlay:not(.hidden) {
+  outline: 5px solid red; /* Red outline if overlay is visible */
+}
+
 #top-scorers-overlay > div {
   height: 100%;
 }

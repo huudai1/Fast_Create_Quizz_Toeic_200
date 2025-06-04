@@ -193,7 +193,9 @@ async function restoreAdminState() {
       currentAdminStep = state.currentAdminStep;
 
       hideAllScreens();
-      topScorersOverlay.classList.add("hidden"); // Ensure overlay is hidden on restore
+      topScorersOverlay.classList.add("hidden"); // Force hide overlay
+      console.log("Overlay state after restoreAdminState:", topScorersOverlay.classList.contains("hidden") ? "Hidden" : "Visible");
+
       if (state.screen === "quiz-list-screen") {
         quizListScreen.classList.remove("hidden");
         adminOptions.classList.remove("hidden");
@@ -207,7 +209,13 @@ async function restoreAdminState() {
         directTestScreen.classList.remove("hidden");
         endDirectTestBtn.disabled = isTestEnded;
         if (isTestEnded) {
-          await fetchDirectResults(false); // Fetch results without showing overlay
+          try {
+            await fetchDirectResults(false); // Fetch results without showing overlay
+            console.log("fetchDirectResults called in restoreAdminState with showOverlay: false");
+          } catch (error) {
+            console.error("Error fetching direct results during state restoration:", error);
+            notification.innerText = "Lỗi khi khôi phục kết quả kiểm tra trực tiếp.";
+          }
         }
       } else if (state.screen === "upload-quizzes") {
         uploadQuizzesSection.classList.remove("hidden");
@@ -234,6 +242,7 @@ function hideAllScreens() {
   resultScreen.classList.add("hidden");
   reviewScreen.classList.add("hidden");
   topScorersOverlay.classList.add("hidden"); // Hide overlay
+  console.log("hideAllScreens called, overlay hidden");
   document.querySelectorAll(".admin-step").forEach(step => step.classList.add("hidden"));
 }
 
@@ -849,11 +858,11 @@ async function endDirectTest() {
       isTestEnded = true;
       endDirectTestBtn.disabled = true;
       localStorage.removeItem("directTestState");
-      await fetchDirectResults(true); // Pass true to show the overlay
+      await fetchDirectResults(true); // Show overlay
       saveAdminState();
     } else {
       notification.innerText = "Không thể gửi tín hiệu kết thúc.";
-      await fetchDirectResults(true); // Still attempt to show results with overlay
+      await fetchDirectResults(true); // Still show overlay
     }
   } catch (error) {
     console.error("Error ending direct test:", error);
@@ -1296,6 +1305,7 @@ async function submitQuiz() {
 
 
 async function fetchDirectResults(showOverlay = false) {
+  console.log("fetchDirectResults called with showOverlay:", showOverlay);
   const retries = 3;
   const delay = 2000;
   for (let i = 0; i < retries; i++) {
@@ -1316,15 +1326,13 @@ async function fetchDirectResults(showOverlay = false) {
         top2List.innerHTML = "<p class='text-center'>Chưa có kết quả</p>";
         top3List.innerHTML = "<p class='text-center'>Chưa có kết quả</p>";
       } else {
-        // Sort results by score (descending) and submission time (ascending for ties)
         results.sort((a, b) => {
           if (b.score !== a.score) {
-            return b.score - a.score; // Higher score first
+            return b.score - a.score;
           }
-          return new Date(a.submittedAt) - new Date(b.submittedAt); // Earlier submission first
+          return new Date(a.submittedAt) - new Date(b.submittedAt);
         });
 
-        // Group results by rank
         let top1 = [], top2 = [], top3 = [];
         let currentRank = 1;
         let lastScore = results[0]?.score;
@@ -1338,7 +1346,6 @@ async function fetchDirectResults(showOverlay = false) {
           `;
           directResultsBody.appendChild(tr);
 
-          // Assign ranks based on score
           if (index > 0 && result.score < lastScore) {
             currentRank++;
             lastScore = result.score;
@@ -1355,7 +1362,6 @@ async function fetchDirectResults(showOverlay = false) {
           }
         });
 
-        // Populate the overlay lists
         top1List.innerHTML = top1.length > 0 ? top1.join("") : "<p class='text-center'>Chưa có kết quả</p>";
         top2List.innerHTML = top2.length > 0 ? top2.join("") : "<p class='text-center'>Chưa có kết quả</p>";
         top3List.innerHTML = top3.length > 0 ? top3.join("") : "<p class='text-center'>Chưa có kết quả</p>";
@@ -1363,7 +1369,11 @@ async function fetchDirectResults(showOverlay = false) {
 
       directResultsTable.classList.remove("hidden");
       if (showOverlay) {
-        topScorersOverlay.classList.remove("hidden"); // Show overlay only if explicitly requested
+        topScorersOverlay.classList.remove("hidden");
+        console.log("Overlay shown in fetchDirectResults");
+      } else {
+        topScorersOverlay.classList.add("hidden");
+        console.log("Overlay hidden in fetchDirectResults");
       }
       return;
     } catch (error) {
@@ -1402,6 +1412,7 @@ function handleWebSocketMessage(event) {
       return;
     }
     const message = JSON.parse(event.data);
+    console.log("WebSocket message received:", message);
     if (message.type === "quizStatus") {
       quizStatus.innerText = message.quizId ? `Đề thi hiện tại: ${message.quizName}` : "Chưa có đề thi được chọn.";
       selectedQuizId = message.quizId;
@@ -1462,7 +1473,8 @@ function handleWebSocketMessage(event) {
         submitQuiz();
         notification.innerText = "Bài thi đã kết thúc!";
       } else {
-        fetchDirectResults(false); // Fetch results without showing overlay
+        fetchDirectResults(false); // Do not show overlay
+        console.log("WebSocket 'end' message processed, overlay should remain hidden");
       }
     } else if (message.type === "error") {
       notification.innerText = message.message;
@@ -1707,7 +1719,16 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 document.addEventListener("DOMContentLoaded", async () => {
-  topScorersOverlay.classList.add("hidden"); // Ensure overlay is hidden on page load
+  // Ensure overlay is hidden on page load
+  topScorersOverlay.classList.add("hidden");
+  console.log("Overlay initial state on DOMContentLoaded:", topScorersOverlay.classList.contains("hidden") ? "Hidden" : "Visible");
+
+  // Failsafe: Hide overlay after 1 second to catch async issues
+  setTimeout(() => {
+    topScorersOverlay.classList.add("hidden");
+    console.log("Failsafe: Overlay forced hidden after 1s:", topScorersOverlay.classList.contains("hidden") ? "Hidden" : "Visible");
+  }, 1000);
+
   if (await restoreAdminState()) {
     console.log("Admin state restored");
   } else {
