@@ -10,6 +10,7 @@ let isTestEnded = false;
 let userAnswers = null; // Lưu đáp án người dùng
 let answerKey = null; // Lưu đáp án đúng
 let currentReviewPart = 1;
+let displayedResults = new Set();
 const answerNotification = document.getElementById("answer-notification");
 const answerImageDisplay = document.getElementById("answer-image-display");
 const welcomeScreen = document.getElementById("welcome-screen");
@@ -1216,18 +1217,25 @@ async function fetchDirectResults() {
         throw new Error(`HTTP error! Status: ${res.status}`);
       }
       const results = await res.json();
-      directResultsBody.innerHTML = "";
+      directResultsBody.innerHTML = ""; // Clear the table before adding results
+      displayedResults.clear(); // Clear the local cache
+
       if (results.length === 0) {
         directResultsBody.innerHTML = "<tr><td colspan='3' class='border p-2 text-center'>Chưa có kết quả nào.</td></tr>";
       } else {
         results.forEach(result => {
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td class="border p-2">${result.username || 'Unknown'}</td>
-            <td class="border p-2">${result.score || 0}</td>
-            <td class="border p-2">${result.submittedAt ? new Date(result.submittedAt).toLocaleString() : 'N/A'}</td>
-          `;
-          directResultsBody.appendChild(tr);
+          // Create a unique key for each result based on username and submission time
+          const resultKey = `${result.username}-${result.submittedAt}`;
+          if (!displayedResults.has(resultKey)) {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td class="border p-2">${result.username || 'Unknown'}</td>
+              <td class="border p-2">${result.score || 0}</td>
+              <td class="border p-2">${result.submittedAt ? new Date(result.submittedAt).toLocaleString() : 'N/A'}</td>
+            `;
+            directResultsBody.appendChild(tr);
+            displayedResults.add(resultKey); // Add to cache
+          }
         });
       }
       directResultsTable.classList.remove("hidden");
@@ -1284,17 +1292,23 @@ function handleWebSocketMessage(event) {
       submittedCount.innerText = `Số bài đã nộp: ${count}`;
       directSubmittedCount.innerText = `Số bài đã nộp: ${count}`;
       if (isAdmin && message.results) {
-        resultsBody.innerHTML = "";
+        directResultsBody.innerHTML = ""; // Clear the table to avoid duplicates
+        displayedResults.clear(); // Clear the local cache
         message.results.forEach(result => {
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td class="border p-2">${result.username || 'Unknown'}</td>
-            <td class="border p-2">${result.score || 0}</td>
-            <td class="border p-2">${result.submittedAt ? new Date(result.submittedAt).toLocaleString() : 'N/A'}</td>
-          `;
-          resultsBody.appendChild(tr);
+          // Create a unique key for each result
+          const resultKey = `${result.username}-${result.submittedAt}`;
+          if (!displayedResults.has(resultKey)) {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td class="border p-2">${result.username || 'Unknown'}</td>
+              <td class="border p-2">${result.score || 0}</td>
+              <td class="border p-2">${result.submittedAt ? new Date(result.submittedAt).toLocaleString() : 'N/A'}</td>
+            `;
+            directResultsBody.appendChild(tr);
+            displayedResults.add(resultKey); // Add to cache
+          }
         });
-        resultsTable.classList.remove("hidden");
+        directResultsTable.classList.remove("hidden");
       }
     } else if (message.type === "start") {
       isAdminControlled = true;
