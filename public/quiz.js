@@ -1188,7 +1188,7 @@ async function submitQuiz() {
         console.error("Failed to fetch answer key, status:", answerRes.status);
         throw new Error("Không thể lấy đáp án đúng");
       }
-      answerKey = await res.json();
+      answerKey = await answerRes.json(); // Sửa lỗi: sử dụng answerRes thay vì res
       console.log("Answer key loaded:", answerKey);
     } catch (error) {
       console.error("Error fetching answer key:", error);
@@ -1196,7 +1196,16 @@ async function submitQuiz() {
       return;
     }
 
-    // Chuyển sang màn hình kết quả
+    // Kiểm tra và hiển thị màn hình kết quả
+    const resultScreen = document.getElementById("result-screen");
+    const resultScore = document.getElementById("result-score");
+    const resultTime = document.getElementById("result-time");
+    if (!resultScreen || !resultScore || !resultTime) {
+      console.error("Result screen elements not found:", { resultScreen, resultScore, resultTime });
+      notification.innerText = "Lỗi giao diện. Vui lòng liên hệ quản trị viên.";
+      return;
+    }
+
     hideAllScreens();
     resultScreen.classList.remove("hidden");
     timerDisplay.classList.add("hidden");
@@ -1229,8 +1238,14 @@ async function submitQuiz() {
     localStorage.removeItem("currentScreen");
     localStorage.removeItem("timeLeft");
 
-    downloadNotice.classList.remove("hidden");
-    showDownloadNotice();
+    // Hiển thị thông báo tải xuống
+    const downloadNotice = document.getElementById("download-notice");
+    if (downloadNotice) {
+      downloadNotice.classList.remove("hidden");
+      showDownloadNotice();
+    } else {
+      console.warn("Download notice element not found");
+    }
   } catch (error) {
     console.error("Error submitting quiz:", error);
     notification.innerText = "Lỗi khi nộp bài. Đáp án của bạn đã được lưu cục bộ. Vui lòng thử lại.";
@@ -1329,7 +1344,7 @@ function handleWebSocketMessage(event) {
       directSubmittedCount.innerText = `Số bài đã nộp: ${count}`;
 
       if (isAdmin && message.results && message.immediateDisplay) {
-        // Hiển thị kết quả ngay trên results-table cho giao bài
+        // Chỉ chuyển màn hình cho admin
         hideAllScreens();
         quizListScreen.classList.remove("hidden");
         if (isAdmin) {
