@@ -10,7 +10,6 @@ let isTestEnded = false;
 let userAnswers = null; // Lưu đáp án người dùng
 let answerKey = null; // Lưu đáp án đúng
 let currentReviewPart = 1;
-let displayedResults = new Set();
 const answerNotification = document.getElementById("answer-notification");
 const answerImageDisplay = document.getElementById("answer-image-display");
 const welcomeScreen = document.getElementById("welcome-screen");
@@ -760,9 +759,7 @@ async function endDirectTest() {
       socket.send(JSON.stringify({ type: "end" }));
       isTestEnded = true;
       endDirectTestBtn.disabled = true;
-      localStorage.removeItem("directTestState");
-      hideAllScreens();
-      directTestScreen.classList.remove("hidden");
+      localStorage.removeItem("directTest");
       await fetchDirectResults();
       saveAdminState();
     } else {
@@ -1144,27 +1141,15 @@ function prevQuizPart(current) {
 async function submitQuiz() {
   if (!user || !user.name) {
     console.error("No user logged in");
-    notification.innerText = "Lỗi: Vui lòng đăng nhập lại.";
+    notification.innerText = "Lỗi: Vui lòng nhập tên lại.";
     showWelcomeScreen();
     return;
   }
 
-  // Thu thập đáp án từ form
   const formData = new FormData(quizForm);
   userAnswers = {};
   formData.forEach((val, key) => (userAnswers[key] = val));
-  console.log("User answers collected:", userAnswers);
 
-  // Lưu đáp án vào localStorage
-  try {
-    saveUserAnswers();
-  } catch (error) {
-    console.error("Error saving user answers:", error);
-    notification.innerText = "Lỗi khi lưu đáp án. Vui lòng thử lại.";
-    return;
-  }
-
-  // Gửi yêu cầu nộp bài tới server
   try {
     const res = await fetch("/submit", {
       method: "POST",
@@ -1174,13 +1159,11 @@ async function submitQuiz() {
 
     if (!res.ok) {
       const errorData = await res.json().catch(() => ({}));
-      console.error("Submit failed:", errorData.message || `HTTP error: ${res.status}`);
       throw new Error(errorData.message || `Lỗi server: ${res.status}`);
     }
 
     const result = await res.json();
-    console.log("Submit response:", result);
-
+    
     // Lấy đáp án đúng từ server
     try {
       const answerRes = await fetch("/answer-key");
@@ -1188,22 +1171,11 @@ async function submitQuiz() {
         console.error("Failed to fetch answer key, status:", answerRes.status);
         throw new Error("Không thể lấy đáp án đúng");
       }
-      answerKey = await answerRes.json(); // Sửa lỗi: sử dụng answerRes thay vì res
-      console.log("Answer key loaded:", answerKey);
+      answerKey = await answerRes.json();
+      console.log("Answer key loaded:", answerKey); // Log để kiểm tra
     } catch (error) {
       console.error("Error fetching answer key:", error);
-      notification.innerText = "Lỗi khi tải đáp án đúng.";
-      return;
-    }
-
-    // Kiểm tra và hiển thị màn hình kết quả
-    const resultScreen = document.getElementById("result-screen");
-    const resultScore = document.getElementById("result-score");
-    const resultTime = document.getElementById("result-time");
-    if (!resultScreen || !resultScore || !resultTime) {
-      console.error("Result screen elements not found:", { resultScreen, resultScore, resultTime });
-      notification.innerText = "Lỗi giao diện. Vui lòng liên hệ quản trị viên.";
-      return;
+      throw error;
     }
 
     hideAllScreens();
@@ -1215,40 +1187,21 @@ async function submitQuiz() {
     quizForm.querySelector("button[type=submit]").disabled = true;
     clearInterval(timerInterval);
 
-    // Gửi tín hiệu nộp bài qua WebSocket
-    if (socket && socket.readyState === WebSocket.OPEN) {
-      const submissionData = {
-        type: "submitted",
-        username: user.name,
-        score: result.score,
-        submittedAt: new Date().toISOString(),
-        quizId: selectedQuizId,
-      };
-      if (!isAdminControlled) {
-        submissionData.immediateDisplay = true; // Hiển thị ngay cho giao bài
-      }
-      socket.send(JSON.stringify(submissionData));
-      console.log("WebSocket submission sent:", submissionData);
-    } else {
-      console.warn("WebSocket not connected, skipping submission notification");
+    if (isAdminControlled && socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({ type: "submitted", username: user.name }));
     }
 
-    // Xóa trạng thái bài thi
+    // KHÔNG xóa userAnswers ngay lập tức, chỉ lưu lại để xem đáp án
+    localStorage.setItem("userAnswers", JSON.stringify(userAnswers)); // Đảm bảo dữ liệu được lưu
     localStorage.removeItem("selectedQuizId");
     localStorage.removeItem("currentScreen");
     localStorage.removeItem("timeLeft");
 
-    // Hiển thị thông báo tải xuống
-    const downloadNotice = document.getElementById("download-notice");
-    if (downloadNotice) {
-      downloadNotice.classList.remove("hidden");
-      showDownloadNotice();
-    } else {
-      console.warn("Download notice element not found");
-    }
+    downloadNotice.classList.remove("hidden");
+    showDownloadNotice();
   } catch (error) {
     console.error("Error submitting quiz:", error);
-    notification.innerText = "Lỗi khi nộp bài. Đáp án của bạn đã được lưu cục bộ. Vui lòng thử lại.";
+    notification.innerText = "Lỗi khi nộp bài. Đáp án của bạn vẫn được lưu. Vui lòng thử lại.";
   }
 }
 
@@ -1263,27 +1216,18 @@ async function fetchDirectResults() {
         throw new Error(`HTTP error! Status: ${res.status}`);
       }
       const results = await res.json();
-      console.log("Direct results fetched:", results);
       directResultsBody.innerHTML = "";
-      displayedResults.clear();
-
       if (results.length === 0) {
         directResultsBody.innerHTML = "<tr><td colspan='3' class='border p-2 text-center'>Chưa có kết quả nào.</td></tr>";
       } else {
         results.forEach(result => {
-          const resultKey = `${result.username}-${result.submittedAt}-${result.quizId || 'unknown'}`;
-          if (!displayedResults.has(resultKey)) {
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-              <td class="border p-2">${result.username || 'Unknown'}</td>
-              <td class="border p-2">${result.score || 0}</td>
-              <td class="border p-2">${result.submittedAt ? new Date(result.submittedAt).toLocaleString() : 'N/A'}</td>
-            `;
-            directResultsBody.appendChild(tr);
-            displayedResults.add(resultKey);
-          } else {
-            console.log("Duplicate direct result skipped:", resultKey);
-          }
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td class="border p-2">${result.username || 'Unknown'}</td>
+            <td class="border p-2">${result.score || 0}</td>
+            <td class="border p-2">${result.submittedAt ? new Date(result.submittedAt).toLocaleString() : 'N/A'}</td>
+          `;
+          directResultsBody.appendChild(tr);
         });
       }
       directResultsTable.classList.remove("hidden");
@@ -1300,15 +1244,14 @@ async function fetchDirectResults() {
 
 function saveUserAnswers() {
   if (!userAnswers) {
-    userAnswers = {};
-    console.warn("userAnswers is null, initialized as empty object");
+    userAnswers = {}; // Khởi tạo nếu chưa có
   }
   try {
     localStorage.setItem("userAnswers", JSON.stringify(userAnswers));
-    console.log("User answers saved to localStorage:", userAnswers);
+    console.log("User answers saved:", userAnswers);
   } catch (error) {
     console.error("Error saving user answers to localStorage:", error);
-    throw new Error("Không thể lưu đáp án cục bộ");
+    notification.innerText = "Lỗi khi lưu đáp án. Vui lòng thử lại.";
   }
 }
 
@@ -1325,8 +1268,6 @@ function handleWebSocketMessage(event) {
       return;
     }
     const message = JSON.parse(event.data);
-    console.log("WebSocket message received:", message);
-
     if (message.type === "quizStatus") {
       quizStatus.innerText = message.quizId ? `Đề thi hiện tại: ${message.quizName}` : "Chưa có đề thi được chọn.";
       selectedQuizId = message.quizId;
@@ -1342,38 +1283,18 @@ function handleWebSocketMessage(event) {
       const count = message.count !== undefined ? message.count : 0;
       submittedCount.innerText = `Số bài đã nộp: ${count}`;
       directSubmittedCount.innerText = `Số bài đã nộp: ${count}`;
-
-      if (isAdmin && message.results && message.immediateDisplay) {
-        // Chỉ chuyển màn hình cho admin
-        hideAllScreens();
-        quizListScreen.classList.remove("hidden");
-        if (isAdmin) {
-          adminOptions.classList.remove("hidden");
-          adminControls.classList.remove("hidden");
-          if (selectedQuizId) {
-            assignBtn.classList.remove("hidden");
-            directTestBtn.classList.remove("hidden");
-          }
-        }
-
-        // Cập nhật bảng kết quả
+      if (isAdmin && message.results) {
+        resultsBody.innerHTML = "";
         message.results.forEach(result => {
-          const resultKey = `${result.username}-${result.submittedAt}-${result.quizId || 'unknown'}`;
-          if (!displayedResults.has(resultKey)) {
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-              <td class="border p-2">${result.username || 'Unknown'}</td>
-              <td class="border p-2">${result.score || 0}</td>
-              <td class="border p-2">${result.submittedAt ? new Date(result.submittedAt).toLocaleString() : 'N/A'}</td>
-            `;
-            resultsBody.appendChild(tr);
-            displayedResults.add(resultKey);
-          } else {
-            console.log("Duplicate result skipped:", resultKey);
-          }
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td class="border p-2">${result.username || 'Unknown'}</td>
+            <td class="border p-2">${result.score || 0}</td>
+            <td class="border p-2">${result.submittedAt ? new Date(result.submittedAt).toLocaleString() : 'N/A'}</td>
+          `;
+          resultsBody.appendChild(tr);
         });
         resultsTable.classList.remove("hidden");
-        notification.innerText = "Có bài thi vừa được nộp.";
       }
     } else if (message.type === "start") {
       isAdminControlled = true;
