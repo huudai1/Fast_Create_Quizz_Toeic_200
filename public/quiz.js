@@ -1188,7 +1188,7 @@ async function submitQuiz() {
         console.error("Failed to fetch answer key, status:", answerRes.status);
         throw new Error("Không thể lấy đáp án đúng");
       }
-      answerKey = await answerRes.json();
+      answerKey = await res.json();
       console.log("Answer key loaded:", answerKey);
     } catch (error) {
       console.error("Error fetching answer key:", error);
@@ -1213,7 +1213,7 @@ async function submitQuiz() {
         username: user.name,
         score: result.score,
         submittedAt: new Date().toISOString(),
-        quizId: selectedQuizId, // Thêm quizId để server xác định bài thi
+        quizId: selectedQuizId,
       };
       if (!isAdminControlled) {
         submissionData.immediateDisplay = true; // Hiển thị ngay cho giao bài
@@ -1228,19 +1228,6 @@ async function submitQuiz() {
     localStorage.removeItem("selectedQuizId");
     localStorage.removeItem("currentScreen");
     localStorage.removeItem("timeLeft");
-
-    // Chuyển admin về quiz-list-screen để xem kết quả ngay trong chế độ giao bài
-    if (isAdmin && !isAdminControlled) {
-      hideAllScreens();
-      quizListScreen.classList.remove("hidden");
-      adminOptions.classList.remove("hidden");
-      adminControls.classList.remove("hidden");
-      if (selectedQuizId) {
-        assignBtn.classList.remove("hidden");
-        directTestBtn.classList.remove("hidden");
-      }
-      await loadQuizzes();
-    }
 
     downloadNotice.classList.remove("hidden");
     showDownloadNotice();
@@ -1343,28 +1330,35 @@ function handleWebSocketMessage(event) {
 
       if (isAdmin && message.results && message.immediateDisplay) {
         // Hiển thị kết quả ngay trên results-table cho giao bài
-        if (!quizListScreen.classList.contains("hidden")) {
-          resultsBody.innerHTML = ""; // Xóa bảng cũ
-          displayedResults.clear(); // Xóa cache
-          message.results.forEach(result => {
-            const resultKey = `${result.username}-${result.submittedAt}-${result.quizId || 'unknown'}`;
-            if (!displayedResults.has(resultKey)) {
-              const tr = document.createElement("tr");
-              tr.innerHTML = `
-                <td class="border p-2">${result.username || 'Unknown'}</td>
-                <td class="border p-2">${result.score || 0}</td>
-                <td class="border p-2">${result.submittedAt ? new Date(result.submittedAt).toLocaleString() : 'N/A'}</td>
-              `;
-              resultsBody.appendChild(tr);
-              displayedResults.add(resultKey);
-            } else {
-              console.log("Duplicate result skipped:", resultKey);
-            }
-          });
-          resultsTable.classList.remove("hidden");
-        } else {
-          console.log("quiz-list-screen is hidden, skipping results display");
+        hideAllScreens();
+        quizListScreen.classList.remove("hidden");
+        if (isAdmin) {
+          adminOptions.classList.remove("hidden");
+          adminControls.classList.remove("hidden");
+          if (selectedQuizId) {
+            assignBtn.classList.remove("hidden");
+            directTestBtn.classList.remove("hidden");
+          }
         }
+
+        // Cập nhật bảng kết quả
+        message.results.forEach(result => {
+          const resultKey = `${result.username}-${result.submittedAt}-${result.quizId || 'unknown'}`;
+          if (!displayedResults.has(resultKey)) {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td class="border p-2">${result.username || 'Unknown'}</td>
+              <td class="border p-2">${result.score || 0}</td>
+              <td class="border p-2">${result.submittedAt ? new Date(result.submittedAt).toLocaleString() : 'N/A'}</td>
+            `;
+            resultsBody.appendChild(tr);
+            displayedResults.add(resultKey);
+          } else {
+            console.log("Duplicate result skipped:", resultKey);
+          }
+        });
+        resultsTable.classList.remove("hidden");
+        notification.innerText = "Có bài thi vừa được nộp.";
       }
     } else if (message.type === "start") {
       isAdminControlled = true;

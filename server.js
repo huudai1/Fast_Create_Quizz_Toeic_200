@@ -137,7 +137,8 @@ app.get('/direct-results', async (req, res) => {
     const quizResults = results.filter(r => r.quizId === currentQuiz.quizId).map(result => ({
       username: result.username,
       score: result.score,
-      submittedAt: new Date(result.timestamp)
+      submittedAt: new Date(result.timestamp),
+      quizId: result.quizId
     }));
     res.status(200).json(quizResults);
   } catch (err) {
@@ -468,15 +469,17 @@ app.post('/submit', async (req, res) => {
   results.push(result);
   await saveResults();
 
-  const quizResults = results.filter(r => r.quizId === currentQuiz.quizId);
+  // Gửi tin nhắn WebSocket chỉ cho bài nộp hiện tại
   broadcast({
     type: 'submitted',
-    count: quizResults.length,
-    results: quizResults.map(r => ({
-      username: r.username,
-      score: r.score,
-      submittedAt: new Date(r.timestamp)
-    }))
+    count: results.filter(r => r.quizId === currentQuiz.quizId).length,
+    results: [{
+      username: result.username,
+      score: result.score,
+      submittedAt: new Date(result.timestamp),
+      quizId: result.quizId
+    }],
+    immediateDisplay: currentQuiz.isAssigned // Gửi immediateDisplay nếu quiz được giao
   });
 
   res.json({ score });
@@ -568,16 +571,6 @@ wss.on('connection', (ws) => {
   clients.add(ws);
   broadcast({ type: 'participantCount', count: clients.size });
   if (currentQuiz) {
-    const quizResults = results.filter(r => r.quizId === currentQuiz.quizId);
-    ws.send(JSON.stringify({
-      type: 'submitted',
-      count: quizResults.length,
-      results: quizResults.map(r => ({
-        username: r.username,
-        score: r.score,
-        submittedAt: new Date(r.timestamp)
-      }))
-    }));
     ws.send(JSON.stringify({
       type: 'quizStatus',
       quizId: currentQuiz.quizId,
@@ -590,7 +583,7 @@ wss.on('connection', (ws) => {
     try {
       const msg = JSON.parse(message);
       if (msg.type === 'start') {
-        broadcast({ type: 'start', timeLimit: msg.timeLimit });
+        broadcast({ type: 'start', timeLimit: msg.timeLimit, quizId: currentQuiz.quizId });
       } else if (msg.type === 'end') {
         if (currentQuiz) {
           const quizResults = results.filter(r => r.quizId === currentQuiz.quizId);
@@ -600,7 +593,8 @@ wss.on('connection', (ws) => {
             results: quizResults.map(r => ({
               username: r.username,
               score: r.score,
-              submittedAt: new Date(r.timestamp)
+              submittedAt: new Date(r.timestamp),
+              quizId: r.quizId
             }))
           });
         }
@@ -620,6 +614,22 @@ wss.on('connection', (ws) => {
         // Lưu thông tin user nếu cần
       } else if (msg.type === 'quizSelected' || msg.type === 'quizAssigned') {
         // Xử lý các tin nhắn từ client nếu cần
+      } else if (msg.type === 'submitted') {
+        // Kiểm tra immediateDisplay từ client
+        if (msg.immediateDisplay && currentQuiz) {
+          const quizResults = results.filter(r => r.quizId === currentQuiz.quizId);
+          broadcast({
+            type: 'submitted',
+            count: quizResults.length,
+            results: [{
+              username: msg.username,
+              score: msg.score,
+              submittedAt: new Date(msg.submittedAt),
+              quizId: msg.quizId
+            }],
+            immediateDisplay: true
+          });
+        }
       }
     } catch (err) {
       console.error('Error processing WebSocket message:', err);
@@ -630,11 +640,4 @@ wss.on('connection', (ws) => {
     clients.delete(ws);
     broadcast({ type: 'participantCount', count: clients.size });
   });
-
-  app.get('/answer-key', (req, res) => {
-  if (!currentQuiz) {
-    return res.status(404).json({ message: 'No quiz selected' });
-  }
-  res.json(currentQuiz.answerKey);
-});
 });
