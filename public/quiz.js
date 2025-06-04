@@ -210,6 +210,7 @@ async function restoreAdminState() {
         endDirectTestBtn.disabled = isTestEnded;
         if (isTestEnded) {
           try {
+            console.log("Restoring direct test results, fetching without overlay");
             await fetchDirectResults(false); // Fetch results without showing overlay
             console.log("fetchDirectResults called in restoreAdminState with showOverlay: false");
           } catch (error) {

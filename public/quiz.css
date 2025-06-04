@@ -541,6 +541,24 @@ input:checked + .slider:before {
   outline: 5px solid red; /* Red outline if overlay is visible */
 }
 
+/* Ensure overlay is hidden by default with high specificity */
+#top-scorers-overlay.hidden {
+  display: none !important;
+}
+
+/* Only show when explicitly triggered */
+#top-scorers-overlay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+/* Debugging outline when visible */
+#top-scorers-overlay:not(.hidden) {
+  outline: 5px solid red; /* Red outline if overlay is visible */
+}
+
 #top-scorers-overlay > div {
   height: 100%;
 }
