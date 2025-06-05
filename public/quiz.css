@@ -521,3 +521,20 @@ input:checked + .slider:before {
 #statistics-table th, #statistics-table td {
   text-align: center;
 }
+
+#static-back {
+  position: fixed;
+  top: 16px;         /* cách mép trên 16px */
+  right: 16px;       /* cách mép phải 16px */
+  background-color: #6B7280;  /* bg-gray-500 */
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  z-index: 9999;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+#static-back:hover {
+  background-color: #4B5563;  /* bg-gray-600 */
+}
