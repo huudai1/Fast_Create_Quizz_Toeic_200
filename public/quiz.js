@@ -48,6 +48,7 @@ const resultScore = document.getElementById("result-score");
 const resultTime = document.getElementById("result-time");
 const downloadNotice = document.getElementById("download-notice");
 const reviewScreen = document.getElementById("review-answers");
+const staticScreen = document.getElementById("statistics-screen");
 
 const wsProtocol = location.protocol === 'https:' ? 'wss://' : 'ws://';
 let socket = null;
@@ -83,6 +84,8 @@ function getCurrentScreen() {
   if (!uploadQuizzesSection.classList.contains("hidden")) return "upload-quizzes";
   if (!quizContainer.classList.contains("hidden")) return "quiz-container";
   if (!resultScreen.classList.contains("hidden")) return "result-screen";
+  if (!reviewScreen.classList.contains("hidden")) return "review-answers";
+  if (!staticScreen.classList.contains("hidden")) return "statistics-screen";
   if (!document.getElementById("admin-step-audio").classList.contains("hidden")) return "admin-step-audio";
   for (let i = 1; i <= 7; i++) {
     if (!document.getElementById(`admin-step-part${i}`).classList.contains("hidden")) {
@@ -200,6 +203,7 @@ function hideAllScreens() {
   uploadQuizzesSection.classList.add("hidden");
   quizContainer.classList.add("hidden");
   resultScreen.classList.add("hidden");
+  staticScreen.classList.add("hidden");
   const reviewScreen = document.getElementById("review-answers");
   if (reviewScreen) reviewScreen.classList.add("hidden");
   document.querySelectorAll(".admin-step").forEach(step => step.classList.add("hidden"));
