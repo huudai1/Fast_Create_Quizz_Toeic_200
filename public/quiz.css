@@ -538,3 +538,7 @@ input:checked + .slider:before {
 #static-back:hover {
   background-color: #4B5563;  /* bg-gray-600 */
 }
+
+#results-table {
+  margin-top: 16px; /* hoặc 24px, 32px tùy ý */
+}
