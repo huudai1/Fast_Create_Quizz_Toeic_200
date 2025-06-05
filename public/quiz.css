@@ -512,3 +512,12 @@ input:checked + .slider {
 input:checked + .slider:before {
   transform: translateX(26px);
 }
+
+/* quiz.css */
+#average-score-bar {
+  transition: width 0.5s ease-in-out;
+}
+
+#statistics-table th, #statistics-table td {
+  text-align: center;
+}

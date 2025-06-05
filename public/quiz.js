@@ -134,6 +134,63 @@ async function restoreAdminState() {
   return false;
 }
 
+async function showStatistics() {
+  if (!selectedQuizId) {
+    notification.innerText = "Vui lòng chọn một đề thi trước!";
+    return;
+  }
+
+  try {
+    // Gọi API để lấy dữ liệu thống kê
+    const res = await fetch(`/statistics?quizId=${selectedQuizId}`);
+    if (!res.ok) {
+      throw new Error(`Lỗi server: ${res.status}`);
+    }
+    const data = await res.json();
+    console.log("Statistics data:", data);
+
+    // Hiển thị màn hình thống kê
+    hideAllScreens();
+    const statisticsScreen = document.getElementById("statistics-screen");
+    statisticsScreen.classList.remove("hidden");
+    const notificationStatistics = document.getElementById("notification-statistics");
+    notificationStatistics.innerText = "";
+
+    // Cập nhật thanh điểm trung bình
+    const averageScore = data.averageScore || 0;
+    const averageScoreBar = document.getElementById("average-score-bar");
+    const averageScoreText = document.getElementById("average-score-text");
+    const percentage = (averageScore / 200) * 100; // Giả sử điểm tối đa là 200
+    averageScoreBar.style.width = `${percentage}%`;
+    averageScoreText.innerText = `Điểm trung bình: ${averageScore.toFixed(2)}/200`;
+
+    // Cập nhật bảng thống kê
+    const statisticsBody = document.getElementById("statistics-body");
+    statisticsBody.innerHTML = "";
+    
+    // Giả định data.questionStats là một mảng chứa thống kê cho từng câu
+    // Mỗi phần tử có dạng { questionId: "q1", wrongCount: 5, totalCount: 10 }
+    data.questionStats.forEach(stat => {
+      const tr = document.createElement("tr");
+      const questionNumber = parseInt(stat.questionId.replace("q", ""));
+      const wrongPercentage = stat.totalCount > 0 ? ((stat.wrongCount / stat.totalCount) * 100).toFixed(2) : 0;
+      tr.innerHTML = `
+        <td class="border p-2">${questionNumber}</td>
+        <td class="border p-2">${stat.wrongCount}</td>
+        <td class="border p-2">${stat.totalCount}</td>
+        <td class="border p-2">${wrongPercentage}%</td>
+      `;
+      statisticsBody.appendChild(tr);
+    });
+
+    // Lưu trạng thái admin
+    saveAdminState();
+  } catch (error) {
+    console.error("Error fetching statistics:", error);
+    document.getElementById("notification-statistics").innerText = "Lỗi khi tải thống kê. Vui lòng thử lại.";
+  }
+}
+
 function hideAllScreens() {
   welcomeScreen.classList.add("hidden");
   adminLogin.classList.add("hidden");

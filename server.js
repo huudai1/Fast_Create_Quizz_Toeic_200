@@ -146,6 +146,65 @@ app.get('/direct-results', async (req, res) => {
   }
 });
 
+app.get('/statistics', async (req, res) => {
+  try {
+    const quizId = req.query.quizId;
+    if (!quizId) {
+      return res.status(400).json({ message: 'Quiz ID is required' });
+    }
+
+    const quiz = quizzes.find((q) => q.quizId === quizId);
+    if (!quiz) {
+      return res.status(404).json({ message: 'Quiz not found' });
+    }
+
+    // Lấy tất cả kết quả của quizId
+    const quizResults = results.filter((r) => r.quizId === quizId);
+    
+    // Tính điểm trung bình
+    let totalScore = 0;
+    let totalSubmissions = quizResults.length;
+    if (totalSubmissions === 0) {
+      return res.status(200).json({
+        averageScore: 0,
+        questionStats: []
+      });
+    }
+
+    quizResults.forEach((result) => {
+      totalScore += result.score || 0;
+    });
+    const averageScore = totalScore / totalSubmissions;
+
+    // Tính thống kê đúng/sai cho từng câu hỏi
+    const questionStats = [];
+    for (let i = 1; i <= 200; i++) {
+      const questionId = `q${i}`;
+      let wrongCount = 0;
+      quizResults.forEach((result) => {
+        const userAnswer = result.answers ? result.answers[questionId] : null;
+        const correctAnswer = quiz.answerKey[questionId];
+        if (userAnswer && userAnswer !== correctAnswer) {
+          wrongCount++;
+        }
+      });
+      questionStats.push({
+        questionId: questionId,
+        wrongCount: wrongCount,
+        totalCount: totalSubmissions
+      });
+    }
+
+    res.status(200).json({
+      averageScore: averageScore,
+      questionStats: questionStats
+    });
+  } catch (err) {
+    console.error('Error fetching statistics:', err);
+    res.status(500).json({ message: 'Error fetching statistics' });
+  }
+});
+
 // Endpoint để xóa database
 app.delete('/clear-database', async (req, res) => {
   try {
@@ -463,16 +522,17 @@ app.post('/submit', async (req, res) => {
     quizId: currentQuiz.quizId,
     username,
     score,
+    answers, // Lưu trữ toàn bộ đáp án
     timestamp: Date.now()
   };
   results.push(result);
   await saveResults();
 
-  const quizResults = results.filter(r => r.quizId === currentQuiz.quizId);
+  const quizResults = results.filter((r) => r.quizId === currentQuiz.quizId);
   broadcast({
     type: 'submitted',
     count: quizResults.length,
-    results: quizResults.map(r => ({
+    results: quizResults.map((r) => ({
       username: r.username,
       score: r.score,
       submittedAt: new Date(r.timestamp)
