@@ -61,11 +61,12 @@ body.dark-mode .question-section h2 {
 
 embed[type="application/pdf"] {
   width: 100%;
-  max-width: 1000px;
-  height: 85vh;
+  max-width: 1200px;
+  height: 90vh;
   max-height: 100%;
-  border: 1px solid #ccc; /* Light border by default */
+  border: 1px solid #ccc;
   margin-bottom: 16px;
+  zoom: 1.5; /* Phóng to 150% */
 }
 
 body.dark-mode embed[type="application/pdf"] {
