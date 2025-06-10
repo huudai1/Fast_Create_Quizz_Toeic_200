@@ -981,22 +981,46 @@ async function loadImages(part) {
   try {
     const res = await fetch(`/images?part=${part}`);
     const files = await res.json();
+    const imageDisplay = document.getElementById("image-display");
     imageDisplay.innerHTML = `<h3 class="text-lg font-semibold mb-2">Part ${part}</h3>`;
-    files.forEach(url => {
+    const pdfCanvasContainer = document.getElementById("pdf-canvas-container");
+    pdfCanvasContainer.innerHTML = '<canvas id="pdf-canvas"></canvas>';
+
+    for (const url of files) {
       const isPDF = url.endsWith('.pdf');
       if (isPDF) {
-        const embed = document.createElement("embed");
-        embed.src = url;
-        embed.type = "application/pdf";
-        embed.className = "w-full h-[600px] mb-4"; // Điều chỉnh kích thước phù hợp
-        imageDisplay.appendChild(embed);
+        const canvas = document.getElementById("pdf-canvas");
+        const context = canvas.getContext('2d');
+        const loadingTask = pdfjsLib.getDocument(url);
+        const pdf = await loadingTask.promise;
+        const page = await pdf.getPage(1); // Lấy trang đầu tiên
+        let scale = 1.5; // Phóng to 150% mặc định
+        const viewport = page.getViewport({ scale });
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        await page.render({ canvasContext: context, viewport });
+
+        // Thêm phóng to/thu nhỏ bằng bánh xe chuột
+        canvas.addEventListener('wheel', (e) => {
+          e.preventDefault();
+          const delta = e.deltaY * -0.01;
+          const newScale = scale * (1 + delta);
+          if (newScale > 0.5 && newScale < 3) { // Giới hạn zoom từ 50% đến 300%
+            scale = newScale;
+            const newViewport = page.getViewport({ scale });
+            canvas.height = newViewport.height;
+            canvas.width = newViewport.width;
+            page.render({ canvasContext: context, viewport: newViewport });
+          }
+        });
       } else {
         const img = document.createElement("img");
         img.src = url;
         img.className = "w-full max-w-[400px] mb-4 rounded";
         imageDisplay.appendChild(img);
       }
-    });
+    }
   } catch (error) {
     console.error("Error loading images:", error);
     notification.innerText = `Lỗi khi tải ảnh hoặc PDF cho Part ${part}.`;
@@ -1544,48 +1568,48 @@ async function loadReviewImages(part) {
       throw new Error(`Không thể tải ảnh hoặc PDF cho Part ${part}`);
     }
     const files = await res.json();
-    console.log(`Images/PDFs for Part ${part}:`, files); // Log để kiểm tra danh sách file
+    console.log(`Images/PDFs for Part ${part}:`, files);
 
     const reviewImageDisplay = document.getElementById("review-image-display");
-    if (!reviewImageDisplay) {
-      console.error("Element with ID 'review-image-display' not found");
-      throw new Error("Không tìm thấy khu vực hiển thị ảnh");
-    }
     reviewImageDisplay.innerHTML = `<h3 class="text-lg font-semibold mb-2">Part ${part}</h3>`;
+    const reviewPdfCanvasContainer = document.getElementById("review-pdf-canvas-container");
+    reviewPdfCanvasContainer.innerHTML = '<canvas id="review-pdf-canvas"></canvas>';
 
-    if (!files || files.length === 0) {
-      console.warn(`No images or PDFs found for Part ${part}`);
-      reviewImageDisplay.innerHTML += `<p>Không có ảnh hoặc PDF cho Part ${part}</p>`;
-      return;
-    }
-
-    files.forEach(url => {
-      console.log(`Processing file: ${url}`); // Log từng URL
+    for (const url of files) {
       const isPDF = url.endsWith('.pdf');
       if (isPDF) {
-        const embed = document.createElement("embed");
-        embed.src = url;
-        embed.type = "application/pdf";
-        embed.className = "w-full h-[600px] mb-4";
-        embed.onerror = () => {
-          console.error(`Failed to load PDF: ${url}`);
-          notification.innerText = `Lỗi khi tải PDF: ${url}`;
-        };
-        reviewImageDisplay.appendChild(embed);
+        const canvas = document.getElementById("review-pdf-canvas");
+        const context = canvas.getContext('2d');
+        const loadingTask = pdfjsLib.getDocument(url);
+        const pdf = await loadingTask.promise;
+        const page = await pdf.getPage(1); // Lấy trang đầu tiên
+        let scale = 1.5; // Phóng to 150% mặc định
+        const viewport = page.getViewport({ scale });
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        await page.render({ canvasContext: context, viewport });
+
+        // Thêm phóng to/thu nhỏ bằng bánh xe chuột
+        canvas.addEventListener('wheel', (e) => {
+          e.preventDefault();
+          const delta = e.deltaY * -0.01;
+          const newScale = scale * (1 + delta);
+          if (newScale > 0.5 && newScale < 3) { // Giới hạn zoom từ 50% đến 300%
+            scale = newScale;
+            const newViewport = page.getViewport({ scale });
+            canvas.height = newViewport.height;
+            canvas.width = newViewport.width;
+            page.render({ canvasContext: context, viewport: newViewport });
+          }
+        });
       } else {
         const img = document.createElement("img");
         img.src = url;
         img.className = "w-full max-w-[400px] mb-4 rounded";
-        img.onerror = () => {
-          console.error(`Failed to load image: ${url}`);
-          notification.innerText = `Lỗi khi tải ảnh: ${url}`;
-        };
-        img.onload = () => {
-          console.log(`Image loaded successfully: ${url}`);
-        };
         reviewImageDisplay.appendChild(img);
       }
-    });
+    }
   } catch (error) {
     console.error("Error loading review images:", error);
     notification.innerText = `Lỗi khi tải ảnh hoặc PDF cho Part ${part}: ${error.message}`;

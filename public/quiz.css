@@ -61,12 +61,11 @@ body.dark-mode .question-section h2 {
 
 embed[type="application/pdf"] {
   width: 100%;
-  max-width: 1200px;
-  height: 90vh;
+  max-width: 1000px;
+  height: 85vh;
   max-height: 100%;
-  border: 1px solid #ccc;
+  border: 1px solid #ccc; /* Light border by default */
   margin-bottom: 16px;
-  zoom: 1.5; /* Phóng to 150% */
 }
 
 body.dark-mode embed[type="application/pdf"] {
@@ -542,4 +541,35 @@ input:checked + .slider:before {
 
 #results-table {
   margin-top: 16px; /* hoặc 24px, 32px tùy ý */
+}
+
+
+.image-section .pdf-canvas-container {
+  width: 100%;
+  max-width: 1200px;
+  height: 90vh;
+  max-height: 100%;
+  margin-bottom: 16px;
+  position: relative;
+  overflow: auto;
+  border: 1px solid #ccc;
+}
+
+body.dark-mode .image-section .pdf-canvas-container {
+  border: 1px solid #4b5563;
+}
+
+.pdf-canvas {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+@media (max-width: 600px) {
+  .image-section .pdf-canvas-container {
+    max-width: 100%;
+    height: 55vh;
+    max-height: 55vh;
+    margin: 10px auto;
+  }
 }
