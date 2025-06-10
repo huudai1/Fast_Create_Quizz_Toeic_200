@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="google-signin-client_id" content="207656291282-2n9j95iveggdn6o3suonlk68k52dfndg.apps.googleusercontent.com">
   <title>Quiz App</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="quiz.css">
@@ -310,11 +309,8 @@
     </audio>
     <div class="split-container">
       <div class="image-section" id="image-display">
-      <h3 class="text-lg font-semibold mb-2">Part 1</h3>
-      <div class="pdf-canvas-container" id="pdf-canvas-container">
-    <canvas id="pdf-canvas"></canvas>
-  </div>
-</div>
+        <h3 class="text-lg font-semibold mb-2">Part 1</h3>
+      </div>
       <div class="question-section">
         <form id="quizForm" class="space-y-4">
           <div id="quiz-part1">
@@ -382,11 +378,8 @@
   <p id="review-time" class="text-lg mb-2"></p>
   <div class="split-container">
     <div class="image-section" id="review-image-display">
-    <h3 class="text-lg font-semibold mb-2">Part 1</h3>
-    <div class="pdf-canvas-container" id="review-pdf-canvas-container">
-    <canvas id="review-pdf-canvas"></canvas>
-  </div>
-</div>
+      <h3 class="text-lg font-semibold mb-2">Part 1</h3>
+    </div>
     <div class="question-section">
       <div id="review-part1">
         <h2 class="text-2xl font-semibold mb-2">Part 1</h2>
