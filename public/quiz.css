@@ -1,8 +1,10 @@
 /* Container chính */
 .split-container {
   display: flex;
-  height: calc(100vh - 50px);
+  height: calc(100vh - 20px); /* Tăng chiều cao, giảm margin top/bottom */
+  margin: 10px; /* Giảm margin để container to hơn */
   overflow: hidden;
+  animation: slideIn 0.6s ease-out forwards, neonGlow 1.5s ease-in-out;
 }
 
 .image-section,
@@ -544,87 +546,198 @@ input:checked + .slider:before {
 }
 
 
-@keyframes fadeInLeft {
+/* Hiệu ứng eSport */
+@keyframes slideIn {
   from {
     opacity: 0;
-    transform: translateX(-50px);
+    transform: translateY(100px) scale(0.95);
   }
   to {
     opacity: 1;
-    transform: translateX(0);
+    transform: translateY(0) scale(1);
   }
 }
 
-@keyframes fadeInRight {
-  from {
-    opacity: 0;
-    transform: translateX(50px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes zoomIn {
-  from {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes pulse {
-  0% {
-    transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+@keyframes neonGlow {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.5), 0 0 20px rgba(59, 130, 246, 0.3);
   }
   50% {
-    transform: scale(1.05);
-    box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
-  }
-  100% {
-    transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.8), 0 0 30px rgba(59, 130, 246, 0.5);
   }
 }
 
-/* Áp dụng hiệu ứng cho các thành phần */
-.split-container {
-  animation: fadeInLeft 0.8s ease-out forwards;
+@keyframes glitch {
+  0% {
+    transform: translate(0);
+  }
+  20% {
+    transform: translate(-2px, 2px);
+  }
+  40% {
+    transform: translate(-2px, -2px);
+  }
+  60% {
+    transform: translate(2px, 2px);
+  }
+  80% {
+    transform: translate(2px, -2px);
+  }
+  100% {
+    transform: translate(0);
+  }
+}
+
+.image-section {
+  width: 70%; /* Tăng chiều rộng lên 70% để container to hơn */
+  border-right: 1px solid #e5e7eb;
+  animation: slideIn 0.7s ease-out forwards;
+  animation-delay: 0.2s;
+}
+
+body.dark-mode .image-section {
+  border-right: 1px solid #4b5563;
 }
 
 .question-section {
-  animation: fadeInRight 0.8s ease-out forwards;
-  animation-delay: 0.2s; /* Trễ nhẹ để tạo hiệu ứng tuần tự */
+  width: 30%; /* Giảm chiều rộng để phần trả lời nhỏ hơn */
+  background-color: #ffffff;
+  padding: 15px; /* Giảm padding để nhỏ gọn */
+  border-radius: 10px;
+  animation: slideIn 0.7s ease-out forwards;
+  animation-delay: 0.4s;
 }
 
-.image-section img,
+body.dark-mode .question-section {
+  background-color: #1a1a1a;
+}
+
+.question-section h2 {
+  font-size: 1.25rem; /* Giảm font-size để nhỏ gọn */
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+  border-bottom: 2px solid #3b82f6;
+  padding-bottom: 4px;
+  animation: glitch 0.5s ease-in-out; /* Hiệu ứng glitch cho tiêu đề */
+}
+
+body.dark-mode .question-section h2 {
+  color: #e5e7eb;
+}
+
+.image-section img {
+  width: 100%;
+  max-width: 1600px; /* Tăng max-width để ảnh to hơn */
+  max-height: 90vh; /* Tăng max-height để ảnh to hơn */
+  margin-bottom: 16px;
+  animation: zoomIn 0.8s ease-out forwards;
+}
+
+.image-section img:hover {
+  transform: scale(1.15); /* Tăng scale khi hover */
+}
+
 embed[type="application/pdf"] {
-  animation: zoomIn 1s ease-out forwards;
+  width: 100%;
+  max-width: 1200px; /* Tăng max-width để PDF to hơn */
+  height: 90vh; /* Tăng height */
+  max-height: 100%;
+  border: 1px solid #ccc;
+  margin-bottom: 16px;
+  animation: zoomIn 0.8s ease-out forwards;
 }
 
-#timer,
+body.dark-mode embed[type="application/pdf"] {
+  border: 1px solid #4b5563;
+}
+
+/* Hiệu ứng ZoomIn */
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Style cho timer */
+#timer {
+  position: fixed;
+  top: 5px;
+  right: 10px;
+  z-index: 100;
+  background-color: #ffffff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); /* Neon glow */
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+  text-align: center;
+  border: 1px solid #e5e7eb;
+  width: auto;
+  min-width: 100px;
+  animation: neonPulse 1.5s ease-in-out infinite;
+}
+
+body.dark-mode #timer {
+  background-color: #2a2a2a;
+  color: #e5e7eb;
+  border: 1px solid #4b5563;
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.7);
+}
+
+/* Style cho audio */
 #audio {
-  animation: pulse 1.5s ease-in-out 2; /* Lặp 2 lần */
-  animation-delay: 0.5s;
+  position: fixed;
+  top: 5px;
+  left: 500px;
+  z-index: 2;
+  background-color: #ffffff;
+  padding: 8px;
+  border-radius: 6px;
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); /* Neon glow */
+  margin-bottom: 16px;
+  border: 1px solid #e5e7eb;
+  width: 100%;
+  max-width: 200px;
+  transition: max-width 0.3s ease;
+  animation: neonPulse 1.5s ease-in-out infinite;
 }
 
-/* Loading Screen */
+body.dark-mode #audio {
+  background-color: #2a2a2a;
+  border: 1px solid #4b5563;
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.7);
+}
+
+/* Hiệu ứng Neon Pulse */
+@keyframes neonPulse {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.5), 0 0 20px rgba(59, 130, 246, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.8), 0 0 30px rgba(59, 130, 246, 0.5);
+  }
+}
+
+/* Loading Screen eSport */
 #loading-screen {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100vh;
-  background-color: rgba(0, 0, 0, 0.8);
+  background-color: #1a1a1a; /* Nền tối kiểu eSport */
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: 2000;
   opacity: 1;
   transition: opacity 0.5s ease;
 }
@@ -634,18 +747,27 @@ embed[type="application/pdf"] {
   pointer-events: none;
 }
 
+#loading-text {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #3b82f6; /* Màu neon xanh */
+  text-transform: uppercase;
+  animation: glitch 0.6s ease-in-out infinite;
+  margin-bottom: 20px;
+}
+
 #loading-spinner {
-  width: 50px;
-  height: 50px;
-  border: 5px solid #e5e7eb;
-  border-top: 5px solid #3b82f6;
+  width: 60px;
+  height: 60px;
+  border: 6px solid #4b5563;
+  border-top: 6px solid #3b82f6;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
 
 body.dark-mode #loading-spinner {
-  border: 5px solid #4b5563;
-  border-top: 5px solid #3b82f6;
+  border: 6px solid #4b5563;
+  border-top: 6px solid #3b82f6;
 }
 
 @keyframes spin {
@@ -654,5 +776,67 @@ body.dark-mode #loading-spinner {
   }
   100% {
     transform: rotate(360deg);
+  }
+}
+
+/* Thu nhỏ phần trả lời */
+.answer-item {
+  padding: 8px 12px; /* Giảm padding để nhỏ gọn */
+  font-size: 13px; /* Giảm font-size */
+}
+
+body.dark-mode .answer-item {
+  background-color: #374151;
+}
+
+.answer-item span {
+  font-size: 13px; /* Giảm font-size */
+}
+
+/* Responsive cho mobile */
+@media (max-width: 600px) {
+  .split-container {
+    flex-direction: column;
+    height: auto;
+    max-height: calc(100vh - 50px); /* Giảm margin để to hơn */
+    margin: 5px;
+  }
+  .image-section {
+    width: 100%;
+    max-height: 65vh; /* Tăng chiều cao ảnh */
+    border-right: none;
+    border-bottom: 1px solid #ccc;
+    animation: slideIn 0.7s ease-out forwards;
+  }
+  .question-section {
+    width: 100%;
+    max-height: 35vh; /* Giảm chiều cao để nhỏ gọn */
+    padding: 10px;
+  }
+  .image-section img {
+    max-width: 100%;
+    max-height: 60vh; /* Tăng chiều cao ảnh */
+  }
+  embed[type="application/pdf"] {
+    max-width: 100%;
+    height: 60vh;
+    max-height: 60vh;
+  }
+  #timer {
+    font-size: 14px; /* Giảm font-size */
+    min-width: 80px;
+  }
+  #audio {
+    max-width: 160px; /* Giảm kích thước */
+  }
+  .question-section h2 {
+    font-size: 1rem; /* Giảm font-size */
+  }
+  .answer-item {
+    padding: 6px 10px; /* Thu nhỏ hơn nữa */
+    font-size: 12px;
+  }
+  .answer-item span {
+    font-size: 12px;
   }
 }

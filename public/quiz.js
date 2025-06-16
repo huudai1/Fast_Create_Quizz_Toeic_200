@@ -1693,5 +1693,5 @@ document.addEventListener("DOMContentLoaded", async () => {
 document.addEventListener("DOMContentLoaded", function () {
   setTimeout(() => {
     document.getElementById("loading-screen").classList.add("hidden");
-  }, 1500); // Ẩn sau 1.5 giây
+  }, 2000); // Ẩn sau 2 giây
 });
