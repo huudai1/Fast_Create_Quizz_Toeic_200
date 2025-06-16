@@ -1689,3 +1689,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     submitQuiz();
   });
 });
+
+document.addEventListener("DOMContentLoaded", function () {
+  setTimeout(() => {
+    document.getElementById("loading-screen").classList.add("hidden");
+  }, 1500); // Ẩn sau 1.5 giây
+});
