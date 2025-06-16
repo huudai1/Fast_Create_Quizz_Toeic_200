@@ -428,22 +428,22 @@ async function uploadQuizzes() {
       throw new Error("Phản hồi server không hợp lệ");
     }
 
-    notificationElement.innerText = result.message || "Tải lên đề thi thành công!";
-    if (res.ok) {
-      console.log("Upload successful, calling backToQuizList()");
-      backToQuizList();
-      
-      setTimeout(() => {
-        notificationElement.innerText = "Đã tải lên thành công! Nếu chưa thấy đề, vui lòng làm mới trang.";
-        setTimeout(() => {
-          if (confirm("Bạn có muốn làm mới trang để xem đề thi mới?")) {
-            window.location.reload();
-          }
-        }, 5000);
-      }, 1000);
-    } else {
+    if (!res.ok) {
       throw new Error(result.message || "Server returned an error");
     }
+
+    notificationElement.innerText = result.message || "Tải lên đề thi thành công!";
+    console.log("Upload successful, calling backToQuizList()");
+    backToQuizList();
+    
+    setTimeout(() => {
+      notificationElement.innerText = "Đã tải lên thành công! Nếu chưa thấy đề, vui lòng làm mới trang.";
+      setTimeout(() => {
+        if (confirm("Bạn có muốn làm mới trang để xem đề thi mới?")) {
+          window.location.reload();
+        }
+      }, 5000);
+    }, 1000);
   } catch (error) {
     console.error("Error uploading quizzes:", error);
     notificationElement.innerText = `Lỗi khi tải lên đề thi: ${error.message}. Vui lòng thử lại.`;
@@ -960,13 +960,13 @@ async function loadImages(part) {
     let files = await res.json();
     console.log(`Images/PDFs for Part ${part} (before sorting):`, files);
 
-    // Sort files based on numeric part of filename
+    // Sort files based on numeric index in filename (e.g., partX_Y.extension)
     files.sort((a, b) => {
-      const getNumber = (url) => {
-        const match = url.match(/(\d+)\.(jpg|jpeg|png|pdf)/i);
+      const getIndex = (url) => {
+        const match = url.match(/part\d+_(\d+)\.(jpg|jpeg|png|pdf)/i);
         return match ? parseInt(match[1]) : Infinity;
       };
-      return getNumber(a) - getNumber(b);
+      return getIndex(a) - getIndex(b);
     });
     console.log(`Images/PDFs for Part ${part} (after sorting):`, files);
 
@@ -982,7 +982,7 @@ async function loadImages(part) {
         const embed = document.createElement("embed");
         embed.src = url;
         embed.type = "application/pdf";
-        embed.className = "w-full h-[90vh] mb-4"; // Adjusted for larger size
+        embed.className = "w-full h-[90vh] mb-4";
         embed.onerror = () => {
           console.error(`Failed to load PDF: ${url}`);
           notification.innerText = `Lỗi khi tải PDF: ${url}`;
@@ -1060,21 +1060,17 @@ async function saveQuiz() {
       notificationElement.innerText = `Vui lòng tải ít nhất một ảnh cho Part ${i}!`;
       return;
     }
-    // Validate filename format (e.g., 1.jpg, 2.pdf)
-    for (let file of files) {
-      const validName = file.name.match(/^(\d+)\.(jpg|jpeg|png|pdf)$/i);
-      if (!validName) {
-        notificationElement.innerText = `Tên file ảnh/PDF cho Part ${i} phải có định dạng số nguyên (ví dụ: 1.jpg, 2.pdf). File không hợp lệ: ${file.name}`;
+    // Validate and rename files to partX_Y.extension
+    Array.from(files).forEach((file, index) => {
+      const extension = file.name.match(/\.(jpg|jpeg|png|pdf)$/i)?.[0].toLowerCase();
+      if (!extension) {
+        notificationElement.innerText = `File không hợp lệ cho Part ${i}: ${file.name}. Chỉ hỗ trợ jpg, jpeg, png, pdf.`;
         return;
       }
-    }
-    // Sort files before appending
-    const sortedFiles = Array.from(files).sort((a, b) => {
-      const getNumber = (name) => parseInt(name.match(/^(\d+)\./)[1]);
-      return getNumber(a.name) - getNumber(b.name);
-    });
-    sortedFiles.forEach(file => {
-      formData.append(`images-part${i}`, file);
+      const newName = `part${i}_${index + 1}${extension}`;
+      console.log(`Renaming file for Part ${i}: ${file.name} -> ${newName}`);
+      const renamedFile = new File([file], newName, { type: file.type });
+      formData.append(`images-part${i}`, renamedFile);
     });
   }
 
@@ -1176,9 +1172,9 @@ function nextAdminStep(step) {
       return;
     }
     for (let file of imagesInput.files) {
-      const validName = file.name.match(/^(\d+)\.(jpg|jpeg|png|pdf)$/i);
-      if (!validName) {
-        notificationElement.innerText = `Tên file ảnh/PDF cho Part ${part} phải có định dạng số nguyên (ví dụ: 1.jpg, 2.pdf). File không hợp lệ: ${file.name}`;
+      const validExtension = file.name.match(/\.(jpg|jpeg|png|pdf)$/i);
+      if (!validExtension) {
+        notificationElement.innerText = `File không hợp lệ cho Part ${part}: ${file.name}. Chỉ hỗ trợ jpg, jpeg, png, pdf.`;
         return;
       }
     }
@@ -1557,13 +1553,13 @@ async function loadReviewImages(part) {
     let files = await res.json();
     console.log(`Images/PDFs for Part ${part} (before sorting):`, files);
 
-    // Sort files based on numeric part of filename
+    // Sort files based on numeric index in filename (e.g., partX_Y.extension)
     files.sort((a, b) => {
-      const getNumber = (url) => {
-        const match = url.match(/(\d+)\.(jpg|jpeg|png|pdf)/i);
+      const getIndex = (url) => {
+        const match = url.match(/part\d+_(\d+)\.(jpg|jpeg|png|pdf)/i);
         return match ? parseInt(match[1]) : Infinity;
       };
-      return getNumber(a) - getNumber(b);
+      return getIndex(a) - getIndex(b);
     });
     console.log(`Images/PDFs for Part ${part} (after sorting):`, files);
 
