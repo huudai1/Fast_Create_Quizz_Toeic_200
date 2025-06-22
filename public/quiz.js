@@ -480,14 +480,13 @@ async function downloadQuizzes(quizId) {
         const downloadUrl = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = downloadUrl;
-        link.download = `quiz_${quizId}.zip`;
+        link.download = `quiz_${quizId}.zip`; // Keep ZIP name as quiz_<quizId>.zip
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         window.URL.revokeObjectURL(downloadUrl);
 
         notification.innerText = "Đã tải xuống file ZIP chứa đề thi.";
-
         setTimeout(() => {
           loadingModal.classList.add('hidden');
           progressBar.style.width = '0%';
@@ -511,6 +510,7 @@ async function downloadQuizzes(quizId) {
     progressText.innerText = '0%';
   }
 }
+
 
 async function clearDatabase() {
   if (!confirm("Bạn có chắc muốn xóa toàn bộ database? Hành động này không thể hoàn tác!")) return;
@@ -976,18 +976,20 @@ async function loadImages(part) {
       return;
     }
 
-    files.forEach(url => {
+    files.forEach((url, index) => {
       const isPDF = url.endsWith('.pdf');
       if (isPDF) {
-        const embed = document.createElement("embed");
-        embed.src = url;
-        embed.type = "application/pdf";
-        embed.className = "w-full h-[90vh] mb-4";
-        embed.onerror = () => {
-          console.error(`Failed to load PDF: ${url}`);
-          notification.innerText = `Lỗi khi tải PDF: ${url}`;
-        };
-        imageDisplay.appendChild(embed);
+        const pdfContainer = document.createElement("div");
+        pdfContainer.className = "pdf-container mb-4";
+        pdfContainer.innerHTML = `
+          <div class="pdf-toolbar mb-2 flex space-x-2">
+            <button onclick="zoomPDF('pdf-${part}-${index}', 1.2)" class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">Phóng to</button>
+            <button onclick="zoomPDF('pdf-${part}-${index}', 0.8)" class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">Thu nhỏ</button>
+            <button onclick="zoomPDF('pdf-${part}-${index}', 1)" class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">Đặt lại</button>
+          </div>
+          <iframe id="pdf-${part}-${index}" src="${url}" class="w-full h-[90vh] rounded" style="transform: scale(1); transform-origin: top left;"></iframe>
+        `;
+        imageDisplay.appendChild(pdfContainer);
       } else {
         const img = document.createElement("img");
         img.src = url;
@@ -1576,19 +1578,21 @@ async function loadReviewImages(part) {
       return;
     }
 
-    files.forEach(url => {
+    files.forEach((url, index) => {
       console.log(`Processing file: ${url}`);
       const isPDF = url.endsWith('.pdf');
       if (isPDF) {
-        const embed = document.createElement("embed");
-        embed.src = url;
-        embed.type = "application/pdf";
-        embed.className = "w-full h-[90vh] mb-4";
-        embed.onerror = () => {
-          console.error(`Failed to load PDF: ${url}`);
-          notification.innerText = `Lỗi khi tải PDF: ${url}`;
-        };
-        reviewImageDisplay.appendChild(embed);
+        const pdfContainer = document.createElement("div");
+        pdfContainer.className = "pdf-container mb-4";
+        pdfContainer.innerHTML = `
+          <div class="pdf-toolbar mb-2 flex space-x-2">
+            <button onclick="zoomPDF('review-pdf-${part}-${index}', 1.2)" class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">Phóng to</button>
+            <button onclick="zoomPDF('review-pdf-${part}-${index}', 0.8)" class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">Thu nhỏ</button>
+            <button onclick="zoomPDF('review-pdf-${part}-${index}', 1)" class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">Đặt lại</button>
+          </div>
+          <iframe id="review-pdf-${part}-${index}" src="${url}" class="w-full h-[90vh] rounded" style="transform: scale(1); transform-origin: top left;"></iframe>
+        `;
+        reviewImageDisplay.appendChild(pdfContainer);
       } else {
         const img = document.createElement("img");
         img.src = url;
@@ -1607,6 +1611,22 @@ async function loadReviewImages(part) {
     console.error("Error loading review images:", error);
     notification.innerText = `Lỗi khi tải ảnh hoặc PDF cho Part ${part}: ${error.message}`;
   }
+}
+
+
+// PDF Zoom Function
+function zoomPDF(iframeId, scaleFactor) {
+  const iframe = document.getElementById(iframeId);
+  if (!iframe) {
+    console.error(`Iframe with ID ${iframeId} not found`);
+    return;
+  }
+  const currentScale = parseFloat(iframe.style.transform.replace('scale(', '').replace(')', '') || 1);
+  let newScale = currentScale * scaleFactor;
+  if (scaleFactor === 1) newScale = 1; // Reset to original size
+  if (newScale < 0.5) newScale = 0.5; // Minimum zoom
+  if (newScale > 2) newScale = 2; // Maximum zoom
+  iframe.style.transform = `scale(${newScale})`;
 }
 
 async function logout() {

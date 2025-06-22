@@ -371,7 +371,9 @@ app.get('/download-quiz-zip/:quizId', async (req, res) => {
       if (audioPath) {
         const fullPath = path.join(__dirname, 'public', audioPath.substring(1));
         if (fsSync.existsSync(fullPath)) {
-          zip.file(fullPath, { name: `part${i}/audio/part${i}.mp3` });
+          // Use original filename from quiz.audio
+          const originalName = path.basename(audioPath);
+          zip.file(fullPath, { name: `part${i}/audio/${originalName}` });
         }
       }
     }
@@ -381,7 +383,9 @@ app.get('/download-quiz-zip/:quizId', async (req, res) => {
       for (let imagePath of images) {
         const fullPath = path.join(__dirname, 'public', imagePath.substring(1));
         if (fsSync.existsSync(fullPath)) {
-          zip.file(fullPath, { name: `part${i}/images/${path.basename(imagePath)}` });
+          // Use original filename from quiz.images
+          const originalName = path.basename(imagePath);
+          zip.file(fullPath, { name: `part${i}/images/${originalName}` });
         }
       }
     }
