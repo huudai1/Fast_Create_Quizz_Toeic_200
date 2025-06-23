@@ -840,3 +840,40 @@ body.dark-mode .answer-item {
     font-size: 12px;
   }
 }
+
+/* quiz.css */
+#direct-test-progress-bar {
+  transition: width 1s ease-in-out;
+}
+
+.w-full.bg-gray-200.rounded-full.h-6 {
+  background-color: #e5e7eb; /* Màu nền thanh tiến trình */
+  border: 2px solid #d1d5db; /* Viền nhẹ */
+}
+
+.bg-green-500 {
+  background-color: #22c55e; /* Màu xanh cho thanh tiến trình */
+}
+
+.bg-green-500.transition-all {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Hiệu ứng đổ bóng nhẹ */
+}
+
+#direct-test-timer {
+  color: #1f2937; /* Màu chữ tối */
+  font-size: 1.25rem; /* Cỡ chữ lớn hơn */
+  font-weight: 600; /* Đậm */
+}
+
+.dark-mode #direct-test-progress-bar {
+  background-color: #34d399; /* Màu xanh sáng hơn trong dark mode */
+}
+
+.dark-mode .w-full.bg-gray-200.rounded-full.h-6 {
+  background-color: #4b5563; /* Màu nền tối trong dark mode */
+  border-color: #6b7280;
+}
+
+.dark-mode #direct-test-timer {
+  color: #f3f4f6; /* Màu chữ sáng trong dark mode */
+}

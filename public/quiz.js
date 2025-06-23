@@ -9,6 +9,9 @@ let isTestEnded = false;
 let userAnswers = null;
 let answerKey = null;
 let currentReviewPart = 1;
+let initialTimeLimit = null; // Lưu thời gian ban đầu (giây)
+const directTestProgressBar = document.getElementById("direct-test-progress-bar");
+const directTestTimer = document.getElementById("direct-test-timer");
 const answerNotification = document.getElementById("answer-notification");
 const answerImageDisplay = document.getElementById("answer-image-display");
 const welcomeScreen = document.getElementById("welcome-screen");
@@ -613,6 +616,7 @@ async function joinDirectTest(quizId, remainingTime, startTime) {
     const result = await res.json();
     if (res.ok) {
       isAdminControlled = true;
+      initialTimeLimit = remainingTime; // Lưu thời gian ban đầu
       timeLeft = remainingTime;
       selectedQuizId = quizId;
       hideAllScreens();
@@ -637,6 +641,7 @@ async function joinDirectTest(quizId, remainingTime, startTime) {
       await loadAudio(1);
       await loadImages(1);
       startTimer();
+      updateProgressBar(); // Cập nhật thanh tiến trình ngay khi tham gia
       currentQuizPart = 1;
       downloadNotice.classList.add("hidden");
       notification.innerText = "Đã tham gia kiểm tra trực tiếp!";
@@ -756,6 +761,8 @@ async function startDirectTest() {
     if (res.ok) {
       isDirectTestMode = true;
       isTestEnded = false;
+      initialTimeLimit = timeLimitSeconds; // Lưu thời gian ban đầu
+      timeLeft = timeLimitSeconds; // Khởi tạo thời gian còn lại
       hideAllScreens();
       directTestScreen.classList.remove("hidden");
       directResultsTable.classList.add("hidden");
@@ -768,6 +775,10 @@ async function startDirectTest() {
         timeLimit: timeLimitSeconds,
         startTime: startTime,
       }));
+
+      // Khởi động thanh thời gian
+      updateProgressBar();
+      startDirectTestTimer();
 
       if (socket && socket.readyState === WebSocket.OPEN) {
         socket.send(JSON.stringify({ 
@@ -788,6 +799,45 @@ async function startDirectTest() {
   }
 }
 
+function startDirectTestTimer() {
+  clearInterval(timerInterval); // Xóa timer cũ nếu có
+  timerInterval = setInterval(() => {
+    if (timeLeft <= 0 || isTestEnded) {
+      clearInterval(timerInterval);
+      directTestProgressBar.style.width = "0%";
+      directTestTimer.innerText = "Hết thời gian!";
+      if (!isTestEnded) {
+        endDirectTest();
+      }
+      return;
+    }
+    updateProgressBar();
+    timeLeft--;
+  }, 1000);
+}
+
+function updateProgressBar() {
+  if (initialTimeLimit) {
+    const percentage = (timeLeft / initialTimeLimit) * 100;
+    directTestProgressBar.style.width = `${percentage}%`;
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+    directTestTimer.innerText = `Còn: ${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+    
+    // Thay đổi màu thanh tiến trình dựa trên thời gian còn lại
+    if (percentage <= 20) {
+      directTestProgressBar.classList.remove("bg-green-500");
+      directTestProgressBar.classList.add("bg-red-500");
+    } else if (percentage <= 50) {
+      directTestProgressBar.classList.remove("bg-green-500", "bg-red-500");
+      directTestProgressBar.classList.add("bg-yellow-500");
+    } else {
+      directTestProgressBar.classList.remove("bg-yellow-500", "bg-red-500");
+      directTestProgressBar.classList.add("bg-green-500");
+    }
+  }
+}
+
 async function endDirectTest() {
   if (isTestEnded) {
     notification.innerText = "Kiểm tra đã kết thúc!";
@@ -798,7 +848,10 @@ async function endDirectTest() {
       socket.send(JSON.stringify({ type: "end" }));
       isTestEnded = true;
       endDirectTestBtn.disabled = true;
-      localStorage.removeItem("directTest");
+      localStorage.removeItem("directTestState");
+      clearInterval(timerInterval);
+      directTestProgressBar.style.width = "0%";
+      directTestTimer.innerText = "Kiểm tra đã kết thúc!";
       await fetchDirectResults();
       saveAdminState();
     } else {
@@ -937,6 +990,7 @@ parts.forEach(({ id, count, part }) => {
 });
 
 function startTimer() {
+  clearInterval(timerInterval);
   timerInterval = setInterval(() => {
     if (timeLeft <= 0) {
       clearInterval(timerInterval);
@@ -945,7 +999,8 @@ function startTimer() {
     }
     const minutes = Math.floor(timeLeft / 60);
     const seconds = timeLeft % 60;
-    timerDisplay.innerText = `còn: ${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+    timerDisplay.innerText = `Còn: ${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+    updateProgressBar(); // Cập nhật thanh tiến trình
     timeLeft--;
     localStorage.setItem("timeLeft", timeLeft);
   }, 1000);
@@ -1375,6 +1430,7 @@ function handleWebSocketMessage(event) {
       }
     } else if (message.type === "start") {
       isAdminControlled = true;
+      initialTimeLimit = message.timeLimit || 7200; // Lưu thời gian ban đầu
       timeLeft = message.timeLimit || 7200;
       localStorage.setItem("directTestState", JSON.stringify({
         isDirectTestMode: true,
@@ -1394,6 +1450,7 @@ function handleWebSocketMessage(event) {
         loadAudio(1);
         loadImages(1);
         startTimer();
+        updateProgressBar(); // Cập nhật thanh tiến trình
         currentQuizPart = 1;
         downloadNotice.classList.add("hidden");
         notification.innerText = "Bài thi đã bắt đầu!";
@@ -1401,6 +1458,9 @@ function handleWebSocketMessage(event) {
     } else if (message.type === "end") {
       isTestEnded = true;
       localStorage.removeItem("directTestState");
+      clearInterval(timerInterval);
+      directTestProgressBar.style.width = "0%";
+      directTestTimer.innerText = "Kiểm tra đã kết thúc!";
       if (!isAdmin) {
         submitQuiz();
         notification.innerText = "Bài thi đã kết thúc!";
