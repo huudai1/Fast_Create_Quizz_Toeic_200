@@ -844,66 +844,41 @@ body.dark-mode .answer-item {
 /* Thanh tiến trình chính */
 #direct-test-progress-bar {
   transition: width 1s ease-in-out, background 0.5s;
-  background: linear-gradient(90deg, #22c55e, #16a34a); /* Gradient xanh neon */
-  box-shadow: 0 0 12px rgba(34, 197, 94, 0.6); /* Neon glow */
+  background: linear-gradient(90deg, #3b82f6, #2563eb); /* Gradient xanh dương neon */
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.6);
   border-radius: 9999px;
+  animation: neonPulse 1.5s ease-in-out infinite;
+}
+
+/* Dark mode */
+.dark-mode #direct-test-progress-bar {
+  background: linear-gradient(90deg, #60a5fa, #3b82f6); /* Gradient sáng hơn */
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.7);
+  animation: neonPulse 1.5s ease-in-out infinite;
 }
 
 /* Nền của thanh tiến trình */
 .w-full.bg-gray-200.rounded-full.h-6 {
-  background: linear-gradient(135deg, #f3f4f6, #e5e7eb); /* Gradient nền nhẹ */
+  background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
   border: 2px solid #d1d5db;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: inset 0 0 10px rgba(59, 130, 246, 0.3); /* Neon nhẹ */
   border-radius: 9999px;
   overflow: hidden;
-  height: 1.5rem; /* Đảm bảo chiều cao rõ nét */
-}
-
-/* Màu thanh tiến trình xanh thêm hiệu ứng đập */
-.bg-green-500 {
-  background: linear-gradient(90deg, #22c55e, #16a34a);
-  animation: pulseBar 2s infinite;
-}
-
-/* Đổ bóng cho thanh */
-.bg-green-500.transition-all {
-  box-shadow: 0 4px 10px rgba(34, 197, 94, 0.5);
-}
-
-/* Timer */
-#direct-test-timer {
-  color: #1f2937;
-  font-size: 1.5rem;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-/* Dark mode - neon sáng hơn */
-.dark-mode #direct-test-progress-bar {
-  background: linear-gradient(90deg, #34d399, #10b981); /* Gradient neon sáng */
-  box-shadow: 0 0 12px rgba(52, 211, 153, 0.7);
+  height: 1.5rem;
 }
 
 .dark-mode .w-full.bg-gray-200.rounded-full.h-6 {
   background: linear-gradient(135deg, #374151, #4b5563);
-  border-color: #6b7280;
+  border: 2px solid #6b7280;
+  box-shadow: inset 0 0 10px rgba(59, 130, 246, 0.4);
 }
 
-.dark-mode #direct-test-timer {
-  color: #f3f4f6;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
-}
-
-/* Hiệu ứng pulse ánh sáng */
-@keyframes pulseBar {
-  0% {
-    box-shadow: 0 0 10px rgba(34, 197, 94, 0.4);
+/* Hiệu ứng neonPulse */
+@keyframes neonPulse {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.5), 0 0 20px rgba(59, 130, 246, 0.3);
   }
   50% {
-    box-shadow: 0 0 20px rgba(34, 197, 94, 0.8);
-  }
-  100% {
-    box-shadow: 0 0 10px rgba(34, 197, 94, 0.4);
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.8), 0 0 30px rgba(59, 130, 246, 0.5);
   }
 }
