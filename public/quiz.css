@@ -841,39 +841,69 @@ body.dark-mode .answer-item {
   }
 }
 
-/* quiz.css */
+/* Hiệu ứng thanh tiến trình */
 #direct-test-progress-bar {
-  transition: width 1s ease-in-out;
+  transition: width 1s ease-in-out, background 1s;
+  background: linear-gradient(90deg, #22c55e, #16a34a); /* Gradient xanh */
+  box-shadow: 0 0 12px rgba(34, 197, 94, 0.6);
+  border-radius: 9999px;
 }
 
+/* Khung nền thanh tiến trình */
 .w-full.bg-gray-200.rounded-full.h-6 {
-  background-color: #e5e7eb; /* Màu nền thanh tiến trình */
-  border: 2px solid #d1d5db; /* Viền nhẹ */
+  background: linear-gradient(135deg, #f3f4f6, #e5e7eb); /* Gradient nền nhẹ */
+  border: 2px solid #d1d5db;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 9999px;
+  overflow: hidden;
+  height: 1.5rem;
 }
 
+/* Thanh tiến trình màu xanh đậm hơn + hiệu ứng */
 .bg-green-500 {
-  background-color: #22c55e; /* Màu xanh cho thanh tiến trình */
+  background: linear-gradient(90deg, #22c55e, #16a34a);
+  animation: pulseBar 2s infinite;
 }
 
+/* Thêm hiệu ứng đổ bóng cho thanh */
 .bg-green-500.transition-all {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Hiệu ứng đổ bóng nhẹ */
+  box-shadow: 0 4px 10px rgba(34, 197, 94, 0.5);
 }
 
+/* Đồng hồ đếm thời gian */
 #direct-test-timer {
-  color: #1f2937; /* Màu chữ tối */
-  font-size: 1.25rem; /* Cỡ chữ lớn hơn */
-  font-weight: 600; /* Đậm */
+  color: #1f2937;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
+/* Dark Mode Style */
 .dark-mode #direct-test-progress-bar {
-  background-color: #34d399; /* Màu xanh sáng hơn trong dark mode */
+  background: linear-gradient(90deg, #34d399, #10b981);
+  box-shadow: 0 0 12px rgba(52, 211, 153, 0.7);
 }
 
 .dark-mode .w-full.bg-gray-200.rounded-full.h-6 {
-  background-color: #4b5563; /* Màu nền tối trong dark mode */
+  background: linear-gradient(135deg, #374151, #4b5563);
   border-color: #6b7280;
 }
 
 .dark-mode #direct-test-timer {
-  color: #f3f4f6; /* Màu chữ sáng trong dark mode */
+  color: #f3f4f6;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* Animation cho thanh tiến trình */
+@keyframes pulseBar {
+  0% {
+    box-shadow: 0 0 10px rgba(34, 197, 94, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.8);
+  }
+  100% {
+    box-shadow: 0 0 10px rgba(34, 197, 94, 0.4);
+  }
 }
