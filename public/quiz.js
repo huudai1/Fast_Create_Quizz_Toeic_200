@@ -1,4 +1,5 @@
 let user = null;
+let heartbeatInterval = null;
 let isAdmin = false;
 let timeLeft = 7200;
 let timerInterval = null;
@@ -61,6 +62,35 @@ const partAnswerCounts = [6, 25, 39, 30, 30, 16, 54];
 function showResultScreen() {
   hideAllScreens();
   resultScreen.classList.remove("hidden");
+}
+
+function startHeartbeat() {
+    if (heartbeatInterval) {
+        return; // Already running
+    }
+    // Show the heartbeat indicator (a simple emoji or icon)
+    const heartbeatIndicator = document.getElementById("heartbeat-indicator");
+    if (heartbeatIndicator) {
+        heartbeatIndicator.classList.remove("hidden");
+    }
+
+    heartbeatInterval = setInterval(() => {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({ type: "heartbeat" }));
+            console.log("Heartbeat sent.");
+        }
+    }, 30000); // Sends a heartbeat every 30 seconds
+}
+
+function stopHeartbeat() {
+    clearInterval(heartbeatInterval);
+    heartbeatInterval = null;
+    // Hide the heartbeat indicator
+    const heartbeatIndicator = document.getElementById("heartbeat-indicator");
+    if (heartbeatIndicator) {
+        heartbeatIndicator.classList.add("hidden");
+    }
+    console.log("Heartbeat stopped.");
 }
 
 function saveAdminState() {
@@ -132,6 +162,9 @@ async function restoreAdminState() {
       }
 
       initializeWebSocket();
+      if (isAdmin) {
+        startHeartbeat(); // ⭐ Add this line
+            }
       downloadNotice.classList.add("hidden");
       return true;
     }
@@ -306,6 +339,7 @@ window.handleAdminCredentialResponse = async (response) => {
     await loadQuizzes();
     downloadNotice.classList.add("hidden");
     saveAdminState();
+    startHeartbeat();
   } catch (error) {
     console.error("Error during Admin login:", error);
     notification.innerText = "Đăng nhập Admin thất bại. Vui lòng thử lại hoặc kiểm tra Client ID.";
@@ -1702,6 +1736,7 @@ async function logout() {
     console.error("Error during logout:", error);
   }
   clearUserAnswers();
+  stopHeartbeat();
   localStorage.removeItem("user");
   localStorage.removeItem("selectedQuizId");
   localStorage.removeItem("currentScreen");

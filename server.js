@@ -684,7 +684,10 @@ wss.on('connection', (ws) => {
         // Lưu thông tin user nếu cần
       } else if (msg.type === 'quizSelected' || msg.type === 'quizAssigned') {
         // Xử lý các tin nhắn từ client nếu cần
-      }
+      } else if (msg.type === 'heartbeat') { // ⭐ Add this new case
+          console.log("Received heartbeat from a client.");
+        // The client is still active, do nothing. The server's timeout logic is reset automatically.
+        }
     } catch (err) {
       console.error('Error processing WebSocket message:', err);
     }
