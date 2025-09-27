@@ -592,6 +592,7 @@ const server = app.listen(port, () => {
 const wss = new WebSocketServer({ server });
 
 wss.on('connection', (ws) => {
+    console.log('[DEBUG] Một client mới đã kết nối.');
     clients.add(ws);
     broadcast({ type: 'participantCount', count: clients.size });
 
@@ -618,37 +619,55 @@ wss.on('connection', (ws) => {
     ws.on('message', (message) => {
         try {
             const msg = JSON.parse(message);
-            
+            console.log(`[SERVER LOG] Nhận được tin nhắn:`, msg); // Log mọi tin nhắn
+
             switch(msg.type) {
-                // --- LOGIC MỚI ---
                 case 'adminLogin':
+                    console.log('[SERVER LOG] Đang xử lý yêu cầu adminLogin...');
+                    console.log(`[SERVER LOG] Trạng thái activeAdminSocket hiện tại: ${activeAdminSocket ? 'ĐÃ CÓ NGƯỜI DÙNG' : 'NULL (TRỐNG)'}`);
                     if (activeAdminSocket && activeAdminSocket.readyState === 1) { // 1 is WebSocket.OPEN
+                        console.log('[SERVER LOG] Lỗi: Đã có admin khác. Gửi adminLoginError.');
                         ws.send(JSON.stringify({ type: 'adminLoginError', message: 'Một Admin khác đang đăng nhập!' }));
                     } else {
+                        console.log('[SERVER LOG] Thành công: Chấp nhận admin mới. Gửi adminLoginSuccess.');
                         activeAdminSocket = ws;
                         ws.isAdmin = true;
                         ws.send(JSON.stringify({ type: 'adminLoginSuccess' }));
-                        console.log(`Admin logged in: ${msg.user ? msg.user.name : 'Unknown'}`);
+                        console.log(`[SERVER LOG] Admin đã đăng nhập: ${msg.user ? msg.user.name : 'Unknown'}`);
                     }
                     break;
 
                 case 'adminLogout':
                     if (ws === activeAdminSocket) {
+                        console.log('[SERVER LOG] Admin đã đăng xuất. Reset activeAdminSocket.');
                         activeAdminSocket = null;
-                        console.log('Admin has logged out.');
                     }
                     break;
                 
                 case 'togglePartVisibility':
+                    console.log('[SERVER LOG] Processing togglePartVisibility...');
                     if (ws.isAdmin) {
                         const quiz = quizzes.find(q => q.quizId === msg.quizId);
                         if (quiz) {
+                            console.log('[SERVER LOG] Found quiz:', quiz.quizName);
+                            // Sửa lỗi: Nếu quiz cũ không có thuộc tính này, hãy tạo nó
+                            if (!quiz.partVisibility) {
+                                quiz.partVisibility = Array(7).fill(true);
+                                console.log('[SERVER LOG] Initialized partVisibility for old quiz.');
+                            }
+                            
                             const partIndex = msg.part - 1;
-                            if (quiz.partVisibility && quiz.partVisibility[partIndex] !== undefined) {
+                            if (partIndex >= 0 && partIndex < 7) {
                                 quiz.partVisibility[partIndex] = !quiz.partVisibility[partIndex];
+                                console.log(`[SERVER LOG] Part ${msg.part} visibility set to ${quiz.partVisibility[partIndex]}`);
                                 saveQuizzes();
                                 broadcast({ type: 'partVisibilityUpdate', visibility: quiz.partVisibility });
+                                console.log('[SERVER LOG] Broadcasted partVisibilityUpdate.');
+                            } else {
+                                console.error(`[SERVER LOG] Invalid part number received: ${msg.part}`);
                             }
+                        } else {
+                            console.error(`[SERVER LOG] Quiz not found for ID: ${msg.quizId}`);
                         }
                     }
                     break;
@@ -657,7 +676,6 @@ wss.on('connection', (ws) => {
                     // Connection is alive, no action needed.
                     break;
                 
-                // --- LOGIC CŨ ĐÃ ĐƯỢC GỘP VÀO ---
                 case 'start':
                     broadcast({ type: 'start', timeLimit: msg.timeLimit, quizId: msg.quizId, startTime: msg.startTime });
                     break;
@@ -691,23 +709,24 @@ wss.on('connection', (ws) => {
                     }
                     break;
                 
-                // Các message khác không cần xử lý đặc biệt ở server
                 case 'login':
                 case 'quizSelected':
                 case 'quizAssigned':
                 case 'submitted':
+                    // Các message này chỉ cần client gửi đi, server không cần xử lý đặc biệt
                     break;
             }
         } catch (err) {
-            console.error('Error processing WebSocket message:', err);
+            console.error('[SERVER LOG] Error processing WebSocket message:', err);
         }
     });
 
     ws.on('close', () => {
+        console.log('[DEBUG] Một client đã ngắt kết nối.');
         clients.delete(ws);
         if (ws === activeAdminSocket) {
             activeAdminSocket = null;
-            console.log("Admin connection closed. Slot is now free.");
+            console.log("[DEBUG] Kết nối của Admin đã đóng. Reset activeAdminSocket về NULL.");
         }
         broadcast({ type: 'participantCount', count: clients.size });
     });
