@@ -1420,136 +1420,135 @@ function clearUserAnswers() {
 }
 
 function handleWebSocketMessage(event) {
-    try {
-        if (!event.data) {
-            console.warn("Received empty WebSocket message");
-            return;
-        }
-        const message = JSON.parse(event.data);
+    try {
+        if (!event.data) {
+            console.warn("Received empty WebSocket message");
+            return;
+        }
+        const message = JSON.parse(event.data);
 
-        switch (message.type) {
-            case 'adminLoginSuccess':
-                hideAllScreens();
-                quizListScreen.classList.remove("hidden");
-                adminOptions.classList.remove("hidden");
-                adminControls.classList.remove("hidden");
-                loadQuizzes();
-                saveAdminState();
-                startHeartbeat();
-                break;
+        switch (message.type) {
+            case 'adminLoginSuccess':
+                hideAllScreens();
+                quizListScreen.classList.remove("hidden");
+                adminOptions.classList.remove("hidden");
+                adminControls.classList.remove("hidden");
+                loadQuizzes();
+                saveAdminState();
+                startHeartbeat();
+                break;
 
-            case 'adminLoginError':
-                isAdmin = false;
-                user = null;
-                if (socket) socket.close();
-                showAdminLogin();
-                document.getElementById("notification-admin-login").innerText = message.message;
-                break;
+            case 'adminLoginError':
+                isAdmin = false;
+                user = null;
+                if (socket) socket.close();
+                showAdminLogin();
+                document.getElementById("notification-admin-login").innerText = message.message;
+                break;
 
-            case 'partVisibilityUpdate':
-                console.log("2. Client ĐÃ NHẬN ĐƯỢC tín hiệu partVisibilityUpdate từ server.", message.visibility); // Log 2
-                partVisibilityState = message.visibility;
-                if (isAdmin) {
-                    updatePartVisibilityButtons();
-                } else {
-                    updateStudentPartVisibility();
-                }
-                break;
+            case 'partVisibilityUpdate':
+                // Chỉ cập nhật nếu trạng thái này dành cho quiz đang được chọn
+                if (message.quizId === selectedQuizId) {
+                    partVisibilityState = message.visibility;
+                    if (isAdmin) {
+                        updatePartVisibilityButtons();
+                    } else {
+                        updateStudentPartVisibility();
+                    }
+                }
+                break;
 
-            case 'quizAssigned':
-                if (!isAdmin) {
-                    console.log(`Quiz ${message.quizId} has been assigned.`);
-                    const startButton = document.getElementById(`start-quiz-btn-${message.quizId}`);
-                    if (startButton) {
-                        startButton.classList.remove('hidden');
-                    }
-                }
-                break;
+            case 'quizAssigned':
+                if (!isAdmin) {
+                    // Tải lại toàn bộ danh sách để cập nhật trạng thái isAssigned
+                    loadQuizzes(); 
+                }
+                break;
 
-            case "quizStatus":
-                quizStatus.innerText = message.quizId ? `Đề thi hiện tại: ${message.quizName}` : "Chưa có đề thi được chọn.";
-                selectedQuizId = message.quizId;
-                if (isAdmin && message.quizId) {
-                    assignBtn.classList.remove("hidden");
-                    directTestBtn.classList.remove("hidden");
-                }
-                loadQuizzes();
-                break;
+            case "quizStatus":
+                quizStatus.innerText = message.quizId ? `Đề thi hiện tại: ${message.quizName}` : "Chưa có đề thi được chọn.";
+                selectedQuizId = message.quizId;
+                if (isAdmin && message.quizId) {
+                    assignBtn.classList.remove("hidden");
+                    directTestBtn.classList.remove("hidden");
+                }
+                // Không cần gọi loadQuizzes() ở đây nữa vì nó có thể gây lặp lại không cần thiết
+                break;
 
-            case "participants":
-            case "participantCount":
-                participantCount.innerText = `Số người tham gia: ${message.count || 0}`;
-                directParticipantCount.innerText = `Số người tham gia: ${message.count || 0}`;
-                break;
+            case "participants":
+            case "participantCount":
+                participantCount.innerText = `Số người tham gia: ${message.count || 0}`;
+                directParticipantCount.innerText = `Số người tham gia: ${message.count || 0}`;
+                break;
 
-            case "submitted":
-            case "submittedCount":
-                const count = message.count !== undefined ? message.count : 0;
-                submittedCount.innerText = `Số bài đã nộp: ${count}`;
-                directSubmittedCount.innerText = `Số bài đã nộp: ${count}`;
-                if (isAdmin && message.results) {
-                    resultsBody.innerHTML = "";
-                    message.results.forEach(result => {
-                        const tr = document.createElement("tr");
-                        tr.innerHTML = `
-                            <td class="border p-2">${result.username || 'Unknown'}</td>
-                            <td class="border p-2">${result.score || 0}</td>
-                            <td class="border p-2">${result.submittedAt ? new Date(result.submittedAt).toLocaleString() : 'N/A'}</td>
-                        `;
-                        resultsBody.appendChild(tr);
-                    });
-                    resultsTable.classList.remove("hidden");
-                }
-                break;
+            case "submitted":
+            case "submittedCount":
+                const count = message.count !== undefined ? message.count : 0;
+                submittedCount.innerText = `Số bài đã nộp: ${count}`;
+                directSubmittedCount.innerText = `Số bài đã nộp: ${count}`;
+                if (isAdmin && message.results) {
+                    resultsBody.innerHTML = "";
+                    message.results.forEach(result => {
+                        const tr = document.createElement("tr");
+                        tr.innerHTML = `
+                            <td class="border p-2">${result.username || 'Unknown'}</td>
+                            <td class="border p-2">${result.score || 0}</td>
+                            <td class="border p-2">${result.submittedAt ? new Date(result.submittedAt).toLocaleString() : 'N/A'}</td>
+                        `;
+                        resultsBody.appendChild(tr);
+                    });
+                    resultsTable.classList.remove("hidden");
+                }
+                break;
 
-            case "start":
-                isAdminControlled = true;
-                initialTimeLimit = message.timeLimit || 7200;
-                timeLeft = message.timeLimit || 7200;
-                localStorage.setItem("directTestState", JSON.stringify({
-                    isDirectTestMode: true,
-                    quizId: message.quizId,
-                    timeLimit: message.timeLimit,
-                    startTime: message.startTime,
-                }));
-                if (!isAdmin) {
-                    hideAllScreens();
-                    quizContainer.classList.remove("hidden");
-                    timerDisplay.classList.remove("hidden");
-                    audio.classList.remove("hidden");
-                    selectedQuizId = message.quizId;
-                    loadAudio(1);
-                    loadImages(1);
-                    startTimer();
-                    updateProgressBar();
-                    currentQuizPart = 1;
-                    notification.innerText = "Bài thi đã bắt đầu!";
-                }
-                break;
+            case "start":
+                isAdminControlled = true;
+                initialTimeLimit = message.timeLimit || 7200;
+                timeLeft = message.timeLimit || 7200;
+                localStorage.setItem("directTestState", JSON.stringify({
+                    isDirectTestMode: true,
+                    quizId: message.quizId,
+                    timeLimit: message.timeLimit,
+                    startTime: message.startTime,
+                }));
+                if (!isAdmin) {
+                    hideAllScreens();
+                    quizContainer.classList.remove("hidden");
+                    timerDisplay.classList.remove("hidden");
+                    audio.classList.remove("hidden");
+                    selectedQuizId = message.quizId;
+                    loadAudio(1);
+                    loadImages(1);
+                    startTimer();
+                    updateProgressBar();
+                    currentQuizPart = 1;
+                    notification.innerText = "Bài thi đã bắt đầu!";
+                }
+                break;
 
-            case "end":
-                isTestEnded = true;
-                localStorage.removeItem("directTestState");
-                clearInterval(timerInterval);
-                if (directTestProgressBar) directTestProgressBar.style.width = "0%";
-                if (directTestTimer) directTestTimer.innerText = "Kiểm tra đã kết thúc!";
-                
-                if (!isAdmin) {
-                    submitQuiz();
-                    notification.innerText = "Bài thi đã kết thúc!";
-                } else {
-                    fetchDirectResults();
-                }
-                break;
+            case "end":
+                isTestEnded = true;
+                localStorage.removeItem("directTestState");
+                clearInterval(timerInterval);
+                if (directTestProgressBar) directTestProgressBar.style.width = "0%";
+                if (directTestTimer) directTestTimer.innerText = "Kiểm tra đã kết thúc!";
+                
+                if (!isAdmin) {
+                    submitQuiz();
+                    notification.innerText = "Bài thi đã kết thúc!";
+                } else {
+                    fetchDirectResults();
+                }
+                break;
 
-            case "error":
-                notification.innerText = message.message;
-                break;
-        }
-    } catch (error) {
-        console.error("Error handling WebSocket message:", error);
-        notification.innerText = "Lỗi khi xử lý thông tin từ server.";
-    }
+            case "error":
+                notification.innerText = message.message;
+                break;
+        }
+    } catch (error) {
+        console.error("Error handling WebSocket message:", error);
+        notification.innerText = "Lỗi khi xử lý thông tin từ server.";
+    }
 }
 
 async function showReviewAnswers() {

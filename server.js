@@ -660,32 +660,26 @@ wss.on('connection', (ws) => {
                     break;
                 
                 case 'togglePartVisibility':
-                    console.log('[SERVER LOG] Processing togglePartVisibility...');
-                    if (ws.isAdmin) {
-                        const quiz = quizzes.find(q => q.quizId === msg.quizId);
-                        if (quiz) {
-                            console.log('[SERVER LOG] Found quiz:', quiz.quizName);
-                            // Sửa lỗi: Nếu quiz cũ không có thuộc tính này, hãy tạo nó
-                            if (!quiz.partVisibility) {
-                                quiz.partVisibility = Array(7).fill(true);
-                                console.log('[SERVER LOG] Initialized partVisibility for old quiz.');
-                            }
-                            
-                            const partIndex = msg.part - 1;
-                            if (partIndex >= 0 && partIndex < 7) {
-                                quiz.partVisibility[partIndex] = !quiz.partVisibility[partIndex];
-                                console.log(`[SERVER LOG] Part ${msg.part} visibility set to ${quiz.partVisibility[partIndex]}`);
-                                saveQuizzes();
-                                broadcast({ type: 'partVisibilityUpdate', visibility: quiz.partVisibility });
-                                console.log('[SERVER LOG] Broadcasted partVisibilityUpdate.');
-                            } else {
-                                console.error(`[SERVER LOG] Invalid part number received: ${msg.part}`);
-                            }
-                        } else {
-                            console.error(`[SERVER LOG] Quiz not found for ID: ${msg.quizId}`);
-                        }
-                    }
-                    break;
+                    if (ws.isAdmin) {
+                        const quiz = quizzes.find(q => q.quizId === msg.quizId);
+                        if (quiz) {
+                            // *** BẮT ĐẦU SỬA LỖI QUAN TRỌNG ***
+                            // Luôn đảm bảo partVisibility là một mảng hợp lệ trước khi thao tác
+                            if (!Array.isArray(quiz.partVisibility) || quiz.partVisibility.length !== 7) {
+                                quiz.partVisibility = Array(7).fill(true);
+                            }
+                            // *** KẾT THÚC SỬA LỖI ***
+
+                            const partIndex = msg.part - 1;
+                            if (partIndex >= 0 && partIndex < 7) {
+                                // Bây giờ thao tác này đã an toàn
+                                quiz.partVisibility[partIndex] = !quiz.partVisibility[partIndex];
+                                saveQuizzes();
+                                broadcast({ type: 'partVisibilityUpdate', quizId: quiz.quizId, visibility: quiz.partVisibility });
+                            }
+                        }
+                    }
+                    break;
 
                 case 'heartbeat':
                     // Connection is alive, no action needed.
