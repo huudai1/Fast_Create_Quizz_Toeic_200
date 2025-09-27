@@ -7,7 +7,6 @@ const fs = require("fs").promises;
 const fsSync = require("fs");
 const archiver = require("archiver");
 const unzipper = require("unzipper");
-let activeAdminSocket = null;
 
 
 // --- 1. KHỞI TẠO BIẾN TOÀN CỤC ---
