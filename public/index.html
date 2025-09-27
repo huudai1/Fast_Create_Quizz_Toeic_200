@@ -3,9 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="google-signin-client_id" content="559727675822-26vjhfb4gmjhmaq0e1522v4qamn0oo6t.apps.googleusercontent.com">
   <title>Quiz App</title>
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="quiz.css">
 </head>
@@ -27,16 +25,23 @@
   </div>
 
   <div id="admin-login" class="container mx-auto p-4 hidden">
-    <h1 class="text-3xl font-bold mb-4">Đăng nhập Admin</h1>
-    <p id="notification-admin-login" class="text-red-500 mb-4"></p>
-    <div id="g_id_onload"
-         data-client_id="559727675822-26vjhfb4gmjhmaq0e1522v4qamn0oo6t.apps.googleusercontent.com"
-         data-callback="handleAdminCredentialResponse"
-         data-auto_prompt="false">
-    </div>
-    <div class="g_id_signin" data-type="standard" data-size="large" data-theme="outline" data-text="sign_in_with" data-shape="rectangular" data-logo_alignment="left"></div>
-    <button onclick="showWelcomeScreen()" class="mt-4 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
-  </div>
+    <h1 class="text-3xl font-bold mb-4">Đăng nhập Admin</h1>
+    <p id="notification-admin-login" class="text-red-500 mb-4"></p>
+    
+    <form id="admin-login-form" class="space-y-4">
+        <div>
+            <label for="admin-username" class="block text-lg">Tên đăng nhập:</label>
+            <input id="admin-username" type="text" class="border p-2 rounded w-full" required value="admin">
+        </div>
+        <div>
+            <label for="admin-password" class="block text-lg">Mật khẩu:</label>
+            <input id="admin-password" type="password" class="border p-2 rounded w-full" required>
+        </div>
+        <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Đăng nhập</button>
+    </form>
+    
+    <button onclick="showWelcomeScreen()" class="mt-4 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
+</div>
 
   <div id="student-login" class="container mx-auto p-4 hidden">
     <h1 class="text-3xl font-bold mb-4">Đăng nhập Học sinh</h1>

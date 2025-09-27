@@ -1783,64 +1783,92 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 document.addEventListener("DOMContentLoaded", async () => {
-  if (await restoreAdminState()) {
-    console.log("Admin state restored");
-  } else {
-    const savedUser = localStorage.getItem("user");
-    const savedAnswers = localStorage.getItem("userAnswers");
-    const savedQuizId = localStorage.getItem("selectedQuizId");
-    const savedScreen = localStorage.getItem("currentScreen");
-    const directTestState = localStorage.getItem("directTestState");
-
-    if (savedUser && savedAnswers && savedQuizId && savedScreen === "quiz-container") {
-      user = JSON.parse(savedUser);
-      userAnswers = JSON.parse(savedAnswers);
-      selectedQuizId = savedQuizId;
-      isAdmin = false;
-      hideAllScreens();
-      quizContainer.classList.remove("hidden");
-      timerDisplay.classList.remove("hidden");
-      audio.classList.remove("hidden");
-      Object.keys(userAnswers).forEach(questionId => {
-        const radio = document.querySelector(`input[name="${questionId}"][value="${userAnswers[questionId]}"]`);
-        if (radio) radio.checked = true;
-        else console.warn(`Radio button for ${questionId} with value ${userAnswers[questionId]} not found`);
-      });
-      timeLeft = parseInt(localStorage.getItem("timeLeft")) || 7200;
-      await loadAudio(1);
-      await loadImages(1);
-      startTimer();
-      currentQuizPart = 1;
-      downloadNotice.classList.add("hidden");
-      initializeWebSocket();
-    } else if (savedUser) {
-      user = JSON.parse(savedUser);
-      isAdmin = false;
-      hideAllScreens();
-      quizListScreen.classList.remove("hidden");
-      adminOptions.classList.add("hidden");
-      adminControls.classList.add("hidden");
-      downloadNotice.classList.add("hidden");
-      initializeWebSocket();
-      await loadQuizzes();
-    } else if (directTestState && !savedUser) {
-      showStudentLogin();
-      notification.innerText = "Kiểm tra trực tiếp đang diễn ra. Vui lòng đăng nhập để tham gia.";
+    // --- 1. KHÔI PHỤC TRẠNG THÁI PHIÊN LÀM VIỆC ---
+    if (await restoreAdminState()) {
+        console.log("Admin state restored");
     } else {
-      showWelcomeScreen();
-    }
-  }
-  assignBtn.addEventListener("click", assignQuiz);
-  directTestBtn.addEventListener("click", startDirectTest);
-  endDirectTestBtn.addEventListener("click", endDirectTest);
-  quizForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-    submitQuiz();
-  });
-});
+        const savedUser = localStorage.getItem("user");
+        const savedAnswers = localStorage.getItem("userAnswers");
+        const savedQuizId = localStorage.getItem("selectedQuizId");
+        const savedScreen = localStorage.getItem("currentScreen");
+        const directTestState = localStorage.getItem("directTestState");
 
-document.addEventListener("DOMContentLoaded", function () {
-  setTimeout(() => {
-    document.getElementById("loading-screen").classList.add("hidden");
-  }, 2000);
+        if (savedUser && savedAnswers && savedQuizId && savedScreen === "quiz-container") {
+            user = JSON.parse(savedUser);
+            userAnswers = JSON.parse(savedAnswers);
+            selectedQuizId = savedQuizId;
+            isAdmin = false;
+            hideAllScreens();
+            quizContainer.classList.remove("hidden");
+            timerDisplay.classList.remove("hidden");
+            audio.classList.remove("hidden");
+            Object.keys(userAnswers).forEach(questionId => {
+                const radio = document.querySelector(`input[name="${questionId}"][value="${userAnswers[questionId]}"]`);
+                if (radio) radio.checked = true;
+                else console.warn(`Radio button for ${questionId} not found`);
+            });
+            timeLeft = parseInt(localStorage.getItem("timeLeft")) || 7200;
+            await loadAudio(1);
+            await loadImages(1);
+            startTimer();
+            currentQuizPart = 1;
+            downloadNotice.classList.add("hidden");
+            initializeWebSocket();
+        } else if (savedUser) {
+            user = JSON.parse(savedUser);
+            isAdmin = false;
+            hideAllScreens();
+            quizListScreen.classList.remove("hidden");
+            adminOptions.classList.add("hidden");
+            adminControls.classList.add("hidden");
+            downloadNotice.classList.add("hidden");
+            initializeWebSocket();
+            await loadQuizzes();
+        } else if (directTestState && !savedUser) {
+            showStudentLogin();
+            notification.innerText = "Kiểm tra trực tiếp đang diễn ra. Vui lòng đăng nhập để tham gia.";
+        } else {
+            showWelcomeScreen();
+        }
+    }
+
+    // --- 2. GẮN SỰ KIỆN CHO CÁC NÚT CHÍNH ---
+    assignBtn.addEventListener("click", assignQuiz);
+    directTestBtn.addEventListener("click", startDirectTest);
+    endDirectTestBtn.addEventListener("click", endDirectTest);
+    quizForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        submitQuiz();
+    });
+
+    // --- 3. XỬ LÝ FORM ĐĂNG NHẬP ADMIN ---
+    const adminLoginForm = document.getElementById("admin-login-form");
+    if (adminLoginForm) {
+        adminLoginForm.onsubmit = (e) => {
+            e.preventDefault();
+            const username = document.getElementById("admin-username").value;
+            const password = document.getElementById("admin-password").value;
+            const notificationElement = document.getElementById("notification-admin-login");
+
+            // *** LƯU Ý BẢO MẬT: Bạn NÊN thay đổi mật khẩu này! ***
+            if (username === 'admin' && password === '12345') {
+                notificationElement.innerText = "";
+                user = { name: 'Admin', email: 'admin@local.com' };
+                isAdmin = true;
+                
+                initializeWebSocket();
+                socket.onopen = () => {
+                    console.log("WebSocket connected for admin login check.");
+                    socket.send(JSON.stringify({ type: "adminLogin", user: user }));
+                };
+            } else {
+                notificationElement.innerText = "Tên đăng nhập hoặc mật khẩu không đúng!";
+            }
+        };
+    }
+
+    // --- 4. ẨN MÀN HÌNH CHỜ SAU 2 GIÂY ---
+    setTimeout(() => {
+        document.getElementById("loading-screen").classList.add("hidden");
+    }, 2000);
 });
