@@ -41,6 +41,32 @@ app.get('/quiz-pdf', (req, res) => {
 });
 
 
+app.post('/submit', async (req, res) => {
+    if (!currentQuiz) {
+        return res.status(404).json({ message: 'No quiz selected' });
+    }
+    const { username, answers } = req.body;
+    if (!username || !answers) {
+        return res.status(400).json({ message: 'Username and answers are required' });
+    }
+    let score = 0;
+    const answerKey = currentQuiz.answerKey;
+    for (const qId in answerKey) {
+        if (answers[qId] === answerKey[qId]) {
+            score++;
+        }
+    }
+    const result = {
+        quizId: currentQuiz.quizId, username, score,
+        answers, timestamp: Date.now()
+    };
+    results.push(result);
+    await saveResults();
+    const quizResults = results.filter(r => r.quizId === currentQuiz.quizId);
+    broadcast({ type: 'submitted', count: quizResults.length, results: quizResults.map(r => ({ username: r.username, score: r.score, submittedAt: new Date(r.timestamp) })) });
+    res.json({ score });
+});
+
 // Ensure directories exist
 const ensureDirectories = async () => {
   const directories = [
