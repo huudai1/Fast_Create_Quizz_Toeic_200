@@ -7,6 +7,7 @@
   animation: slideIn 0.6s ease-out forwards, neonGlow 1.5s ease-in-out;
 }
 
+<<<<<<< HEAD
 /* -- BẮT ĐẦU ĐOẠN CODE THAY THẾ -- */
 .part-toggle-btn {
     padding: 8px 16px;
@@ -27,6 +28,8 @@
     background-color: #ef4444; /* red-500 */
 }
 
+=======
+>>>>>>> parent of 3b91775 (big update for each part)
 .image-section,
 .question-section {
   overflow-y: auto;
