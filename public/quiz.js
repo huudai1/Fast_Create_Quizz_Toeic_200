@@ -110,19 +110,26 @@ function saveAdminState() {
 }
 
 function updatePartVisibilityButtons() {
-    console.log("3. Hàm updatePartVisibilityButtons ĐANG CHẠY để đổi màu nút."); // Log 3
-    for (let i = 0; i < 7; i++) {
-        const btn = document.getElementById(`toggle-part-${i + 1}`);
-        if (btn) {
-            if (partVisibilityState[i]) {
-                btn.classList.add('visible');
-                btn.classList.remove('hidden-part');
-            } else {
-                btn.classList.add('hidden-part');
-                btn.classList.remove('visible');
-            }
-        }
-    }
+    console.log("3. Hàm updatePartVisibilityButtons ĐANG CHẠY để đổi màu nút."); 
+    for (let i = 0; i < 7; i++) {
+        const btn = document.getElementById(`toggle-part-${i + 1}`);
+        if (btn) {
+            // Dòng code này đọc trạng thái của từng part (true hoặc false)
+            if (partVisibilityState[i]) { 
+                // Nếu trạng thái là TRUE (hiện), nó sẽ:
+                // 1. Thêm class 'visible' -> CSS sẽ tô nút màu XANH
+                btn.classList.add('visible'); 
+                // 2. Xóa class 'hidden-part' (nếu có)
+                btn.classList.remove('hidden-part');
+            } else {
+                // Nếu trạng thái là FALSE (ẩn), nó sẽ:
+                // 1. Thêm class 'hidden-part' -> CSS sẽ tô nút màu ĐỎ
+                btn.classList.add('hidden-part'); 
+                // 2. Xóa class 'visible' (nếu có)
+                btn.classList.remove('visible');
+            }
+        }
+    }
 }
 
 function updateStudentPartVisibility() {
