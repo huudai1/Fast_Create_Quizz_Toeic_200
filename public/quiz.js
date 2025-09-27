@@ -103,7 +103,6 @@ function saveAdminState() {
     }
 }
 
-<<<<<<< HEAD
 function updatePartVisibilityButtons() {
     for (let i = 0; i < 7; i++) {
         const btn = document.getElementById(`toggle-part-${i + 1}`);
@@ -155,8 +154,6 @@ function togglePartVisibility(partNumber) {
     }));
 }
 
-=======
->>>>>>> parent of 3b91775 (big update for each part)
 function getCurrentScreen() {
     if (!welcomeScreen.classList.contains("hidden")) return "welcome-screen";
     if (!adminLogin.classList.contains("hidden")) return "admin-login";
@@ -637,7 +634,6 @@ async function fetchWithRetry(url, retries = 5, delay = 2000) {
 }
 
 async function loadQuizzes() {
-<<<<<<< HEAD
     const url = isAdmin ? `/quizzes?email=${encodeURIComponent(user.email)}` : '/quizzes';
     try {
         const res = await fetch(url);
@@ -702,7 +698,6 @@ async function loadQuizzes() {
           joinDirectTestBtn.onclick = () => joinDirectTest(quizId, remainingTime, startTime);
           directTestNotice.classList.remove("hidden");
         }
-=======
   const url = isAdmin ? `/quizzes?email=${encodeURIComponent(user.email)}` : '/quizzes';
   try {
     const res = await fetchWithRetry(url);
@@ -724,7 +719,6 @@ async function loadQuizzes() {
           joinDirectTestBtn.onclick = () => joinDirectTest(quizId, remainingTime, startTime);
           directTestNotice.classList.remove("hidden");
         }
->>>>>>> parent of 3b91775 (big update for each part)
       }
     } else {
       directTestNotice.classList.add("hidden");
@@ -1579,8 +1573,6 @@ function clearUserAnswers() {
 }
 
 function handleWebSocketMessage(event) {
-<<<<<<< HEAD
-<<<<<<< HEAD
     try {
         if (!event.data) return;
         const message = JSON.parse(event.data);
@@ -1694,8 +1686,6 @@ function handleWebSocketMessage(event) {
     } catch (error) {
         console.error("Error handling WebSocket message:", error);
         notification.innerText = "Lỗi khi xử lý thông tin từ server.";
-=======
->>>>>>> parent of 3b91775 (big update for each part)
   try {
     if (!event.data) {
       console.warn("Received empty WebSocket message");
@@ -1710,7 +1700,6 @@ function handleWebSocketMessage(event) {
         directTestBtn.classList.remove("hidden");
       }
       loadQuizzes();
-=======
   try {
     if (!event.data) return;
         const message = JSON.parse(event.data);
@@ -1749,7 +1738,6 @@ function handleWebSocketMessage(event) {
                 }
                 loadQuizzes();
                 break;
->>>>>>> parent of bb2c51e (fix bug 1)
     } else if (message.type === "participants" || message.type === "participantCount") {
       participantCount.innerText = `Số người tham gia: ${message.count || 0}`;
       directParticipantCount.innerText = `Số người tham gia: ${message.count || 0}`;
