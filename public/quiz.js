@@ -719,6 +719,27 @@ async function loadQuizzes() {
           joinDirectTestBtn.onclick = () => joinDirectTest(quizId, remainingTime, startTime);
           directTestNotice.classList.remove("hidden");
         }
+  const url = isAdmin ? `/quizzes?email=${encodeURIComponent(user.email)}` : '/quizzes';
+  try {
+    const res = await fetchWithRetry(url);
+    const quizzes = await res.json();
+    quizList.innerHTML = "";
+    
+    const directTestState = localStorage.getItem("directTestState");
+    const directTestNotice = document.getElementById("direct-test-notice");
+    const directTestMessage = document.getElementById("direct-test-message");
+    const joinDirectTestBtn = document.getElementById("join-direct-test-btn");
+    
+    if (!isAdmin && directTestState) {
+      const { isDirectTestMode, quizId, timeLimit, startTime } = JSON.parse(directTestState);
+      if (isDirectTestMode && !isTestEnded) {
+        const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+        const remainingTime = timeLimit - elapsedTime;
+        if (remainingTime > 0) {
+          directTestMessage.innerText = `Kiểm tra trực tiếp đang diễn ra! (Còn: ${Math.floor(remainingTime / 60)}:${remainingTime % 60 < 10 ? "0" : ""}${remainingTime % 60})`;
+          joinDirectTestBtn.onclick = () => joinDirectTest(quizId, remainingTime, startTime);
+          directTestNotice.classList.remove("hidden");
+        }
       }
     } else {
       directTestNotice.classList.add("hidden");
@@ -1701,43 +1722,19 @@ function handleWebSocketMessage(event) {
       }
       loadQuizzes();
   try {
-    if (!event.data) return;
-        const message = JSON.parse(event.data);
-        switch (message.type) {
-            case 'adminLoginSuccess':
-                hideAllScreens();
-                quizListScreen.classList.remove("hidden");
-                adminOptions.classList.remove("hidden");
-                adminControls.classList.remove("hidden");
-                loadQuizzes();
-                downloadNotice.classList.add("hidden");
-                saveAdminState();
-                startHeartbeat();
-                break;
-            case 'adminLoginError':
-                isAdmin = false;
-                user = null;
-                if(socket) socket.close();
-                showAdminLogin();
-                document.getElementById("notification-admin-login").innerText = message.message;
-                break;
-            case 'partVisibilityUpdate':
-                partVisibilityState = message.visibility;
-                if (isAdmin) {
-                    updatePartVisibilityButtons();
-                } else {
-                    updateStudentPartVisibility();
-                }
-                break;
-            case "quizStatus":
-                quizStatus.innerText = message.quizId ? `Đề thi hiện tại: ${message.quizName}` : "Chưa có đề thi được chọn.";
-                selectedQuizId = message.quizId;
-                if (isAdmin && message.quizId) {
-                    assignBtn.classList.remove("hidden");
-                    directTestBtn.classList.remove("hidden");
-                }
-                loadQuizzes();
-                break;
+    if (!event.data) {
+      console.warn("Received empty WebSocket message");
+      return;
+    }
+    const message = JSON.parse(event.data);
+    if (message.type === "quizStatus") {
+      quizStatus.innerText = message.quizId ? `Đề thi hiện tại: ${message.quizName}` : "Chưa có đề thi được chọn.";
+      selectedQuizId = message.quizId;
+      if (isAdmin && message.quizId) {
+        assignBtn.classList.remove("hidden");
+        directTestBtn.classList.remove("hidden");
+      }
+      loadQuizzes();
     } else if (message.type === "participants" || message.type === "participantCount") {
       participantCount.innerText = `Số người tham gia: ${message.count || 0}`;
       directParticipantCount.innerText = `Số người tham gia: ${message.count || 0}`;
