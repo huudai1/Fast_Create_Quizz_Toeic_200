@@ -24,6 +24,7 @@ app.use(express.json());
 app.use(express.static("public"));
 
 
+<<<<<<< HEAD
 app.get('/quiz-state/:quizId', (req, res) => {
     const { quizId } = req.params;
     const quiz = quizzes.find(q => q.quizId === quizId);
@@ -40,6 +41,15 @@ app.get('/quiz-pdf', (req, res) => {
     res.json({ pdfPath: currentQuiz.pdfPath || null });
 });
 
+=======
+app.use(express.json());
+app.use(express.static("public", {
+  index: "index.html",
+  setHeaders: (res, path) => {
+    console.log(`Serving file: ${path}`);
+  }
+}));
+>>>>>>> parent of 3b91775 (big update for each part)
 
 app.post('/submit', async (req, res) => {
     if (!currentQuiz) {
@@ -247,6 +257,7 @@ app.get('/answer-key', (req, res) => {
     res.json(currentQuiz.answerKey);
 });
 
+<<<<<<< HEAD
 app.delete('/delete-quiz/:quizId', async (req, res) => {
     try {
         const quizId = req.params.quizId;
@@ -282,6 +293,38 @@ app.delete('/delete-quiz/:quizId', async (req, res) => {
         console.error('Error deleting quiz:', err);
         res.status(500).json({ message: 'Error deleting quiz' });
     }
+=======
+// Endpoint để xóa database
+app.delete('/clear-database', async (req, res) => {
+  try {
+    quizzes = [];
+    results = [];
+    currentQuiz = null;
+    await saveQuizzes();
+    await saveResults();
+    broadcast({ type: 'quizStatus', quizExists: false });
+    res.status(200).json({ message: 'Database cleared successfully!' });
+  } catch (err) {
+    console.error('Error clearing database:', err);
+    res.status(500).json({ message: 'Error clearing database' });
+  }
+});
+
+// Endpoint để giao bài
+app.post('/assign-quiz', async (req, res) => {
+  const { quizId, timeLimit } = req.body;
+  if (!quizId || !timeLimit) {
+    return res.status(400).json({ message: 'Quiz ID and time limit are required' });
+  }
+  const quiz = quizzes.find((q) => q.quizId === quizId);
+  if (!quiz) {
+    return res.status(404).json({ message: 'Quiz not found' });
+  }
+  quiz.isAssigned = true;
+  await saveQuizzes();
+  broadcast({ type: 'quizStatus', quizId: quiz.quizId, quizName: quiz.quizName, quizExists: true });
+  res.json({ message: 'Quiz assigned successfully!' });
+>>>>>>> parent of 3b91775 (big update for each part)
 });
 
 app.get('/quizzes', async (req, res) => {
@@ -295,53 +338,62 @@ app.get('/quizzes', async (req, res) => {
 
 
 app.post(
-    '/save-quiz',
-    upload.fields([
-        { name: 'quiz-pdf', maxCount: 1 },
-        { name: 'audio-part1', maxCount: 1 },
-        { name: 'audio-part2', maxCount: 1 },
-        { name: 'audio-part3', maxCount: 1 },
-        { name: 'audio-part4', maxCount: 1 },
-    ]),
-    async (req, res) => {
-        try {
-            const { quizName, answerKey, createdBy } = req.body;
-            if (!quizName || !answerKey || !createdBy || !req.files['quiz-pdf']) {
-                return res.status(400).json({ message: "Missing required fields" });
-            }
-            const pdfFile = req.files['quiz-pdf'][0];
-            const pdfPath = `/uploads/images/${pdfFile.filename}`;
-
-            const audioPaths = {};
-            for (let i = 1; i <= 4; i++) {
-                if (req.files[`audio-part${i}`]) {
-                    const audioFile = req.files[`audio-part${i}`][0];
-                    audioPaths[`part${i}`] = `/uploads/audio/${audioFile.filename}`;
-                }
-            }
-
-            const quiz = {
-                quizId: uuidv4(),
-                quizName,
-                pdfPath: pdfPath,
-                audio: audioPaths,
-                answerKey: JSON.parse(answerKey),
-                createdBy,
-                partVisibility: [true, true, true, true, true, true, true],
-                isAssigned: false
-            };
-
-            quizzes.push(quiz);
-            await saveQuizzes();
-            res.json({ message: 'Quiz saved successfully!' });
-        } catch (err) {
-            console.error('Error saving quiz:', err);
-            res.status(500).json({ message: 'Error saving quiz' });
+  '/save-quiz',
+  upload.fields([
+    { name: 'audio-part1', maxCount: 1 },
+    { name: 'audio-part2', maxCount: 1 },
+    { name: 'audio-part3', maxCount: 1 },
+    { name: 'audio-part4', maxCount: 1 },
+    { name: 'images-part1' },
+    { name: 'images-part2' },
+    { name: 'images-part3' },
+    { name: 'images-part4' },
+    { name: 'images-part5' },
+    { name: 'images-part6' },
+    { name: 'images-part7' },
+  ]),
+  async (req, res) => {
+    try {
+      const { quizName, answerKey, createdBy } = req.body;
+      if (!quizName || !answerKey || !createdBy) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+      const audioPaths = {};
+      for (let i = 1; i <= 4; i++) {
+        if (req.files[`audio-part${i}`]) {
+          const audioFile = req.files[`audio-part${i}`][0];
+          audioPaths[`part${i}`] = `/uploads/audio/${audioFile.filename}`;
         }
+      }
+
+      const images = {};
+      for (let i = 1; i <= 7; i++) {
+        const partImages = req.files[`images-part${i}`] || [];
+        images[`part${i}`] = partImages.map((file) => `/uploads/images/${file.filename}`);
+      }
+
+      const quiz = {
+        quizId: uuidv4(),
+        quizName,
+        audio: audioPaths,
+        images,
+        answerKey: JSON.parse(answerKey),
+        createdBy,
+        isAssigned: false
+      };
+
+      quizzes.push(quiz);
+      await saveQuizzes();
+      res.json({ message: 'Quiz saved successfully!' });
+    } catch (err) {
+      console.error('Error saving quiz:', err);
+      res.status(500).json({ message: 'Error saving quiz' });
     }
+  }
 );
 
 app.get('/download-quiz-zip/:quizId', async (req, res) => {
+<<<<<<< HEAD
     try {
         const quizId = req.params.quizId;
         const quiz = quizzes.find((q) => q.quizId === quizId);
@@ -376,7 +428,51 @@ app.get('/download-quiz-zip/:quizId', async (req, res) => {
     } catch (err) {
         console.error('Error creating ZIP:', err);
         res.status(500).json({ message: 'Error creating ZIP file' });
+=======
+  try {
+    const quizId = req.params.quizId;
+    const quiz = quizzes.find((q) => q.quizId === quizId);
+    if (!quiz) {
+      return res.status(404).json({ message: 'Quiz not found' });
+>>>>>>> parent of 3b91775 (big update for each part)
     }
+
+    const zip = archiver('zip', { zlib: { level: 9 } });
+    res.attachment(`quiz_${quizId}.zip`);
+    zip.pipe(res);
+
+    const quizJson = JSON.stringify(quiz, null, 2);
+    zip.append(quizJson, { name: 'key/quizzes.json' });
+
+    for (let i = 1; i <= 4; i++) {
+      const audioPath = quiz.audio[`part${i}`];
+      if (audioPath) {
+        const fullPath = path.join(__dirname, 'public', audioPath.substring(1));
+        if (fsSync.existsSync(fullPath)) {
+          // Use original filename from quiz.audio
+          const originalName = path.basename(audioPath);
+          zip.file(fullPath, { name: `part${i}/audio/${originalName}` });
+        }
+      }
+    }
+
+    for (let i = 1; i <= 7; i++) {
+      const images = quiz.images[`part${i}`] || [];
+      for (let imagePath of images) {
+        const fullPath = path.join(__dirname, 'public', imagePath.substring(1));
+        if (fsSync.existsSync(fullPath)) {
+          // Use original filename from quiz.images
+          const originalName = path.basename(imagePath);
+          zip.file(fullPath, { name: `part${i}/images/${originalName}` });
+        }
+      }
+    }
+
+    await zip.finalize();
+  } catch (err) {
+    console.error('Error creating ZIP:', err);
+    res.status(500).json({ message: 'Error creating ZIP file' });
+  }
 });
 
 app.post('/assign-quiz', async (req, res) => {
@@ -441,8 +537,105 @@ app.post('/select-quiz', (req, res) => {
 
 
 app.get('/quiz-audio', (req, res) => {
+<<<<<<< HEAD
     if (!currentQuiz || !currentQuiz.audio) {
         return res.status(404).json({ message: 'No audio available' });
+=======
+  if (!currentQuiz || !currentQuiz.audio) {
+    return res.status(404).json({ message: 'No audio available' });
+  }
+  const part = req.query.part || 'part1';
+  res.json({ audio: currentQuiz.audio[part] });
+});
+
+app.get('/images', (req, res) => {
+  if (!currentQuiz) {
+    return res.status(404).json({ message: 'No quiz selected' });
+  }
+  const part = req.query.part || 1;
+  res.json(currentQuiz.images[`part${part}`] || []);
+});
+
+app.post('/submit', async (req, res) => {
+  if (!currentQuiz) {
+    return res.status(404).json({ message: 'No quiz selected' });
+  }
+
+  const { username, answers } = req.body;
+  if (!username || !answers) {
+    return res.status(400).json({ message: 'Username and answers are required' });
+  }
+  let score = 0;
+  const answerKey = currentQuiz.answerKey;
+
+  for (let i = 1; i <= 200; i++) {
+    const userAnswer = answers[`q${i}`];
+    const correctAnswer = answerKey[`q${i}`];
+    if (userAnswer && userAnswer === correctAnswer) {
+      score++;
+    }
+  }
+
+  const result = {
+    quizId: currentQuiz.quizId,
+    username,
+    score,
+    answers, // Lưu trữ toàn bộ đáp án
+    timestamp: Date.now()
+  };
+  results.push(result);
+  await saveResults();
+
+  const quizResults = results.filter((r) => r.quizId === currentQuiz.quizId);
+  broadcast({
+    type: 'submitted',
+    count: quizResults.length,
+    results: quizResults.map((r) => ({
+      username: r.username,
+      score: r.score,
+      submittedAt: new Date(r.timestamp)
+    }))
+  });
+
+  res.json({ score });
+});
+
+app.get('/results', (req, res) => {
+  res.json(results);
+});
+
+app.post('/reset', async (req, res) => {
+  results = [];
+  await saveResults();
+  broadcast({ type: 'submitted', count: 0, results: [] });
+  res.json({ message: 'Quiz reset successfully!' });
+});
+
+app.get('/download-quizzes', (req, res) => {
+  res.setHeader('Content-Disposition', 'attachment; filename=quizzes.json');
+  res.setHeader('Content-Type', 'application/json');
+  res.send(JSON.stringify(quizzes, null, 2));
+});
+
+app.post(
+  '/upload-quizzes',
+  upload.fields([{ name: 'quizzes', maxCount: 1 }]),
+  async (req, res) => {
+    try {
+      if (!req.files.quizzes) {
+        return res.status(400).json({ message: 'No quizzes.json file uploaded' });
+      }
+      const file = req.files.quizzes[0];
+      const data = await fs.readFile(file.path, 'utf8');
+      const uploadedQuizzes = JSON.parse(data);
+      quizzes = uploadedQuizzes;
+      await saveQuizzes();
+      await fs.unlink(file.path);
+      res.json({ message: 'Quizzes uploaded successfully!' });
+    } catch (err) {
+      console.error('Error uploading quizzes:', err);
+      res.status(500).json({ message: 'Error uploading quizzes' });
+>>>>>>> parent of 3b91775 (big update for each part)
     }
     const part = req.query.part || 'part1';
     res.json({ audio: currentQuiz.audio[part] });
@@ -467,9 +660,28 @@ const server = app.listen(port, () => {
 const wss = new WebSocketServer({ server });
 
 wss.on('connection', (ws) => {
-    clients.add(ws);
-    broadcast({ type: 'participantCount', count: clients.size });
+  clients.add(ws);
+  broadcast({ type: 'participantCount', count: clients.size });
+  if (currentQuiz) {
+    const quizResults = results.filter(r => r.quizId === currentQuiz.quizId);
+    ws.send(JSON.stringify({
+      type: 'submitted',
+      count: quizResults.length,
+      results: quizResults.map(r => ({
+        username: r.username,
+        score: r.score,
+        submittedAt: new Date(r.timestamp)
+      }))
+    }));
+    ws.send(JSON.stringify({
+      type: 'quizStatus',
+      quizId: currentQuiz.quizId,
+      quizName: currentQuiz.quizName,
+      quizExists: true
+    }));
+  }
 
+<<<<<<< HEAD
     if (currentQuiz) {
         ws.send(JSON.stringify({
             type: 'quizStatus',
@@ -482,8 +694,52 @@ wss.on('connection', (ws) => {
             quizId: currentQuiz.quizId,
             visibility: currentQuiz.partVisibility
         }));
+=======
+  ws.on('message', (message) => {
+    try {
+      const msg = JSON.parse(message);
+      if (msg.type === 'start') {
+        broadcast({ type: 'start', timeLimit: msg.timeLimit });
+      } else if (msg.type === 'end') {
+        if (currentQuiz) {
+          const quizResults = results.filter(r => r.quizId === currentQuiz.quizId);
+          broadcast({
+            type: 'submitted',
+            count: quizResults.length,
+            results: quizResults.map(r => ({
+              username: r.username,
+              score: r.score,
+              submittedAt: new Date(r.timestamp)
+            }))
+          });
+        }
+        broadcast({ type: 'end' });
+      } else if (msg.type === 'requestQuizStatus') {
+        if (currentQuiz) {
+          ws.send(JSON.stringify({
+            type: 'quizStatus',
+            quizId: currentQuiz.quizId,
+            quizName: currentQuiz.quizName,
+            quizExists: true
+          }));
+        } else {
+          ws.send(JSON.stringify({ type: 'quizStatus', quizExists: false }));
+        }
+      } else if (msg.type === 'login') {
+        // Lưu thông tin user nếu cần
+      } else if (msg.type === 'quizSelected' || msg.type === 'quizAssigned') {
+        // Xử lý các tin nhắn từ client nếu cần
+      } else if (msg.type === 'heartbeat') { // ⭐ Add this new case
+          console.log("Received heartbeat from a client.");
+        // The client is still active, do nothing. The server's timeout logic is reset automatically.
+        }
+    } catch (err) {
+      console.error('Error processing WebSocket message:', err);
+>>>>>>> parent of 3b91775 (big update for each part)
     }
+  });
 
+<<<<<<< HEAD
     ws.on('message', (message) => {
         try {
             const msg = JSON.parse(message);
@@ -545,4 +801,17 @@ wss.on('connection', (ws) => {
         }
         broadcast({ type: 'participantCount', count: clients.size });
     });
+=======
+  ws.on('close', () => {
+    clients.delete(ws);
+    broadcast({ type: 'participantCount', count: clients.size });
+  });
+
+  app.get('/answer-key', (req, res) => {
+  if (!currentQuiz) {
+    return res.status(404).json({ message: 'No quiz selected' });
+  }
+  res.json(currentQuiz.answerKey);
+});
+>>>>>>> parent of 3b91775 (big update for each part)
 });
