@@ -1580,6 +1580,7 @@ function clearUserAnswers() {
 
 function handleWebSocketMessage(event) {
 <<<<<<< HEAD
+<<<<<<< HEAD
     try {
         if (!event.data) return;
         const message = JSON.parse(event.data);
@@ -1709,6 +1710,46 @@ function handleWebSocketMessage(event) {
         directTestBtn.classList.remove("hidden");
       }
       loadQuizzes();
+=======
+  try {
+    if (!event.data) return;
+        const message = JSON.parse(event.data);
+        switch (message.type) {
+            case 'adminLoginSuccess':
+                hideAllScreens();
+                quizListScreen.classList.remove("hidden");
+                adminOptions.classList.remove("hidden");
+                adminControls.classList.remove("hidden");
+                loadQuizzes();
+                downloadNotice.classList.add("hidden");
+                saveAdminState();
+                startHeartbeat();
+                break;
+            case 'adminLoginError':
+                isAdmin = false;
+                user = null;
+                if(socket) socket.close();
+                showAdminLogin();
+                document.getElementById("notification-admin-login").innerText = message.message;
+                break;
+            case 'partVisibilityUpdate':
+                partVisibilityState = message.visibility;
+                if (isAdmin) {
+                    updatePartVisibilityButtons();
+                } else {
+                    updateStudentPartVisibility();
+                }
+                break;
+            case "quizStatus":
+                quizStatus.innerText = message.quizId ? `Đề thi hiện tại: ${message.quizName}` : "Chưa có đề thi được chọn.";
+                selectedQuizId = message.quizId;
+                if (isAdmin && message.quizId) {
+                    assignBtn.classList.remove("hidden");
+                    directTestBtn.classList.remove("hidden");
+                }
+                loadQuizzes();
+                break;
+>>>>>>> parent of bb2c51e (fix bug 1)
     } else if (message.type === "participants" || message.type === "participantCount") {
       participantCount.innerText = `Số người tham gia: ${message.count || 0}`;
       directParticipantCount.innerText = `Số người tham gia: ${message.count || 0}`;
@@ -1771,6 +1812,10 @@ function handleWebSocketMessage(event) {
     } else if (message.type === "error") {
       notification.innerText = message.message;
     }
+  } catch (error) {
+    console.error("Error handling WebSocket message:", error);
+    notification.innerText = "Lỗi khi xử lý thông tin từ server.";
+  }
 }
 
 
