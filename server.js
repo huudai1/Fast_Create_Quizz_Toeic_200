@@ -482,22 +482,37 @@ app.post(
 );
 
 app.post('/select-quiz', (req, res) => {
-  const { quizId } = req.body;
-  if (!quizId) {
-    return res.status(400).json({ message: 'Quiz ID is required' });
-  }
-  const quiz = quizzes.find((q) => q.quizId === quizId);
-  if (!quiz) {
-    return res.status(404).json({ message: 'Quiz not found' });
-  }
-  currentQuiz = quiz;
-  broadcast({
-    type: 'quizStatus',
-    quizId: quiz.quizId,
-    quizName: quiz.quizName,
-    quizExists: true
-  });
-  res.json({ message: 'Quiz selected successfully!', quizName: quiz.quizName });
+  const { quizId } = req.body;
+  if (!quizId) {
+    return res.status(400).json({ message: 'Quiz ID is required' });
+  }
+  const quiz = quizzes.find((q) => q.quizId === quizId);
+  if (!quiz) {
+    return res.status(404).json({ message: 'Quiz not found' });
+  }
+  currentQuiz = quiz;
+
+  // Gửi trạng thái chung của đề thi
+  broadcast({
+    type: 'quizStatus',
+    quizId: quiz.quizId,
+    quizName: quiz.quizName,
+    quizExists: true
+  });
+
+  // *** BẮT ĐẦU THAY ĐỔI ***
+  // Khởi tạo partVisibility nếu chưa có (dành cho các đề cũ)
+  if (!quiz.partVisibility) {
+    quiz.partVisibility = Array(7).fill(true);
+  }
+  // Gửi trạng thái ẩn/hiện ngay lập tức khi chọn đề
+  broadcast({
+    type: 'partVisibilityUpdate',
+    visibility: quiz.partVisibility
+  });
+  // *** KẾT THÚC THAY ĐỔI ***
+
+  res.json({ message: 'Quiz selected successfully!', quizName: quiz.quizName });
 });
 
 app.get('/quiz-audio', (req, res) => {

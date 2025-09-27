@@ -612,74 +612,73 @@ async function fetchWithRetry(url, retries = 5, delay = 2000) {
 }
 
 async function loadQuizzes() {
-    const url = isAdmin ? `/quizzes?email=${encodeURIComponent(user.email)}` : '/quizzes';
-    try {
-        const res = await fetchWithRetry(url);
-        const quizzes = await res.json();
-        quizList.innerHTML = "";
+    const url = isAdmin ? `/quizzes?email=${encodeURIComponent(user.email)}` : '/quizzes';
+    try {
+        const res = await fetchWithRetry(url);
+        const quizzes = await res.json();
+        quizList.innerHTML = "";
 
-        const partControls = document.getElementById('part-visibility-controls');
-        if (isAdmin && selectedQuizId && quizzes.some(q => q.quizId === selectedQuizId)) {
-            partControls.classList.remove('hidden');
-            const quizStateRes = await fetch(`/quiz-state/${selectedQuizId}`);
-            if(quizStateRes.ok){
-                const quizState = await quizStateRes.json();
-                partVisibilityState = quizState.partVisibility;
-                updatePartVisibilityButtons();
-            }
-        } else {
-            partControls.classList.add('hidden');
-        }
-        
-        const directTestState = localStorage.getItem("directTestState");
-        const directTestNotice = document.getElementById("direct-test-notice");
-        const directTestMessage = document.getElementById("direct-test-message");
-        const joinDirectTestBtn = document.getElementById("join-direct-test-btn");
-        
-        if (!isAdmin && directTestState) {
-          const { isDirectTestMode, quizId, timeLimit, startTime } = JSON.parse(directTestState);
-          if (isDirectTestMode && !isTestEnded) {
-            const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
-            const remainingTime = timeLimit - elapsedTime;
-            if (remainingTime > 0) {
-              directTestMessage.innerText = `Kiểm tra trực tiếp đang diễn ra! (Còn: ${Math.floor(remainingTime / 60)}:${remainingTime % 60 < 10 ? "0" : ""}${remainingTime % 60})`;
-              joinDirectTestBtn.onclick = () => joinDirectTest(quizId, remainingTime, startTime);
-              directTestNotice.classList.remove("hidden");
-            }
-          }
-        } else {
-          directTestNotice.classList.add("hidden");
-        }
+        const partControls = document.getElementById('part-visibility-controls');
 
-        if (quizzes.length === 0) {
-            quizList.innerHTML = "<p>Chưa có đề thi nào.</p>";
-        } else {
-            quizzes.forEach(quiz => {
-                const div = document.createElement("div");
-                div.className = "flex items-center space-x-2";
-                const isSelected = selectedQuizId === quiz.quizId;
-                if (isAdmin) {
-                    div.innerHTML = `
-                        <span class="text-lg font-medium">${quiz.quizName}${isSelected ? ' ✅' : ''}</span>
-                        <button onclick="selectQuiz('${quiz.quizId}')" class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">Chọn</button>
-                        <button onclick="downloadQuizzes('${quiz.quizId}')" class="bg-purple-500 text-white px-2 py-1 rounded hover:bg-purple-600">Tải xuống</button>
-                        <button onclick="deleteQuiz('${quiz.quizId}')" class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Xóa</button>
-                    `;
-                } else {
-                    // Dòng innerHTML đã được cập nhật với ID cho nút bấm
-                    div.innerHTML = `
-                        <span class="text-lg font-medium">${quiz.quizName}${isSelected ? ' ✅' : ''}</span>
-                        <button id="start-quiz-btn-${quiz.quizId}" onclick="startQuiz('${quiz.quizId}')" class="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 ${quiz.isAssigned ? '' : 'hidden'}">Bắt đầu làm bài</button>
-                    `;
-                }
-                quizList.appendChild(div);
-            });
-        }
-    } catch (error) {
-        console.error("Error loading quizzes:", error);
-        notification.innerText = "Không thể tải danh sách đề thi.";
-        quizList.innerHTML = "<p>Lỗi khi tải danh sách đề thi.</p>";
-    }
+        // *** BẮT ĐẦU THAY ĐỔI ***
+        // Logic được đơn giản hóa: chỉ kiểm tra xem có nên hiện khu vực controls không
+        // và gọi updatePartVisibilityButtons để đảm bảo màu nút luôn đúng
+        if (isAdmin && selectedQuizId && quizzes.some(q => q.quizId === selectedQuizId)) {
+            partControls.classList.remove('hidden');
+            updatePartVisibilityButtons(); // Dựa vào state hiện tại để tô màu
+        } else {
+            partControls.classList.add('hidden');
+        }
+        // *** KẾT THÚC THAY ĐỔI ***
+        
+        const directTestState = localStorage.getItem("directTestState");
+        const directTestNotice = document.getElementById("direct-test-notice");
+        const directTestMessage = document.getElementById("direct-test-message");
+        const joinDirectTestBtn = document.getElementById("join-direct-test-btn");
+        
+        if (!isAdmin && directTestState) {
+          const { isDirectTestMode, quizId, timeLimit, startTime } = JSON.parse(directTestState);
+          if (isDirectTestMode && !isTestEnded) {
+            const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+            const remainingTime = timeLimit - elapsedTime;
+            if (remainingTime > 0) {
+              directTestMessage.innerText = `Kiểm tra trực tiếp đang diễn ra! (Còn: ${Math.floor(remainingTime / 60)}:${remainingTime % 60 < 10 ? "0" : ""}${remainingTime % 60})`;
+              joinDirectTestBtn.onclick = () => joinDirectTest(quizId, remainingTime, startTime);
+              directTestNotice.classList.remove("hidden");
+            }
+          }
+        } else {
+          directTestNotice.classList.add("hidden");
+        }
+
+        if (quizzes.length === 0) {
+            quizList.innerHTML = "<p>Chưa có đề thi nào.</p>";
+        } else {
+            quizzes.forEach(quiz => {
+                const div = document.createElement("div");
+                div.className = "flex items-center space-x-2";
+                const isSelected = selectedQuizId === quiz.quizId;
+                if (isAdmin) {
+                    div.innerHTML = `
+                        <span class="text-lg font-medium">${quiz.quizName}${isSelected ? ' ✅' : ''}</span>
+                        <button onclick="selectQuiz('${quiz.quizId}')" class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">Chọn</button>
+                        <button onclick="downloadQuizzes('${quiz.quizId}')" class="bg-purple-500 text-white px-2 py-1 rounded hover:bg-purple-600">Tải xuống</button>
+                        <button onclick="deleteQuiz('${quiz.quizId}')" class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Xóa</button>
+                    `;
+                } else {
+                    div.innerHTML = `
+                        <span class="text-lg font-medium">${quiz.quizName}${isSelected ? ' ✅' : ''}</span>
+                        <button id="start-quiz-btn-${quiz.quizId}" onclick="startQuiz('${quiz.quizId}')" class="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 ${quiz.isAssigned ? '' : 'hidden'}">Bắt đầu làm bài</button>
+                    `;
+                }
+                quizList.appendChild(div);
+            });
+        }
+    } catch (error) {
+        console.error("Error loading quizzes:", error);
+        notification.innerText = "Không thể tải danh sách đề thi.";
+        quizList.innerHTML = "<p>Lỗi khi tải danh sách đề thi.</p>";
+    }
 }
 
 async function joinDirectTest(quizId, remainingTime, startTime) {
