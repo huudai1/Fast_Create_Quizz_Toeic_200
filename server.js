@@ -24,7 +24,6 @@ app.use(express.json());
 app.use(express.static("public"));
 
 
-<<<<<<< HEAD
 app.get('/quiz-state/:quizId', (req, res) => {
     const { quizId } = req.params;
     const quiz = quizzes.find(q => q.quizId === quizId);
@@ -41,7 +40,6 @@ app.get('/quiz-pdf', (req, res) => {
     res.json({ pdfPath: currentQuiz.pdfPath || null });
 });
 
-=======
 app.use(express.json());
 app.use(express.static("public", {
   index: "index.html",
@@ -49,7 +47,6 @@ app.use(express.static("public", {
     console.log(`Serving file: ${path}`);
   }
 }));
->>>>>>> parent of 3b91775 (big update for each part)
 
 app.post('/submit', async (req, res) => {
     if (!currentQuiz) {
@@ -257,7 +254,6 @@ app.get('/answer-key', (req, res) => {
     res.json(currentQuiz.answerKey);
 });
 
-<<<<<<< HEAD
 app.delete('/delete-quiz/:quizId', async (req, res) => {
     try {
         const quizId = req.params.quizId;
@@ -293,7 +289,6 @@ app.delete('/delete-quiz/:quizId', async (req, res) => {
         console.error('Error deleting quiz:', err);
         res.status(500).json({ message: 'Error deleting quiz' });
     }
-=======
 // Endpoint để xóa database
 app.delete('/clear-database', async (req, res) => {
   try {
@@ -324,7 +319,6 @@ app.post('/assign-quiz', async (req, res) => {
   await saveQuizzes();
   broadcast({ type: 'quizStatus', quizId: quiz.quizId, quizName: quiz.quizName, quizExists: true });
   res.json({ message: 'Quiz assigned successfully!' });
->>>>>>> parent of 3b91775 (big update for each part)
 });
 
 app.get('/quizzes', async (req, res) => {
@@ -393,7 +387,6 @@ app.post(
 );
 
 app.get('/download-quiz-zip/:quizId', async (req, res) => {
-<<<<<<< HEAD
     try {
         const quizId = req.params.quizId;
         const quiz = quizzes.find((q) => q.quizId === quizId);
@@ -428,13 +421,11 @@ app.get('/download-quiz-zip/:quizId', async (req, res) => {
     } catch (err) {
         console.error('Error creating ZIP:', err);
         res.status(500).json({ message: 'Error creating ZIP file' });
-=======
   try {
     const quizId = req.params.quizId;
     const quiz = quizzes.find((q) => q.quizId === quizId);
     if (!quiz) {
       return res.status(404).json({ message: 'Quiz not found' });
->>>>>>> parent of 3b91775 (big update for each part)
     }
 
     const zip = archiver('zip', { zlib: { level: 9 } });
@@ -537,10 +528,8 @@ app.post('/select-quiz', (req, res) => {
 
 
 app.get('/quiz-audio', (req, res) => {
-<<<<<<< HEAD
     if (!currentQuiz || !currentQuiz.audio) {
         return res.status(404).json({ message: 'No audio available' });
-=======
   if (!currentQuiz || !currentQuiz.audio) {
     return res.status(404).json({ message: 'No audio available' });
   }
@@ -635,7 +624,6 @@ app.post(
     } catch (err) {
       console.error('Error uploading quizzes:', err);
       res.status(500).json({ message: 'Error uploading quizzes' });
->>>>>>> parent of 3b91775 (big update for each part)
     }
     const part = req.query.part || 'part1';
     res.json({ audio: currentQuiz.audio[part] });
@@ -681,7 +669,6 @@ wss.on('connection', (ws) => {
     }));
   }
 
-<<<<<<< HEAD
     if (currentQuiz) {
         ws.send(JSON.stringify({
             type: 'quizStatus',
@@ -694,7 +681,7 @@ wss.on('connection', (ws) => {
             quizId: currentQuiz.quizId,
             visibility: currentQuiz.partVisibility
         }));
-=======
+
   ws.on('message', (message) => {
     try {
       const msg = JSON.parse(message);
@@ -735,11 +722,9 @@ wss.on('connection', (ws) => {
         }
     } catch (err) {
       console.error('Error processing WebSocket message:', err);
->>>>>>> parent of 3b91775 (big update for each part)
     }
   });
 
-<<<<<<< HEAD
     ws.on('message', (message) => {
         try {
             const msg = JSON.parse(message);
@@ -801,7 +786,6 @@ wss.on('connection', (ws) => {
         }
         broadcast({ type: 'participantCount', count: clients.size });
     });
-=======
   ws.on('close', () => {
     clients.delete(ws);
     broadcast({ type: 'participantCount', count: clients.size });
@@ -813,5 +797,4 @@ wss.on('connection', (ws) => {
   }
   res.json(currentQuiz.answerKey);
 });
->>>>>>> parent of 3b91775 (big update for each part)
-});
+};
