@@ -698,6 +698,27 @@ async function loadQuizzes() {
           joinDirectTestBtn.onclick = () => joinDirectTest(quizId, remainingTime, startTime);
           directTestNotice.classList.remove("hidden");
         }
+  const url = isAdmin ? `/quizzes?email=${encodeURIComponent(user.email)}` : '/quizzes';
+  try {
+    const res = await fetchWithRetry(url);
+    const quizzes = await res.json();
+    quizList.innerHTML = "";
+    
+    const directTestState = localStorage.getItem("directTestState");
+    const directTestNotice = document.getElementById("direct-test-notice");
+    const directTestMessage = document.getElementById("direct-test-message");
+    const joinDirectTestBtn = document.getElementById("join-direct-test-btn");
+    
+    if (!isAdmin && directTestState) {
+      const { isDirectTestMode, quizId, timeLimit, startTime } = JSON.parse(directTestState);
+      if (isDirectTestMode && !isTestEnded) {
+        const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+        const remainingTime = timeLimit - elapsedTime;
+        if (remainingTime > 0) {
+          directTestMessage.innerText = `Kiểm tra trực tiếp đang diễn ra! (Còn: ${Math.floor(remainingTime / 60)}:${remainingTime % 60 < 10 ? "0" : ""}${remainingTime % 60})`;
+          joinDirectTestBtn.onclick = () => joinDirectTest(quizId, remainingTime, startTime);
+          directTestNotice.classList.remove("hidden");
+        }
       }
     } else {
       directTestNotice.classList.add("hidden");
