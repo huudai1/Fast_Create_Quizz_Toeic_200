@@ -464,7 +464,7 @@ app.get('/download-quiz-zip/:quizId', async (req, res) => {
     console.error('Error creating ZIP:', err);
     res.status(500).json({ message: 'Error creating ZIP file' });
   }
-});
+};
 
 app.post('/assign-quiz', async (req, res) => {
     const { quizId, timeLimit } = req.body;
@@ -535,7 +535,7 @@ app.get('/quiz-audio', (req, res) => {
   }
   const part = req.query.part || 'part1';
   res.json({ audio: currentQuiz.audio[part] });
-});
+};
 
 app.get('/images', (req, res) => {
   if (!currentQuiz) {
