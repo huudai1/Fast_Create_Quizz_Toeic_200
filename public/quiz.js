@@ -11,6 +11,13 @@ let userAnswers = null;
 let answerKey = null;
 let currentReviewPart = 1;
 let initialTimeLimit = null; // Lưu thời gian ban đầu (giây)
+
+const ADMIN_PASSWORD = "admin123";
+const adminLoginForm = document.getElementById("admin-login-form"); // Thêm dòng này
+const adminPasswordInput = document.getElementById("admin-password"); // Thêm dòng này
+const notificationAdmin = document.getElementById("notification-admin"); // Thêm dòng này
+
+
 const directTestProgressBar = document.getElementById("direct-test-progress-bar");
 const directTestTimer = document.getElementById("direct-test-timer");
 const answerNotification = document.getElementById("answer-notification");
@@ -257,11 +264,11 @@ function startDownloadNotice() {
 }
 
 function showAdminLogin() {
-  hideAllScreens();
-  adminLogin.classList.remove("hidden");
-  notification.innerText = "";
-  downloadNotice.classList.add("hidden");
-  saveAdminState();
+    hideAllScreens();
+    adminLogin.classList.remove("hidden");
+    notificationAdmin.innerText = ""; // 👈 Đổi từ 'notification' thành 'notificationAdmin'
+    downloadNotice.classList.add("hidden");
+    saveAdminState();
 }
 
 function showStudentLogin() {
@@ -319,33 +326,6 @@ function initializeWebSocket() {
     notification.innerText = "Không thể khởi tạo WebSocket. Vẫn có thể tiếp tục sử dụng.";
   }
 }
-
-window.handleAdminCredentialResponse = async (response) => {
-  try {
-    if (!response.credential) {
-      throw new Error("No credential received from Google Sign-In.");
-    }
-    const profile = JSON.parse(atob(response.credential.split('.')[1]));
-    if (!profile.email) {
-      throw new Error("Unable to retrieve email from Google profile.");
-    }
-    user = { name: profile.name, email: profile.email };
-    isAdmin = true;
-    hideAllScreens();
-    quizListScreen.classList.remove("hidden");
-    adminOptions.classList.remove("hidden");
-    adminControls.classList.remove("hidden");
-    initializeWebSocket();
-    await loadQuizzes();
-    downloadNotice.classList.add("hidden");
-    saveAdminState();
-    startHeartbeat();
-  } catch (error) {
-    console.error("Error during Admin login:", error);
-    notification.innerText = "Đăng nhập Admin thất bại. Vui lòng thử lại hoặc kiểm tra Client ID.";
-    showWelcomeScreen();
-  }
-};
 
 studentNameForm.onsubmit = async (e) => {
   e.preventDefault();
@@ -438,7 +418,7 @@ async function uploadQuizzes() {
 
   const formData = new FormData();
   formData.append("quizzes", file);
-  formData.append("createdBy", user.email);
+  formData.append("createdBy", user.name); // 👈 Đổi từ 'user.email' sang 'user.name'
   console.log("FormData prepared, createdBy:", user.email);
 
   modal.classList.remove("hidden");
