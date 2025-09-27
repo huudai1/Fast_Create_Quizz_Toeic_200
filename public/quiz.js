@@ -268,18 +268,25 @@ async function showStatistics() {
 }
 
 function hideAllScreens() {
-    welcomeScreen.classList.add("hidden");
-    adminLogin.classList.add("hidden");
-    studentLogin.classList.add("hidden");
-    quizListScreen.classList.add("hidden");
-    directTestScreen.classList.add("hidden");
-    uploadQuizzesSection.classList.add("hidden");
-    quizContainer.classList.add("hidden");
-    resultScreen.classList.add("hidden");
-    staticScreen.classList.add("hidden");
-    const reviewScreen = document.getElementById("review-answers");
-    if (reviewScreen) reviewScreen.classList.add("hidden");
-    document.querySelectorAll(".admin-step").forEach(step => step.classList.add("hidden"));
+    const screens = [
+        welcomeScreen, adminLogin, studentLogin, quizListScreen,
+        directTestScreen, uploadQuizzesSection, quizContainer,
+        resultScreen, staticScreen, reviewScreen
+    ];
+
+    // Ẩn tất cả các màn hình chính
+    screens.forEach(screen => {
+        if (screen) { // Chỉ thực hiện nếu phần tử tồn tại
+            screen.classList.add("hidden");
+        }
+    });
+
+    // Ẩn tất cả các bước của admin
+    document.querySelectorAll(".admin-step").forEach(step => {
+        if (step) {
+            step.classList.add("hidden");
+        }
+    });
 }
 
 function clearState() {
