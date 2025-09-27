@@ -1802,13 +1802,26 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     // --- 2. GẮN SỰ KIỆN CHO CÁC NÚT CHÍNH ---
-    assignBtn.addEventListener("click", assignQuiz);
-    directTestBtn.addEventListener("click", startDirectTest);
-    endDirectTestBtn.addEventListener("click", endDirectTest);
-    quizForm.addEventListener("submit", (e) => {
-        e.preventDefault();
-        submitQuiz();
-    });
+    const assignBtn = document.getElementById("assignBtn");
+    const directTestBtn = document.getElementById("directTestBtn");
+    const endDirectTestBtn = document.getElementById("endDirectTestBtn");
+    const quizForm = document.getElementById("quizForm");
+
+    if (assignBtn) {
+        assignBtn.addEventListener("click", assignQuiz);
+    }
+    if (directTestBtn) {
+        directTestBtn.addEventListener("click", startDirectTest);
+    }
+    if (endDirectTestBtn) {
+        endDirectTestBtn.addEventListener("click", endDirectTest);
+    }
+    if (quizForm) {
+        quizForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            submitQuiz();
+        });
+    }
 
     // --- 3. XỬ LÝ FORM ĐĂNG NHẬP ADMIN ---
     const adminLoginForm = document.getElementById("admin-login-form");
@@ -1818,13 +1831,10 @@ document.addEventListener("DOMContentLoaded", async () => {
             const username = document.getElementById("admin-username").value;
             const password = document.getElementById("admin-password").value;
             const notificationElement = document.getElementById("notification-admin-login");
-
-            // *** LƯU Ý BẢO MẬT: Bạn NÊN thay đổi mật khẩu này! ***
             if (username === 'admin' && password === '12345') {
                 notificationElement.innerText = "";
                 user = { name: 'Admin', email: 'admin@local.com' };
                 isAdmin = true;
-                
                 initializeWebSocket();
                 socket.onopen = () => {
                     console.log("WebSocket connected for admin login check.");
@@ -1838,6 +1848,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // --- 4. ẨN MÀN HÌNH CHỜ SAU 2 GIÂY ---
     setTimeout(() => {
-        document.getElementById("loading-screen").classList.add("hidden");
+        const loadingScreen = document.getElementById("loading-screen");
+        if (loadingScreen) {
+            loadingScreen.classList.add("hidden");
+        }
     }, 2000);
 });
