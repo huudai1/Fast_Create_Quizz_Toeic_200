@@ -546,7 +546,7 @@ app.get('/quiz-audio', (req, res) => {
   }
   const part = req.query.part || 'part1';
   res.json({ audio: currentQuiz.audio[part] });
-});
+};
 
 app.get('/images', (req, res) => {
   if (!currentQuiz) {
