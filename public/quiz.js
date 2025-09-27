@@ -370,30 +370,6 @@ function initializeWebSocket() {
   }
 }
 
-window.handleAdminCredentialResponse = async (response) => {
-    try {
-        if (!response.credential) {
-            throw new Error("No credential received from Google Sign-In.");
-        }
-        const profile = JSON.parse(atob(response.credential.split('.')[1]));
-        if (!profile.email) {
-            throw new Error("Unable to retrieve email from Google profile.");
-        }
-        user = { name: profile.name, email: profile.email };
-        isAdmin = true;
-        
-        initializeWebSocket();
-        socket.onopen = () => {
-            console.log("WebSocket connected for admin login check.");
-            socket.send(JSON.stringify({ type: "adminLogin", user: user }));
-        };
-
-    } catch (error) {
-        console.error("Error during Admin login:", error);
-        document.getElementById("notification-admin-login").innerText = "Đăng nhập Admin thất bại. Vui lòng thử lại.";
-    }
-};
-
 studentNameForm.onsubmit = async (e) => {
   e.preventDefault();
   const nameInput = document.getElementById("student-name");
