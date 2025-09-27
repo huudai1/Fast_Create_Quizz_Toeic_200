@@ -1406,70 +1406,52 @@ function handleWebSocketMessage(event) {
         if (!event.data) return;
         const message = JSON.parse(event.data);
 
+        // Khai báo các biến ở đầu hàm
+        const quizStatus = document.getElementById("quiz-status");
+        const participantCount = document.getElementById("participant-count");
+        const submittedCount = document.getElementById("submitted-count");
+        const directParticipantCount = document.getElementById("direct-participant-count");
+        const directSubmittedCount = document.getElementById("direct-submitted-count");
+
         switch (message.type) {
-            /* ==================== ADMIN LOGIN ==================== */
-            case 'adminLoginSuccess':
-                hideAllScreens();
-                quizListScreen.classList.remove("hidden");
-                adminOptions.classList.remove("hidden");
-                adminControls.classList.remove("hidden");
-                loadQuizzes();
-                saveAdminState();
-                startHeartbeat();
-                break;
-
-            case 'adminLoginError':
-                isAdmin = false;
-                user = null;
-                if (socket) socket.close();
-                showAdminLogin();
-                document.getElementById("notification-admin-login").innerText = message.message;
-                break;
-
-            /* ==================== QUIZ STATE UPDATES ==================== */
-            case 'partVisibilityUpdate':
-                // Chỉ cập nhật nếu trạng thái này thuộc quiz đang được chọn
-                if (message.quizId === selectedQuizId) {
-                    partVisibilityState = message.visibility;
-                    if (isAdmin) {
-                        updatePartVisibilityButtons();  // Cập nhật màu nút cho admin
-                    } else {
-                        updateStudentPartVisibility();  // Ẩn/hiện phần thi cho học sinh
-                    }
-                }
-                break;
-
-            case 'quizAssigned':
-                // Học sinh: tải lại danh sách để cập nhật trạng thái isAssigned
-                if (!isAdmin) loadQuizzes();
-                break;
-
             case 'quizStatus':
-                quizStatus.innerText = message.quizId
-                    ? `Đề thi hiện tại: ${message.quizName}`
-                    : "Chưa có đề thi được chọn.";
+                if (quizStatus) { // Kiểm tra sự tồn tại trước khi cập nhật
+                    quizStatus.innerText = message.quizId ? `Đề thi hiện tại: ${message.quizName}` : "Chưa có đề thi được chọn.";
+                }
                 selectedQuizId = message.quizId;
-                loadQuizzes(); // Tải lại để đồng bộ UI
+                if (!isAdmin) loadQuizzes(); // Chỉ tải lại cho học sinh
                 break;
 
-            /* ==================== PARTICIPANT & SUBMISSION ==================== */
             case 'participants':
             case 'participantCount':
                 const pCount = message.count || 0;
-                participantCount.innerText      = `Số người tham gia: ${pCount}`;
-                directParticipantCount.innerText = `Số người tham gia: ${pCount}`;
+                if (participantCount) {
+                    participantCount.innerText = `Số người tham gia: ${pCount}`;
+                }
+                if (directParticipantCount) {
+                    directParticipantCount.innerText = `Số người tham gia: ${pCount}`;
+                }
                 break;
 
             case 'submittedCount':
             case 'submitted':
                 const sCount = message.count !== undefined ? message.count : 0;
-                submittedCount.innerText       = `Số bài đã nộp: ${sCount}`;
-                directSubmittedCount.innerText = `Số bài đã nộp: ${sCount}`;
+                if (submittedCount) {
+                    submittedCount.innerText = `Số bài đã nộp: ${sCount}`;
+                }
+                if (directSubmittedCount) {
+                    directSubmittedCount.innerText = `Số bài đã nộp: ${sCount}`;
+                }
 
                 if (isAdmin && message.results) {
-                    // Hiển thị bảng kết quả cho admin
-                    populateResultsTable(resultsBody, message.results);
-                    resultsTable.classList.remove("hidden");
+                    const resultsTable = document.getElementById("results-table");
+                    const resultsBody = document.getElementById("results-body");
+                    if (resultsBody) {
+                        populateResultsTable(resultsBody, message.results);
+                    }
+                    if (resultsTable) {
+                        resultsTable.classList.remove("hidden");
+                    }
                 }
                 break;
 
@@ -1523,7 +1505,10 @@ function handleWebSocketMessage(event) {
 
             /* ==================== ERROR ==================== */
             case 'error':
-                notification.innerText = message.message;
+                const notification = document.getElementById("notification");
+                if (notification) {
+                    notification.innerText = message.message;
+                }
                 break;
         }
 
