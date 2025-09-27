@@ -409,6 +409,24 @@ app.get('/download-quiz-zip/:quizId', async (req, res) => {
     }
 });
 
+app.post('/assign-quiz', async (req, res) => {
+    const { quizId, timeLimit } = req.body;
+    if (!quizId || !timeLimit) {
+        return res.status(400).json({ message: 'Quiz ID and time limit are required' });
+    }
+    const quiz = quizzes.find((q) => q.quizId === quizId);
+    if (!quiz) {
+        return res.status(404).json({ message: 'Quiz not found' });
+    }
+    quiz.isAssigned = true;
+    await saveQuizzes();
+
+    // Gửi tin nhắn tới tất cả client để cập nhật
+    broadcast({ type: 'quizAssigned', quizId: quiz.quizId, isAssigned: true });
+
+    res.json({ message: 'Quiz assigned successfully!' });
+});
+
 app.post(
   '/upload-quizzes-zip',
   upload.single('quizzes'),

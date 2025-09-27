@@ -910,25 +910,25 @@ function startDirectTestTimer() {
 }
 
 function updateProgressBar() {
-  if (initialTimeLimit) {
-    const percentage = (timeLeft / initialTimeLimit) * 100;
-    directTestProgressBar.style.width = `${percentage}%`;
-    const minutes = Math.floor(timeLeft / 60);
-    const seconds = timeLeft % 60;
-    directTestTimer.innerText = `Còn: ${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
-    
-    // Thay đổi màu thanh tiến trình dựa trên thời gian còn lại
-    if (percentage <= 20) {
-      directTestProgressBar.classList.remove("bg-green-500");
-      directTestProgressBar.classList.add("bg-red-500");
-    } else if (percentage <= 50) {
-      directTestProgressBar.classList.remove("bg-green-500", "bg-red-500");
-      directTestProgressBar.classList.add("bg-yellow-500");
-    } else {
-      directTestProgressBar.classList.remove("bg-yellow-500", "bg-red-500");
-      directTestProgressBar.classList.add("bg-green-500");
+    if (initialTimeLimit && initialTimeLimit > 0) { // Thêm kiểm tra initialTimeLimit > 0
+        const percentage = (timeLeft / initialTimeLimit) * 100;
+
+        // Log để kiểm tra
+        console.log(`Updating progress: timeLeft=${timeLeft}, initialTimeLimit=${initialTimeLimit}, percentage=${percentage}%`);
+
+        directTestProgressBar.style.width = `${percentage}%`;
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        directTestTimer.innerText = `Còn: ${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+
+        if (percentage <= 20) {
+            directTestProgressBar.className = 'bg-red-500 h-6 rounded-full transition-all duration-1000';
+        } else if (percentage <= 50) {
+            directTestProgressBar.className = 'bg-yellow-500 h-6 rounded-full transition-all duration-1000';
+        } else {
+            directTestProgressBar.className = 'bg-green-500 h-6 rounded-full transition-all duration-1000';
+        }
     }
-  }
 }
 
 async function endDirectTest() {
@@ -1133,21 +1133,43 @@ async function loadImages(part) {
 }
 
 function nextQuizPart(current) {
-  if (current >= 7) return;
-  document.getElementById(`quiz-part${current}`).classList.add("hidden");
-  document.getElementById(`quiz-part${current + 1}`).classList.remove("hidden");
-  currentQuizPart = current + 1;
-  loadImages(current + 1);
-  loadAudio(current + 1);
+    if (current >= 7) return;
+
+    let nextPart = current + 1;
+    // Bỏ qua các phần bị ẩn
+    while(nextPart <= 7 && !partVisibilityState[nextPart - 1]) {
+        nextPart++;
+    }
+    if (nextPart > 7) return; // Không còn phần nào để đi tới
+
+    document.getElementById(`quiz-part${current}`).classList.add("hidden");
+    document.getElementById(`quiz-part${nextPart}`).classList.remove("hidden");
+
+    // Chỉ cập nhật tiêu đề, không tải lại PDF
+    imageDisplay.querySelector('h3').innerText = `Part ${nextPart}`;
+
+    currentQuizPart = nextPart;
+    loadAudio(nextPart);
 }
 
 function prevQuizPart(current) {
-  if (current <= 1) return;
-  document.getElementById(`quiz-part${current}`).classList.add("hidden");
-  document.getElementById(`quiz-part${current - 1}`).classList.remove("hidden");
-  currentQuizPart = current - 1;
-  loadImages(current - 1);
-  loadAudio(current - 1);
+    if (current <= 1) return;
+
+    let prevPart = current - 1;
+    // Bỏ qua các phần bị ẩn
+    while(prevPart >= 1 && !partVisibilityState[prevPart - 1]) {
+        prevPart--;
+    }
+    if (prevPart < 1) return; // Không còn phần nào để lùi lại
+
+    document.getElementById(`quiz-part${current}`).classList.add("hidden");
+    document.getElementById(`quiz-part${prevPart}`).classList.remove("hidden");
+
+    // Chỉ cập nhật tiêu đề, không tải lại PDF
+    imageDisplay.querySelector('h3').innerText = `Part ${prevPart}`;
+
+    currentQuizPart = prevPart;
+    loadAudio(prevPart);
 }
 
 async function saveQuiz() {
@@ -1451,7 +1473,12 @@ function handleWebSocketMessage(event) {
                     updateStudentPartVisibility();
                 }
                 break;
-
+            case 'quizAssigned':
+              if (!isAdmin) {
+            // Tải lại danh sách đề thi để nút "Bắt đầu làm bài" xuất hiện
+                loadQuizzes();
+                }
+                break;
             case "quizStatus":
                 quizStatus.innerText = message.quizId ? `Đề thi hiện tại: ${message.quizName}` : "Chưa có đề thi được chọn.";
                 selectedQuizId = message.quizId;
