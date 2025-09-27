@@ -110,6 +110,7 @@ function saveAdminState() {
 }
 
 function updatePartVisibilityButtons() {
+    console.log("3. Hàm updatePartVisibilityButtons ĐANG CHẠY để đổi màu nút."); // Log 3
     for (let i = 0; i < 7; i++) {
         const btn = document.getElementById(`toggle-part-${i + 1}`);
         if (btn) {
@@ -149,7 +150,11 @@ function updateStudentPartVisibility() {
 }
 
 function togglePartVisibility(partNumber) {
-    if (!isAdmin || !selectedQuizId) return;
+    console.log(`1. Nút Part ${partNumber} ĐÃ ĐƯỢC NHẤN.`); // Log 1
+    if (!isAdmin || !selectedQuizId) {
+        console.error("Lỗi: Không phải admin hoặc chưa chọn quizId.");
+        return;
+    }
     socket.send(JSON.stringify({
         type: 'togglePartVisibility',
         quizId: selectedQuizId,
@@ -1430,20 +1435,20 @@ function handleWebSocketMessage(event) {
                 adminOptions.classList.remove("hidden");
                 adminControls.classList.remove("hidden");
                 loadQuizzes();
-                downloadNotice.classList.add("hidden");
                 saveAdminState();
                 startHeartbeat();
                 break;
-            
+
             case 'adminLoginError':
                 isAdmin = false;
                 user = null;
-                if(socket) socket.close();
+                if (socket) socket.close();
                 showAdminLogin();
                 document.getElementById("notification-admin-login").innerText = message.message;
                 break;
-                
+
             case 'partVisibilityUpdate':
+                console.log("2. Client ĐÃ NHẬN ĐƯỢC tín hiệu partVisibilityUpdate từ server.", message.visibility); // Log 2
                 partVisibilityState = message.visibility;
                 if (isAdmin) {
                     updatePartVisibilityButtons();
@@ -1451,15 +1456,17 @@ function handleWebSocketMessage(event) {
                     updateStudentPartVisibility();
                 }
                 break;
+
             case 'quizAssigned':
                 if (!isAdmin) {
-                console.log(`Quiz ${message.quizId} has been assigned.`);
-                const startButton = document.getElementById(`start-quiz-btn-${message.quizId}`);
-                if (startButton) {
-                  startButton.classList.remove('hidden');
+                    console.log(`Quiz ${message.quizId} has been assigned.`);
+                    const startButton = document.getElementById(`start-quiz-btn-${message.quizId}`);
+                    if (startButton) {
+                        startButton.classList.remove('hidden');
                     }
-                  }
+                }
                 break;
+
             case "quizStatus":
                 quizStatus.innerText = message.quizId ? `Đề thi hiện tại: ${message.quizName}` : "Chưa có đề thi được chọn.";
                 selectedQuizId = message.quizId;
@@ -1469,7 +1476,7 @@ function handleWebSocketMessage(event) {
                 }
                 loadQuizzes();
                 break;
-            
+
             case "participants":
             case "participantCount":
                 participantCount.innerText = `Số người tham gia: ${message.count || 0}`;
