@@ -798,4 +798,3 @@ wss.on('connection', (ws) => {
   }
   res.json(currentQuiz.answerKey);
 });
-});
