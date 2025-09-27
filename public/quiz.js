@@ -104,6 +104,7 @@ function saveAdminState() {
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 function updatePartVisibilityButtons() {
     for (let i = 0; i < 7; i++) {
         const btn = document.getElementById(`toggle-part-${i + 1}`);
@@ -155,6 +156,8 @@ function togglePartVisibility(partNumber) {
     }));
 }
 
+=======
+>>>>>>> parent of 3b91775 (big update for each part)
 =======
 >>>>>>> parent of 3b91775 (big update for each part)
 function getCurrentScreen() {
@@ -638,6 +641,7 @@ async function fetchWithRetry(url, retries = 5, delay = 2000) {
 
 async function loadQuizzes() {
 <<<<<<< HEAD
+<<<<<<< HEAD
     const url = isAdmin ? `/quizzes?email=${encodeURIComponent(user.email)}` : '/quizzes';
     try {
         const res = await fetch(url);
@@ -723,6 +727,29 @@ async function loadQuizzes() {
           joinDirectTestBtn.onclick = () => joinDirectTest(quizId, remainingTime, startTime);
           directTestNotice.classList.remove("hidden");
         }
+=======
+  const url = isAdmin ? `/quizzes?email=${encodeURIComponent(user.email)}` : '/quizzes';
+  try {
+    const res = await fetchWithRetry(url);
+    const quizzes = await res.json();
+    quizList.innerHTML = "";
+    
+    const directTestState = localStorage.getItem("directTestState");
+    const directTestNotice = document.getElementById("direct-test-notice");
+    const directTestMessage = document.getElementById("direct-test-message");
+    const joinDirectTestBtn = document.getElementById("join-direct-test-btn");
+    
+    if (!isAdmin && directTestState) {
+      const { isDirectTestMode, quizId, timeLimit, startTime } = JSON.parse(directTestState);
+      if (isDirectTestMode && !isTestEnded) {
+        const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+        const remainingTime = timeLimit - elapsedTime;
+        if (remainingTime > 0) {
+          directTestMessage.innerText = `Kiểm tra trực tiếp đang diễn ra! (Còn: ${Math.floor(remainingTime / 60)}:${remainingTime % 60 < 10 ? "0" : ""}${remainingTime % 60})`;
+          joinDirectTestBtn.onclick = () => joinDirectTest(quizId, remainingTime, startTime);
+          directTestNotice.classList.remove("hidden");
+        }
+>>>>>>> parent of 3b91775 (big update for each part)
 =======
   const url = isAdmin ? `/quizzes?email=${encodeURIComponent(user.email)}` : '/quizzes';
   try {
@@ -1600,6 +1627,7 @@ function clearUserAnswers() {
 }
 
 function handleWebSocketMessage(event) {
+<<<<<<< HEAD
     try {
         if (!event.data) return;
         const message = JSON.parse(event.data);
@@ -1727,6 +1755,8 @@ function handleWebSocketMessage(event) {
         directTestBtn.classList.remove("hidden");
       }
       loadQuizzes();
+=======
+>>>>>>> parent of 3b91775 (big update for each part)
   try {
     if (!event.data) {
       console.warn("Received empty WebSocket message");
