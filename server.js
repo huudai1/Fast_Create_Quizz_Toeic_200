@@ -682,6 +682,7 @@ wss.on('connection', (ws) => {
             quizId: currentQuiz.quizId,
             visibility: currentQuiz.partVisibility
         }));
+      }
 
   ws.on('message', (message) => {
     try {
