@@ -245,6 +245,13 @@ app.get('/statistics', async (req, res) => {
   }
 });
 
+app.get('/answer-key', (req, res) => {
+    if (!currentQuiz) {
+        return res.status(404).json({ message: 'No quiz selected' });
+    }
+    res.json(currentQuiz.answerKey);
+});
+
 // Endpoint để xóa database
 app.delete('/delete-quiz/:quizId', async (req, res) => {
     try {

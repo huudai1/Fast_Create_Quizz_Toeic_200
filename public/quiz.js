@@ -629,6 +629,7 @@ async function fetchWithRetry(url, retries = 5, delay = 2000) {
     }
   }
 }
+
 async function loadQuizzes() {
     const url = isAdmin ? `/quizzes?email=${encodeURIComponent(user.email)}` : '/quizzes';
     try {
@@ -678,15 +679,16 @@ async function loadQuizzes() {
                 const isSelected = selectedQuizId === quiz.quizId;
                 if (isAdmin) {
                     div.innerHTML = `
-                      <span class="text-lg font-medium">${quiz.quizName}${isSelected ? ' ✅' : ''}</span>
-                      <button onclick="selectQuiz('${quiz.quizId}')" class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">Chọn</button>
-                      <button onclick="downloadQuizzes('${quiz.quizId}')" class="bg-purple-500 text-white px-2 py-1 rounded hover:bg-purple-600">Tải xuống</button>
-                      <button onclick="deleteQuiz('${quiz.quizId}')" class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Xóa</button>
+                        <span class="text-lg font-medium">${quiz.quizName}${isSelected ? ' ✅' : ''}</span>
+                        <button onclick="selectQuiz('${quiz.quizId}')" class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">Chọn</button>
+                        <button onclick="downloadQuizzes('${quiz.quizId}')" class="bg-purple-500 text-white px-2 py-1 rounded hover:bg-purple-600">Tải xuống</button>
+                        <button onclick="deleteQuiz('${quiz.quizId}')" class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Xóa</button>
                     `;
                 } else {
+                    // Dòng innerHTML đã được cập nhật với ID cho nút bấm
                     div.innerHTML = `
-                      <span class="text-lg font-medium">${quiz.quizName}${isSelected ? ' ✅' : ''}</span>
-                      <button onclick="startQuiz('${quiz.quizId}')" class="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 ${quiz.isAssigned ? '' : 'hidden'}">Bắt đầu làm bài</button>
+                        <span class="text-lg font-medium">${quiz.quizName}${isSelected ? ' ✅' : ''}</span>
+                        <button id="start-quiz-btn-${quiz.quizId}" onclick="startQuiz('${quiz.quizId}')" class="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 ${quiz.isAssigned ? '' : 'hidden'}">Bắt đầu làm bài</button>
                     `;
                 }
                 quizList.appendChild(div);
@@ -1474,10 +1476,13 @@ function handleWebSocketMessage(event) {
                 }
                 break;
             case 'quizAssigned':
-              if (!isAdmin) {
-            // Tải lại danh sách đề thi để nút "Bắt đầu làm bài" xuất hiện
-                loadQuizzes();
-                }
+                if (!isAdmin) {
+                console.log(`Quiz ${message.quizId} has been assigned.`);
+                const startButton = document.getElementById(`start-quiz-btn-${message.quizId}`);
+                if (startButton) {
+                  startButton.classList.remove('hidden');
+                    }
+                  }
                 break;
             case "quizStatus":
                 quizStatus.innerText = message.quizId ? `Đề thi hiện tại: ${message.quizName}` : "Chưa có đề thi được chọn.";
