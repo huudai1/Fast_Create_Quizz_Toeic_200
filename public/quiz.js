@@ -70,7 +70,6 @@ function startHeartbeat() {
     if (heartbeatInterval) {
         return; // Already running
     }
-    // Show the heartbeat indicator (a simple emoji or icon)
     const heartbeatIndicator = document.getElementById("heartbeat-indicator");
     if (heartbeatIndicator) {
         heartbeatIndicator.classList.remove("hidden");
@@ -79,57 +78,46 @@ function startHeartbeat() {
     heartbeatInterval = setInterval(() => {
         if (socket && socket.readyState === WebSocket.OPEN) {
             socket.send(JSON.stringify({ type: "heartbeat" }));
-            console.log("Heartbeat sent.");
         }
-    }, 30000); // Sends a heartbeat every 30 seconds
+    }, 30000);
 }
 
 function stopHeartbeat() {
     clearInterval(heartbeatInterval);
     heartbeatInterval = null;
-    // Hide the heartbeat indicator
     const heartbeatIndicator = document.getElementById("heartbeat-indicator");
     if (heartbeatIndicator) {
         heartbeatIndicator.classList.add("hidden");
     }
-    console.log("Heartbeat stopped.");
 }
 
 function saveAdminState() {
-  if (isAdmin && user) {
-    localStorage.setItem("adminState", JSON.stringify({
-      user: user,
-      isAdmin: true,
-      screen: getCurrentScreen(),
-      selectedQuizId: selectedQuizId,
-      isDirectTestMode: isDirectTestMode,
-      isTestEnded: isTestEnded,
-      currentAdminStep: currentAdminStep
-    }));
-  }
+    if (isAdmin && user) {
+        localStorage.setItem("adminState", JSON.stringify({
+            user: user,
+            isAdmin: true,
+            screen: getCurrentScreen(),
+            selectedQuizId: selectedQuizId,
+            isDirectTestMode: isDirectTestMode,
+            isTestEnded: isTestEnded,
+            currentAdminStep: currentAdminStep
+        }));
+    }
 }
 
 function updatePartVisibilityButtons() {
-    console.log("3. Hàm updatePartVisibilityButtons ĐANG CHẠY để đổi màu nút."); 
-    for (let i = 0; i < 7; i++) {
-        const btn = document.getElementById(`toggle-part-${i + 1}`);
-        if (btn) {
-            // Dòng code này đọc trạng thái của từng part (true hoặc false)
-            if (partVisibilityState[i]) { 
-                // Nếu trạng thái là TRUE (hiện), nó sẽ:
-                // 1. Thêm class 'visible' -> CSS sẽ tô nút màu XANH
-                btn.classList.add('visible'); 
-                // 2. Xóa class 'hidden-part' (nếu có)
-                btn.classList.remove('hidden-part');
-            } else {
-                // Nếu trạng thái là FALSE (ẩn), nó sẽ:
-                // 1. Thêm class 'hidden-part' -> CSS sẽ tô nút màu ĐỎ
-                btn.classList.add('hidden-part'); 
-                // 2. Xóa class 'visible' (nếu có)
-                btn.classList.remove('visible');
-            }
-        }
-    }
+    for (let i = 0; i < 7; i++) {
+        const btn = document.getElementById(`toggle-part-${i + 1}`);
+        if (btn) {
+            if (partVisibilityState[i]) {
+                btn.classList.add('visible');
+                btn.classList.remove('hidden-part');
+            } else {
+                btn.classList.add('hidden-part');
+                btn.classList.remove('visible');
+            }
+        }
+    }
 }
 
 function updateStudentPartVisibility() {
@@ -157,7 +145,6 @@ function updateStudentPartVisibility() {
 }
 
 function togglePartVisibility(partNumber) {
-    console.log(`1. Nút Part ${partNumber} ĐÃ ĐƯỢC NHẤN.`); // Log 1
     if (!isAdmin || !selectedQuizId) {
         console.error("Lỗi: Không phải admin hoặc chưa chọn quizId.");
         return;
@@ -170,133 +157,129 @@ function togglePartVisibility(partNumber) {
 }
 
 function getCurrentScreen() {
-  if (!welcomeScreen.classList.contains("hidden")) return "welcome-screen";
-  if (!adminLogin.classList.contains("hidden")) return "admin-login";
-  if (!studentLogin.classList.contains("hidden")) return "student-login";
-  if (!quizListScreen.classList.contains("hidden")) return "quiz-list-screen";
-  if (!directTestScreen.classList.contains("hidden")) return "direct-test-screen";
-  if (!uploadQuizzesSection.classList.contains("hidden")) return "upload-quizzes";
-  if (!quizContainer.classList.contains("hidden")) return "quiz-container";
-  if (!resultScreen.classList.contains("hidden")) return "result-screen";
-  if (!reviewScreen.classList.contains("hidden")) return "review-answers";
-  if (!staticScreen.classList.contains("hidden")) return "statistics-screen";
-  if (!document.getElementById("admin-step-audio").classList.contains("hidden")) return "admin-step-audio";
-  for (let i = 1; i <= 7; i++) {
-    if (!document.getElementById(`admin-step-part${i}`).classList.contains("hidden")) {
-      return `admin-step-part${i}`;
+    if (!welcomeScreen.classList.contains("hidden")) return "welcome-screen";
+    if (!adminLogin.classList.contains("hidden")) return "admin-login";
+    if (!studentLogin.classList.contains("hidden")) return "student-login";
+    if (!quizListScreen.classList.contains("hidden")) return "quiz-list-screen";
+    if (!directTestScreen.classList.contains("hidden")) return "direct-test-screen";
+    if (!uploadQuizzesSection.classList.contains("hidden")) return "upload-quizzes";
+    if (!quizContainer.classList.contains("hidden")) return "quiz-container";
+    if (!resultScreen.classList.contains("hidden")) return "result-screen";
+    if (!reviewScreen.classList.contains("hidden")) return "review-answers";
+    if (!staticScreen.classList.contains("hidden")) return "statistics-screen";
+    if (!document.getElementById("admin-step-audio").classList.contains("hidden")) return "admin-step-audio";
+    for (let i = 1; i <= 7; i++) {
+        if (!document.getElementById(`admin-step-part${i}`).classList.contains("hidden")) {
+            return `admin-step-part${i}`;
+        }
     }
-  }
-  return "welcome-screen";
+    return "welcome-screen";
 }
 
 async function restoreAdminState() {
-  const adminState = localStorage.getItem("adminState");
-  if (adminState) {
-    const state = JSON.parse(adminState);
-    if (state.isAdmin && state.user) {
-      user = state.user;
-      isAdmin = true;
-      selectedQuizId = state.selectedQuizId;
-      isDirectTestMode = state.isDirectTestMode;
-      isTestEnded = state.isTestEnded;
-      currentAdminStep = state.currentAdminStep;
+    const adminState = localStorage.getItem("adminState");
+    if (adminState) {
+        const state = JSON.parse(adminState);
+        if (state.isAdmin && state.user) {
+            user = state.user;
+            isAdmin = true;
+            selectedQuizId = state.selectedQuizId;
+            isDirectTestMode = state.isDirectTestMode;
+            isTestEnded = state.isTestEnded;
+            currentAdminStep = state.currentAdminStep;
 
-      hideAllScreens();
-      if (state.screen === "quiz-list-screen") {
-        quizListScreen.classList.remove("hidden");
-        adminOptions.classList.remove("hidden");
-        adminControls.classList.remove("hidden");
-        if (selectedQuizId) {
-          assignBtn.classList.remove("hidden");
-          directTestBtn.classList.remove("hidden");
-        }
-        await loadQuizzes();
-      } else if (state.screen === "direct-test-screen") {
-        directTestScreen.classList.remove("hidden");
-        endDirectTestBtn.disabled = isTestEnded;
-        if (isTestEnded) {
-          await fetchDirectResults();
-        }
-      } else if (state.screen === "upload-quizzes") {
-        uploadQuizzesSection.classList.remove("hidden");
-      } else if (state.screen.startsWith("admin-step-")) {
-        document.getElementById(state.screen).classList.remove("hidden");
-      }
-
-      initializeWebSocket();
-      if (isAdmin) {
-        startHeartbeat(); // ⭐ Add this line
+            hideAllScreens();
+            if (state.screen === "quiz-list-screen") {
+                quizListScreen.classList.remove("hidden");
+                adminOptions.classList.remove("hidden");
+                adminControls.classList.remove("hidden");
+                if (selectedQuizId) {
+                    assignBtn.classList.remove("hidden");
+                    directTestBtn.classList.remove("hidden");
+                }
+                await loadQuizzes();
+            } else if (state.screen === "direct-test-screen") {
+                directTestScreen.classList.remove("hidden");
+                endDirectTestBtn.disabled = isTestEnded;
+                if (isTestEnded) {
+                    await fetchDirectResults();
+                }
+            } else if (state.screen === "upload-quizzes") {
+                uploadQuizzesSection.classList.remove("hidden");
+            } else if (state.screen.startsWith("admin-step-")) {
+                document.getElementById(state.screen).classList.remove("hidden");
             }
-      downloadNotice.classList.add("hidden");
-      return true;
+
+            initializeWebSocket();
+            if (isAdmin) {
+                startHeartbeat();
+            }
+            return true;
+        }
     }
-  }
-  return false;
+    return false;
 }
 
 async function showStatistics() {
-  if (!selectedQuizId) {
-    notification.innerText = "Vui lòng chọn một đề thi trước!";
-    return;
-  }
-
-  try {
-    const res = await fetch(`/statistics?quizId=${selectedQuizId}`);
-    if (!res.ok) {
-      throw new Error(`Lỗi server: ${res.status}`);
+    if (!selectedQuizId) {
+        notification.innerText = "Vui lòng chọn một đề thi trước!";
+        return;
     }
-    const data = await res.json();
-    console.log("Statistics data:", data);
 
-    hideAllScreens();
-    const statisticsScreen = document.getElementById("statistics-screen");
-    statisticsScreen.classList.remove("hidden");
-    const notificationStatistics = document.getElementById("notification-statistics");
-    notificationStatistics.innerText = "";
+    try {
+        const res = await fetch(`/statistics?quizId=${selectedQuizId}`);
+        if (!res.ok) {
+            throw new Error(`Lỗi server: ${res.status}`);
+        }
+        const data = await res.json();
+        
+        hideAllScreens();
+        staticScreen.classList.remove("hidden");
+        document.getElementById("notification-statistics").innerText = "";
 
-    const averageScore = data.averageScore || 0;
-    const averageScoreBar = document.getElementById("average-score-bar");
-    const averageScoreText = document.getElementById("average-score-text");
-    const percentage = (averageScore / 200) * 100;
-    averageScoreBar.style.width = `${percentage}%`;
-    averageScoreText.innerText = `Điểm trung bình: ${averageScore.toFixed(2)}/200`;
+        const averageScore = data.averageScore || 0;
+        const averageScoreBar = document.getElementById("average-score-bar");
+        const averageScoreText = document.getElementById("average-score-text");
+        const percentage = (averageScore / 200) * 100;
+        averageScoreBar.style.width = `${percentage}%`;
+        averageScoreText.innerText = `Điểm trung bình: ${averageScore.toFixed(2)}/200`;
 
-    const statisticsBody = document.getElementById("statistics-body");
-    statisticsBody.innerHTML = "";
-    
-    data.questionStats.forEach(stat => {
-      const tr = document.createElement("tr");
-      const questionNumber = parseInt(stat.questionId.replace("q", ""));
-      const wrongPercentage = stat.totalCount > 0 ? ((stat.wrongCount / stat.totalCount) * 100).toFixed(2) : 0;
-      tr.innerHTML = `
-        <td class="border p-2">${questionNumber}</td>
-        <td class="border p-2">${stat.wrongCount}</td>
-        <td class="border p-2">${stat.totalCount}</td>
-        <td class="border p-2">${wrongPercentage}%</td>
-      `;
-      statisticsBody.appendChild(tr);
-    });
+        const statisticsBody = document.getElementById("statistics-body");
+        statisticsBody.innerHTML = "";
+        
+        data.questionStats.forEach(stat => {
+            const tr = document.createElement("tr");
+            const questionNumber = parseInt(stat.questionId.replace("q", ""));
+            const wrongPercentage = stat.totalCount > 0 ? ((stat.wrongCount / stat.totalCount) * 100).toFixed(2) : 0;
+            tr.innerHTML = `
+                <td class="border p-2">${questionNumber}</td>
+                <td class="border p-2">${stat.wrongCount}</td>
+                <td class="border p-2">${stat.totalCount}</td>
+                <td class="border p-2">${wrongPercentage}%</td>
+            `;
+            statisticsBody.appendChild(tr);
+        });
 
-    saveAdminState();
-  } catch (error) {
-    console.error("Error fetching statistics:", error);
-    document.getElementById("notification-statistics").innerText = "Lỗi khi tải thống kê. Vui lòng thử lại.";
-  }
+        saveAdminState();
+    } catch (error) {
+        console.error("Error fetching statistics:", error);
+        document.getElementById("notification-statistics").innerText = "Lỗi khi tải thống kê. Vui lòng thử lại.";
+    }
 }
 
 function hideAllScreens() {
-  welcomeScreen.classList.add("hidden");
-  adminLogin.classList.add("hidden");
-  studentLogin.classList.add("hidden");
-  quizListScreen.classList.add("hidden");
-  directTestScreen.classList.add("hidden");
-  uploadQuizzesSection.classList.add("hidden");
-  quizContainer.classList.add("hidden");
-  resultScreen.classList.add("hidden");
-  staticScreen.classList.add("hidden");
-  const reviewScreen = document.getElementById("review-answers");
-  if (reviewScreen) reviewScreen.classList.add("hidden");
-  document.querySelectorAll(".admin-step").forEach(step => step.classList.add("hidden"));
+    welcomeScreen.classList.add("hidden");
+    adminLogin.classList.add("hidden");
+    studentLogin.classList.add("hidden");
+    quizListScreen.classList.add("hidden");
+    directTestScreen.classList.add("hidden");
+    uploadQuizzesSection.classList.add("hidden");
+    quizContainer.classList.add("hidden");
+    resultScreen.classList.add("hidden");
+    staticScreen.classList.add("hidden");
+    const reviewScreen = document.getElementById("review-answers");
+    if (reviewScreen) reviewScreen.classList.add("hidden");
+    document.querySelectorAll(".admin-step").forEach(step => step.classList.add("hidden"));
 }
 
 function clearState() {
@@ -619,73 +602,49 @@ async function fetchWithRetry(url, retries = 5, delay = 2000) {
 }
 
 async function loadQuizzes() {
-    const url = isAdmin ? `/quizzes?email=${encodeURIComponent(user.email)}` : '/quizzes';
-    try {
-        const res = await fetchWithRetry(url);
-        const quizzes = await res.json();
-        quizList.innerHTML = "";
+    const url = isAdmin ? `/quizzes?email=${encodeURIComponent(user.email)}` : '/quizzes';
+    try {
+        const res = await fetch(url);
+        const quizzes = await res.json();
+        quizList.innerHTML = "";
 
-        const partControls = document.getElementById('part-visibility-controls');
-
-        // *** BẮT ĐẦU THAY ĐỔI ***
-        // Logic được đơn giản hóa: chỉ kiểm tra xem có nên hiện khu vực controls không
-        // và gọi updatePartVisibilityButtons để đảm bảo màu nút luôn đúng
-        if (isAdmin && selectedQuizId && quizzes.some(q => q.quizId === selectedQuizId)) {
-            partControls.classList.remove('hidden');
-            updatePartVisibilityButtons(); // Dựa vào state hiện tại để tô màu
-        } else {
-            partControls.classList.add('hidden');
-        }
-        // *** KẾT THÚC THAY ĐỔI ***
-        
-        const directTestState = localStorage.getItem("directTestState");
-        const directTestNotice = document.getElementById("direct-test-notice");
-        const directTestMessage = document.getElementById("direct-test-message");
-        const joinDirectTestBtn = document.getElementById("join-direct-test-btn");
-        
-        if (!isAdmin && directTestState) {
-          const { isDirectTestMode, quizId, timeLimit, startTime } = JSON.parse(directTestState);
-          if (isDirectTestMode && !isTestEnded) {
-            const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
-            const remainingTime = timeLimit - elapsedTime;
-            if (remainingTime > 0) {
-              directTestMessage.innerText = `Kiểm tra trực tiếp đang diễn ra! (Còn: ${Math.floor(remainingTime / 60)}:${remainingTime % 60 < 10 ? "0" : ""}${remainingTime % 60})`;
-              joinDirectTestBtn.onclick = () => joinDirectTest(quizId, remainingTime, startTime);
-              directTestNotice.classList.remove("hidden");
-            }
-          }
-        } else {
-          directTestNotice.classList.add("hidden");
-        }
-
-        if (quizzes.length === 0) {
-            quizList.innerHTML = "<p>Chưa có đề thi nào.</p>";
-        } else {
-            quizzes.forEach(quiz => {
-                const div = document.createElement("div");
-                div.className = "flex items-center space-x-2";
-                const isSelected = selectedQuizId === quiz.quizId;
-                if (isAdmin) {
-                    div.innerHTML = `
-                        <span class="text-lg font-medium">${quiz.quizName}${isSelected ? ' ✅' : ''}</span>
-                        <button onclick="selectQuiz('${quiz.quizId}')" class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">Chọn</button>
-                        <button onclick="downloadQuizzes('${quiz.quizId}')" class="bg-purple-500 text-white px-2 py-1 rounded hover:bg-purple-600">Tải xuống</button>
-                        <button onclick="deleteQuiz('${quiz.quizId}')" class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Xóa</button>
-                    `;
-                } else {
-                    div.innerHTML = `
-                        <span class="text-lg font-medium">${quiz.quizName}${isSelected ? ' ✅' : ''}</span>
-                        <button id="start-quiz-btn-${quiz.quizId}" onclick="startQuiz('${quiz.quizId}')" class="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 ${quiz.isAssigned ? '' : 'hidden'}">Bắt đầu làm bài</button>
-                    `;
-                }
-                quizList.appendChild(div);
-            });
-        }
-    } catch (error) {
-        console.error("Error loading quizzes:", error);
-        notification.innerText = "Không thể tải danh sách đề thi.";
-        quizList.innerHTML = "<p>Lỗi khi tải danh sách đề thi.</p>";
-    }
+        // *** BẮT ĐẦU SỬA LỖI & TÁI CẤU TRÚC ***
+        // Chỉ hiện/ẩn khu vực controls. Việc tô màu nút sẽ do WebSocket handler đảm nhiệm.
+        const partControls = document.getElementById('part-visibility-controls');
+        if (isAdmin && selectedQuizId && quizzes.some(q => q.quizId === selectedQuizId)) {
+            partControls.classList.remove('hidden');
+        } else {
+            partControls.classList.add('hidden');
+        }
+        // *** KẾT THÚC SỬA LỖI & TÁI CẤU TRÚC ***
+        
+        if (quizzes.length === 0) {
+            quizList.innerHTML = `<p>${isAdmin ? 'Chưa có đề thi nào được tạo.' : 'Chưa có bài thi nào được giao.'}</p>`;
+        } else {
+            quizzes.forEach(quiz => {
+                const div = document.createElement("div");
+                div.className = "flex items-center space-x-2";
+                const isSelected = selectedQuizId === quiz.quizId;
+                if (isAdmin) {
+                    div.innerHTML = `
+                        <span class="text-lg font-medium">${quiz.quizName}${isSelected ? ' ✅' : ''}</span>
+                        <button onclick="selectQuiz('${quiz.quizId}')" class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">Chọn</button>
+                        <button onclick="downloadQuizzes('${quiz.quizId}')" class="bg-purple-500 text-white px-2 py-1 rounded hover:bg-purple-600">Tải xuống</button>
+                        <button onclick="deleteQuiz('${quiz.quizId}')" class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Xóa</button>
+                    `;
+                } else {
+                    div.innerHTML = `
+                        <span class="text-lg font-medium">${quiz.quizName}</span>
+                        <button id="start-quiz-btn-${quiz.quizId}" onclick="startQuiz('${quiz.quizId}')" class="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600">Bắt đầu làm bài</button>
+                    `;
+                }
+                quizList.appendChild(div);
+            });
+        }
+    } catch (error) {
+        console.error("Error loading quizzes:", error);
+        quizList.innerHTML = "<p>Lỗi khi tải danh sách đề thi.</p>";
+    }
 }
 
 async function joinDirectTest(quizId, remainingTime, startTime) {
@@ -760,30 +719,54 @@ async function deleteQuiz(quizId) {
 }
 
 async function selectQuiz(quizId) {
-  try {
-    const res = await fetch("/select-quiz", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ quizId }),
-    });
-    const result = await res.json();
-    if (res.ok) {
-      selectedQuizId = quizId;
-      assignBtn.classList.remove("hidden");
-      directTestBtn.classList.remove("hidden");
-      await loadQuizzes();
-      notification.innerText = `Đã chọn đề: ${result.quizName}`;
-      if (socket && socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({ type: "quizSelected", quizId }));
-      }
-      saveAdminState();
-    } else {
-      notification.innerText = result.message;
+    try {
+        const res = await fetch("/select-quiz", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ quizId }),
+        });
+        const result = await res.json();
+        if (res.ok) {
+            selectedQuizId = quizId;
+            assignBtn.classList.remove("hidden");
+            directTestBtn.classList.remove("hidden");
+            notification.innerText = `Đã chọn đề: ${result.quizName}`;
+            await loadQuizzes(); // Tải lại danh sách để đánh dấu tick ✅
+            saveAdminState();
+        } else {
+            notification.innerText = result.message;
+        }
+    } catch (error) {
+        console.error("Error selecting quiz:", error);
     }
-  } catch (error) {
-    console.error("Error selecting quiz:", error);
-    notification.innerText = "Lỗi khi chọn đề thi. Vui lòng thử lại.";
-  }
+}
+
+function populateResultsTable(bodyElement, results) {
+    bodyElement.innerHTML = ""; // Xóa nội dung cũ
+    if (results.length === 0) {
+        bodyElement.innerHTML = "<tr><td colspan='3' class='border p-2 text-center'>Chưa có kết quả nào.</td></tr>";
+    } else {
+        results.forEach(result => {
+            const tr = document.createElement("tr");
+
+            const tdName = document.createElement("td");
+            tdName.className = "border p-2";
+            tdName.textContent = result.username || 'Unknown';
+            tr.appendChild(tdName);
+
+            const tdScore = document.createElement("td");
+            tdScore.className = "border p-2";
+            tdScore.textContent = result.score !== undefined ? result.score : 0;
+            tr.appendChild(tdScore);
+
+            const tdTime = document.createElement("td");
+            tdTime.className = "border p-2";
+            tdTime.textContent = result.submittedAt ? new Date(result.submittedAt).toLocaleString() : 'N/A';
+            tr.appendChild(tdTime);
+            
+            bodyElement.appendChild(tr);
+        });
+    }
 }
 
 async function assignQuiz() {
@@ -1377,27 +1360,12 @@ async function fetchDirectResults() {
   const delay = 2000;
   for (let i = 0; i < retries; i++) {
     try {
-      const res = await fetch("/direct-results");
-      if (!res.ok) {
-        throw new Error(`HTTP error! Status: ${res.status}`);
-      }
-      const results = await res.json();
-      directResultsBody.innerHTML = "";
-      if (results.length === 0) {
-        directResultsBody.innerHTML = "<tr><td colspan='3' class='border p-2 text-center'>Chưa có kết quả nào.</td></tr>";
-      } else {
-        results.forEach(result => {
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td class="border p-2">${result.username || 'Unknown'}</td>
-            <td class="border p-2">${result.score || 0}</td>
-            <td class="border p-2">${result.submittedAt ? new Date(result.submittedAt).toLocaleString() : 'N/A'}</td>
-          `;
-          directResultsBody.appendChild(tr);
-        });
-      }
-      directResultsTable.classList.remove("hidden");
-      return;
+        const res = await fetch("/direct-results");
+        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+        const results = await res.json();
+        // *** SỬ DỤNG HÀM MỚI ***
+        populateResultsTable(directResultsBody, results);
+        directResultsTable.classList.remove("hidden");
     } catch (error) {
       console.error(`Attempt ${i + 1} failed:`, error);
       if (i === retries - 1) {
@@ -1427,136 +1395,137 @@ function clearUserAnswers() {
 }
 
 function handleWebSocketMessage(event) {
-    try {
-        if (!event.data) {
-            console.warn("Received empty WebSocket message");
-            return;
-        }
-        const message = JSON.parse(event.data);
+    try {
+        if (!event.data) return;
+        const message = JSON.parse(event.data);
 
-        switch (message.type) {
-            case 'adminLoginSuccess':
-                hideAllScreens();
-                quizListScreen.classList.remove("hidden");
-                adminOptions.classList.remove("hidden");
-                adminControls.classList.remove("hidden");
-                loadQuizzes();
-                saveAdminState();
-                startHeartbeat();
-                break;
+        switch (message.type) {
+            /* ==================== ADMIN LOGIN ==================== */
+            case 'adminLoginSuccess':
+                hideAllScreens();
+                quizListScreen.classList.remove("hidden");
+                adminOptions.classList.remove("hidden");
+                adminControls.classList.remove("hidden");
+                loadQuizzes();
+                saveAdminState();
+                startHeartbeat();
+                break;
 
-            case 'adminLoginError':
-                isAdmin = false;
-                user = null;
-                if (socket) socket.close();
-                showAdminLogin();
-                document.getElementById("notification-admin-login").innerText = message.message;
-                break;
+            case 'adminLoginError':
+                isAdmin = false;
+                user = null;
+                if (socket) socket.close();
+                showAdminLogin();
+                document.getElementById("notification-admin-login").innerText = message.message;
+                break;
 
-            case 'partVisibilityUpdate':
-                // Chỉ cập nhật nếu trạng thái này dành cho quiz đang được chọn
-                if (message.quizId === selectedQuizId) {
-                    partVisibilityState = message.visibility;
-                    if (isAdmin) {
-                        updatePartVisibilityButtons();
-                    } else {
-                        updateStudentPartVisibility();
-                    }
-                }
-                break;
+            /* ==================== QUIZ STATE UPDATES ==================== */
+            case 'partVisibilityUpdate':
+                // Chỉ cập nhật nếu trạng thái này thuộc quiz đang được chọn
+                if (message.quizId === selectedQuizId) {
+                    partVisibilityState = message.visibility;
+                    if (isAdmin) {
+                        updatePartVisibilityButtons();  // Cập nhật màu nút cho admin
+                    } else {
+                        updateStudentPartVisibility();  // Ẩn/hiện phần thi cho học sinh
+                    }
+                }
+                break;
 
-            case 'quizAssigned':
-                if (!isAdmin) {
-                    // Tải lại toàn bộ danh sách để cập nhật trạng thái isAssigned
-                    loadQuizzes(); 
-                }
-                break;
+            case 'quizAssigned':
+                // Học sinh: tải lại danh sách để cập nhật trạng thái isAssigned
+                if (!isAdmin) loadQuizzes();
+                break;
 
-            case "quizStatus":
-                quizStatus.innerText = message.quizId ? `Đề thi hiện tại: ${message.quizName}` : "Chưa có đề thi được chọn.";
-                selectedQuizId = message.quizId;
-                if (isAdmin && message.quizId) {
-                    assignBtn.classList.remove("hidden");
-                    directTestBtn.classList.remove("hidden");
-                }
-                // Không cần gọi loadQuizzes() ở đây nữa vì nó có thể gây lặp lại không cần thiết
-                break;
+            case 'quizStatus':
+                quizStatus.innerText = message.quizId
+                    ? `Đề thi hiện tại: ${message.quizName}`
+                    : "Chưa có đề thi được chọn.";
+                selectedQuizId = message.quizId;
+                loadQuizzes(); // Tải lại để đồng bộ UI
+                break;
 
-            case "participants":
-            case "participantCount":
-                participantCount.innerText = `Số người tham gia: ${message.count || 0}`;
-                directParticipantCount.innerText = `Số người tham gia: ${message.count || 0}`;
-                break;
+            /* ==================== PARTICIPANT & SUBMISSION ==================== */
+            case 'participants':
+            case 'participantCount':
+                const pCount = message.count || 0;
+                participantCount.innerText      = `Số người tham gia: ${pCount}`;
+                directParticipantCount.innerText = `Số người tham gia: ${pCount}`;
+                break;
 
-            case "submitted":
-            case "submittedCount":
-                const count = message.count !== undefined ? message.count : 0;
-                submittedCount.innerText = `Số bài đã nộp: ${count}`;
-                directSubmittedCount.innerText = `Số bài đã nộp: ${count}`;
-                if (isAdmin && message.results) {
-                    resultsBody.innerHTML = "";
-                    message.results.forEach(result => {
-                        const tr = document.createElement("tr");
-                        tr.innerHTML = `
-                            <td class="border p-2">${result.username || 'Unknown'}</td>
-                            <td class="border p-2">${result.score || 0}</td>
-                            <td class="border p-2">${result.submittedAt ? new Date(result.submittedAt).toLocaleString() : 'N/A'}</td>
-                        `;
-                        resultsBody.appendChild(tr);
-                    });
-                    resultsTable.classList.remove("hidden");
-                }
-                break;
+            case 'submittedCount':
+            case 'submitted':
+                const sCount = message.count !== undefined ? message.count : 0;
+                submittedCount.innerText       = `Số bài đã nộp: ${sCount}`;
+                directSubmittedCount.innerText = `Số bài đã nộp: ${sCount}`;
 
-            case "start":
-                isAdminControlled = true;
-                initialTimeLimit = message.timeLimit || 7200;
-                timeLeft = message.timeLimit || 7200;
-                localStorage.setItem("directTestState", JSON.stringify({
-                    isDirectTestMode: true,
-                    quizId: message.quizId,
-                    timeLimit: message.timeLimit,
-                    startTime: message.startTime,
-                }));
-                if (!isAdmin) {
-                    hideAllScreens();
-                    quizContainer.classList.remove("hidden");
-                    timerDisplay.classList.remove("hidden");
-                    audio.classList.remove("hidden");
-                    selectedQuizId = message.quizId;
-                    loadAudio(1);
-                    loadImages(1);
-                    startTimer();
-                    updateProgressBar();
-                    currentQuizPart = 1;
-                    notification.innerText = "Bài thi đã bắt đầu!";
-                }
-                break;
+                if (isAdmin && message.results) {
+                    // Hiển thị bảng kết quả cho admin
+                    populateResultsTable(resultsBody, message.results);
+                    resultsTable.classList.remove("hidden");
+                }
+                break;
 
-            case "end":
-                isTestEnded = true;
-                localStorage.removeItem("directTestState");
-                clearInterval(timerInterval);
-                if (directTestProgressBar) directTestProgressBar.style.width = "0%";
-                if (directTestTimer) directTestTimer.innerText = "Kiểm tra đã kết thúc!";
-                
-                if (!isAdmin) {
-                    submitQuiz();
-                    notification.innerText = "Bài thi đã kết thúc!";
-                } else {
-                    fetchDirectResults();
-                }
-                break;
+            /* ==================== DIRECT TEST CONTROL ==================== */
+            case 'start':
+                isAdminControlled = true;
+                initialTimeLimit  = message.timeLimit || 7200;
+                timeLeft          = message.timeLimit || 7200;
 
-            case "error":
-                notification.innerText = message.message;
-                break;
-        }
-    } catch (error) {
-        console.error("Error handling WebSocket message:", error);
-        notification.innerText = "Lỗi khi xử lý thông tin từ server.";
-    }
+                // Lưu trạng thái kiểm tra trực tiếp
+                localStorage.setItem("directTestState", JSON.stringify({
+                    isDirectTestMode: true,
+                    quizId:   message.quizId,
+                    timeLimit: message.timeLimit,
+                    startTime: message.startTime,
+                }));
+
+                if (!isAdmin) {
+                    hideAllScreens();
+                    quizContainer.classList.remove("hidden");
+                    timerDisplay.classList.remove("hidden");
+                    audio.classList.remove("hidden");
+
+                    selectedQuizId = message.quizId;
+                    currentQuizPart = 1;
+
+                    loadAudio(1);
+                    loadImages(1);
+                    startTimer();
+                    updateProgressBar();
+
+                    notification.innerText = "Bài thi đã bắt đầu!";
+                }
+                break;
+
+            case 'end':
+                isTestEnded = true;
+                localStorage.removeItem("directTestState");
+                clearInterval(timerInterval);
+
+                if (directTestProgressBar) directTestProgressBar.style.width = "0%";
+                if (directTestTimer) directTestTimer.innerText = "Kiểm tra đã kết thúc!";
+
+                if (!isAdmin) {
+                    submitQuiz();
+                    notification.innerText = "Bài thi đã kết thúc!";
+                } else {
+                    fetchDirectResults();
+                }
+                break;
+
+            /* ==================== ERROR ==================== */
+            case 'error':
+                notification.innerText = message.message;
+                break;
+        }
+
+    } catch (error) {
+        console.error("Error handling WebSocket message:", error);
+        notification.innerText = "Lỗi khi xử lý thông tin từ server.";
+    }
 }
+
 
 async function showReviewAnswers() {
   try {
