@@ -290,6 +290,7 @@ app.delete('/delete-quiz/:quizId', async (req, res) => {
         console.error('Error deleting quiz:', err);
         res.status(500).json({ message: 'Error deleting quiz' });
     }
+});
 // Endpoint để xóa database
 app.delete('/clear-database', async (req, res) => {
   try {
