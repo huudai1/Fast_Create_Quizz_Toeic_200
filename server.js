@@ -223,18 +223,20 @@ app.delete('/clear-database', async (req, res) => {
 
 // Endpoint để giao bài
 app.post('/assign-quiz', async (req, res) => {
-  const { quizId, timeLimit } = req.body;
-  if (!quizId || !timeLimit) {
-    return res.status(400).json({ message: 'Quiz ID and time limit are required' });
-  }
-  const quiz = quizzes.find((q) => q.quizId === quizId);
-  if (!quiz) {
-    return res.status(404).json({ message: 'Quiz not found' });
-  }
-  quiz.isAssigned = true;
-  await saveQuizzes();
-  broadcast({ type: 'quizStatus', quizId: quiz.quizId, quizName: quiz.quizName, quizExists: true });
-  res.json({ message: 'Quiz assigned successfully!' });
+    const { quizId, timeLimit, partVisibility } = req.body;
+    if (!quizId || !timeLimit) {
+        return res.status(400).json({ message: 'Quiz ID and time limit are required' });
+    }
+    const quiz = quizzes.find((q) => q.quizId === quizId);
+    if (!quiz) {
+        return res.status(404).json({ message: 'Quiz not found' });
+    }
+    quiz.isAssigned = true;
+    quiz.timeLimit = timeLimit;
+    quiz.partVisibility = partVisibility || { 1: true, 2: true, 3: true, 4: true, 5: true, 6: true, 7: true };
+    await saveQuizzes();
+    broadcast({ type: 'quizStatus', quizId: quiz.quizId, quizName: quiz.quizName, quizExists: true });
+    res.json({ message: 'Quiz assigned successfully!' });
 });
 
 app.get('/quizzes', async (req, res) => {
@@ -468,22 +470,27 @@ app.post(
 );
 
 app.post('/select-quiz', (req, res) => {
-  const { quizId } = req.body;
-  if (!quizId) {
-    return res.status(400).json({ message: 'Quiz ID is required' });
-  }
-  const quiz = quizzes.find((q) => q.quizId === quizId);
-  if (!quiz) {
-    return res.status(404).json({ message: 'Quiz not found' });
-  }
-  currentQuiz = quiz;
-  broadcast({
-    type: 'quizStatus',
-    quizId: quiz.quizId,
-    quizName: quiz.quizName,
-    quizExists: true
-  });
-  res.json({ message: 'Quiz selected successfully!', quizName: quiz.quizName });
+    const { quizId } = req.body;
+    if (!quizId) {
+        return res.status(400).json({ message: 'Quiz ID is required' });
+    }
+    const quiz = quizzes.find((q) => q.quizId === quizId);
+    if (!quiz) {
+        return res.status(404).json({ message: 'Quiz not found' });
+    }
+    currentQuiz = quiz;
+    broadcast({
+        type: 'quizStatus',
+        quizId: quiz.quizId,
+        quizName: quiz.quizName,
+        quizExists: true
+    });
+    res.json({
+        message: 'Quiz selected successfully!',
+        quizName: quiz.quizName,
+        timeLimit: quiz.timeLimit,
+        partVisibility: quiz.partVisibility
+    });
 });
 
 app.get('/quiz-audio', (req, res) => {
@@ -652,46 +659,49 @@ wss.on('connection', (ws) => {
 
   ws.on('message', (message) => {
     try {
-      const msg = JSON.parse(message);
-      if (msg.type === 'start') {
-        broadcast({ type: 'start', timeLimit: msg.timeLimit });
-      } else if (msg.type === 'end') {
-        if (currentQuiz) {
-          const quizResults = results.filter(r => r.quizId === currentQuiz.quizId);
-          broadcast({
-            type: 'submitted',
-            count: quizResults.length,
-            results: quizResults.map(r => ({
-              username: r.username,
-              score: r.score,
-              submittedAt: new Date(r.timestamp)
-            }))
-          });
-        }
-        broadcast({ type: 'end' });
-      } else if (msg.type === 'requestQuizStatus') {
-        if (currentQuiz) {
-          ws.send(JSON.stringify({
-            type: 'quizStatus',
-            quizId: currentQuiz.quizId,
-            quizName: currentQuiz.quizName,
-            quizExists: true
-          }));
-        } else {
-          ws.send(JSON.stringify({ type: 'quizStatus', quizExists: false }));
-        }
-      } else if (msg.type === 'login') {
-        // Lưu thông tin user nếu cần
-      } else if (msg.type === 'quizSelected' || msg.type === 'quizAssigned') {
-        // Xử lý các tin nhắn từ client nếu cần
-      } else if (msg.type === 'heartbeat') { // ⭐ Add this new case
-          console.log("Received heartbeat from a client.");
-        // The client is still active, do nothing. The server's timeout logic is reset automatically.
+        const msg = JSON.parse(message);
+        if (msg.type === 'start') {
+            broadcast({
+                type: 'start',
+                timeLimit: msg.timeLimit,
+                quizId: msg.quizId,
+                startTime: msg.startTime,
+                partVisibility: msg.partVisibility
+            });
+        } else if (msg.type === 'end') {
+            if (currentQuiz) {
+                const quizResults = results.filter(r => r.quizId === currentQuiz.quizId);
+                broadcast({
+                    type: 'submitted',
+                    count: quizResults.length,
+                    results: quizResults.map(r => ({
+                        username: r.username,
+                        score: r.score,
+                        submittedAt: new Date(r.timestamp)
+                    }))
+                });
+            }
+            broadcast({ type: 'end' });
+        } else if (msg.type === 'requestQuizStatus') {
+            if (currentQuiz) {
+                ws.send(JSON.stringify({
+                    type: 'quizStatus',
+                    quizId: currentQuiz.quizId,
+                    quizName: currentQuiz.quizName,
+                    quizExists: true
+                }));
+            } else {
+                ws.send(JSON.stringify({ type: 'quizStatus', quizExists: false }));
+            }
+        } else if (msg.type === 'login' || msg.type === 'quizSelected' || msg.type === 'quizAssigned') {
+            // Không cần xử lý đặc biệt ở đây
+        } else if (msg.type === 'heartbeat') {
+            console.log("Received heartbeat from a client.");
         }
     } catch (err) {
-      console.error('Error processing WebSocket message:', err);
+        console.error('Error processing WebSocket message:', err);
     }
-  });
+});
 
   ws.on('close', () => {
     clients.delete(ws);
