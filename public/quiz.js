@@ -463,7 +463,7 @@ async function uploadQuizzes() {
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 60000);
+    const timeoutId = setTimeout(() => controller.abort(), 300000);
     const endpoint = file.name.endsWith('.zip') ? '/upload-quizzes-zip' : '/upload-quizzes';
     const res = await fetch(endpoint, {
       method: "POST",
@@ -1217,7 +1217,7 @@ async function saveQuiz() {
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 60000);
+    const timeoutId = setTimeout(() => controller.abort(), 300000);
     const res = await fetch("/save-quiz", {
       method: "POST",
       body: formData,
