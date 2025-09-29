@@ -114,6 +114,43 @@ function saveAdminState() {
   }
 }
 
+adminLoginForm.onsubmit = async (e) => {
+    e.preventDefault(); // Ngăn trang tải lại
+    const password = adminPasswordInput.value;
+
+    // Kiểm tra mật khẩu
+    if (password === ADMIN_PASSWORD) {
+        // Nếu đúng, thiết lập trạng thái admin
+        isAdmin = true;
+        user = { name: "Admin", email: "admin@example.com" }; // Tạo một user admin tạm thời
+
+        // Ẩn các màn hình khác và hiển thị màn hình danh sách quiz cho admin
+        hideAllScreens();
+        quizListScreen.classList.remove("hidden");
+        adminOptions.classList.remove("hidden");
+        adminControls.classList.remove("hidden");
+        downloadNotice.classList.add("hidden");
+
+        initializeWebSocket();
+        startHeartbeat(); // Bắt đầu gửi tín hiệu heartbeat cho admin
+
+        // Tải danh sách các đề thi
+        try {
+            await loadQuizzes();
+        } catch (error) {
+            console.error("Lỗi khi tải đề thi cho admin:", error);
+            notification.innerText = "Không thể tải danh sách đề thi.";
+        }
+        
+        saveAdminState(); // Lưu lại trạng thái đăng nhập của admin
+
+    } else {
+        // Nếu sai, hiển thị thông báo lỗi
+        notificationAdmin.innerText = "Mật khẩu không đúng!";
+        adminPasswordInput.value = ""; // Xóa trường nhập mật khẩu
+    }
+};
+
 function getCurrentScreen() {
   if (!welcomeScreen.classList.contains("hidden")) return "welcome-screen";
   if (!adminLogin.classList.contains("hidden")) return "admin-login";
