@@ -253,58 +253,50 @@ app.get('/quizzes', async (req, res) => {
 });
 
 app.post(
-  '/save-quiz',
-  upload.fields([
-    { name: 'audio-part1', maxCount: 1 },
-    { name: 'audio-part2', maxCount: 1 },
-    { name: 'audio-part3', maxCount: 1 },
-    { name: 'audio-part4', maxCount: 1 },
-    { name: 'images-part1' },
-    { name: 'images-part2' },
-    { name: 'images-part3' },
-    { name: 'images-part4' },
-    { name: 'images-part5' },
-    { name: 'images-part6' },
-    { name: 'images-part7' },
-  ]),
-  async (req, res) => {
-    try {
-      const { quizName, answerKey, createdBy } = req.body;
-      if (!quizName || !answerKey || !createdBy) {
-        return res.status(400).json({ message: "Missing required fields" });
-      }
-      const audioPaths = {};
-      for (let i = 1; i <= 4; i++) {
-        if (req.files[`audio-part${i}`]) {
-          const audioFile = req.files[`audio-part${i}`][0];
-          audioPaths[`part${i}`] = `/uploads/audio/${audioFile.filename}`;
+    '/save-quiz',
+    upload.fields([
+        { name: 'audio-part1', maxCount: 1 },
+        { name: 'audio-part2', maxCount: 1 },
+        { name: 'audio-part3', maxCount: 1 },
+        { name: 'audio-part4', maxCount: 1 },
+        { name: 'quiz-pdf', maxCount: 1 } // Thêm trường cho file PDF
+    ]),
+    async (req, res) => {
+        try {
+            const { quizName, answerKey, createdBy } = req.body;
+            if (!quizName || !answerKey || !createdBy || !req.files['quiz-pdf']) {
+                return res.status(400).json({ message: "Thiếu các trường thông tin cần thiết." });
+            }
+
+            const quizPdfFile = req.files['quiz-pdf'][0];
+            const quizPdfUrl = `/uploads/images/${quizPdfFile.filename}`;
+
+            const audioPaths = {};
+            for (let i = 1; i <= 4; i++) {
+                if (req.files[`audio-part${i}`]) {
+                    const audioFile = req.files[`audio-part${i}`][0];
+                    audioPaths[`part${i}`] = `/uploads/audio/${audioFile.filename}`;
+                }
+            }
+
+            const quiz = {
+                quizId: uuidv4(),
+                quizName,
+                quizPdfUrl, // Lưu URL của file PDF
+                audio: audioPaths,
+                answerKey: JSON.parse(answerKey),
+                createdBy,
+                isAssigned: false
+            };
+
+            quizzes.push(quiz);
+            await saveQuizzes();
+            res.json({ message: 'Lưu đề thi thành công!' });
+        } catch (err) {
+            console.error('Error saving quiz:', err);
+            res.status(500).json({ message: 'Lỗi khi lưu đề thi' });
         }
-      }
-
-      const images = {};
-      for (let i = 1; i <= 7; i++) {
-        const partImages = req.files[`images-part${i}`] || [];
-        images[`part${i}`] = partImages.map((file) => `/uploads/images/${file.filename}`);
-      }
-
-      const quiz = {
-        quizId: uuidv4(),
-        quizName,
-        audio: audioPaths,
-        images,
-        answerKey: JSON.parse(answerKey),
-        createdBy,
-        isAssigned: false
-      };
-
-      quizzes.push(quiz);
-      await saveQuizzes();
-      res.json({ message: 'Quiz saved successfully!' });
-    } catch (err) {
-      console.error('Error saving quiz:', err);
-      res.status(500).json({ message: 'Error saving quiz' });
     }
-  }
 );
 
 app.delete('/delete-quiz/:quizId', async (req, res) => {
@@ -471,9 +463,6 @@ app.post(
 
 app.post('/select-quiz', (req, res) => {
     const { quizId } = req.body;
-    if (!quizId) {
-        return res.status(400).json({ message: 'Quiz ID is required' });
-    }
     const quiz = quizzes.find((q) => q.quizId === quizId);
     if (!quiz) {
         return res.status(404).json({ message: 'Quiz not found' });
@@ -482,14 +471,14 @@ app.post('/select-quiz', (req, res) => {
     broadcast({
         type: 'quizStatus',
         quizId: quiz.quizId,
-        quizName: quiz.quizName,
-        quizExists: true
+        quizName: quiz.quizName
     });
     res.json({
         message: 'Quiz selected successfully!',
         quizName: quiz.quizName,
         timeLimit: quiz.timeLimit,
-        partVisibility: quiz.partVisibility
+        partVisibility: quiz.partVisibility,
+        quizPdfUrl: quiz.quizPdfUrl // Gửi kèm URL của PDF
     });
 });
 
@@ -592,6 +581,16 @@ app.post(
   }
 );
 
+app.get('/get-quiz', (req, res) => {
+    const { quizId } = req.query;
+    const quiz = quizzes.find(q => q.quizId === quizId);
+    if (quiz) {
+        res.json(quiz);
+    } else {
+        res.status(404).json({ message: 'Quiz not found' });
+    }
+});
+
 app.post(
   '/upload-files',
   upload.fields([
@@ -667,6 +666,7 @@ wss.on('connection', (ws) => {
                 quizId: msg.quizId,
                 startTime: msg.startTime,
                 partVisibility: msg.partVisibility
+                quizPdfUrl: quiz.quizPdfUrl
             });
         } else if (msg.type === 'end') {
             if (currentQuiz) {
