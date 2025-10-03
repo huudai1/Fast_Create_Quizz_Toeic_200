@@ -235,7 +235,10 @@ app.post('/assign-quiz', async (req, res) => {
     quiz.timeLimit = timeLimit;
     quiz.partVisibility = partVisibility || { 1: true, 2: true, 3: true, 4: true, 5: true, 6: true, 7: true };
     await saveQuizzes();
-    broadcast({ type: 'quizStatus', quizId: quiz.quizId, quizName: quiz.quizName, quizExists: true });
+
+    // THÊM DÒNG NÀY ĐỂ GỬI THÔNG BÁO TỚI TẤT CẢ HỌC SINH
+    broadcast({ type: 'quizAssigned', quizId: quiz.quizId });
+
     res.json({ message: 'Quiz assigned successfully!' });
 });
 

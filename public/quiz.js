@@ -407,24 +407,28 @@ function showStudentLogin() {
 }
 
 function showWelcomeScreen() {
-  hideAllScreens();
-  welcomeScreen.classList.remove("hidden");
-  notification.innerText = "";
-  user = null;
-  isAdmin = false;
-  selectedQuizId = null;
-  isDirectTestMode = false;
-  isTestEnded = false;
-  currentAdminStep = 0;
-  currentQuizPart = 1;
-  if (socket) {
-    socket.close();
-    socket = null;
-  }
-  clearState();
-  clearUserAnswers();
-  downloadNotice.classList.remove("hidden");
-  startDownloadNotice();
+    hideAllScreens();
+    welcomeScreen.classList.remove("hidden");
+    notification.innerText = "";
+    user = null;
+    isAdmin = false;
+    selectedQuizId = null; // Reset ID ở đây
+    isDirectTestMode = false;
+    isTestEnded = false;
+    currentAdminStep = 0;
+    currentQuizPart = 1;
+    if (socket) {
+        socket.close();
+        socket = null;
+    }
+    clearState();
+    clearUserAnswers();
+    
+    // THÊM DÒNG NÀY ĐỂ DỌN DẸP SẠCH SẼ
+    localStorage.removeItem("selectedQuizId");
+
+    downloadNotice.classList.remove("hidden");
+    startDownloadNotice();
 }
 
 function initializeWebSocket() {
@@ -1470,7 +1474,6 @@ async function submitQuiz() {
     }
 
     localStorage.setItem("userAnswers", JSON.stringify(userAnswers));
-    localStorage.removeItem("selectedQuizId");
     localStorage.removeItem("currentScreen");
     localStorage.removeItem("timeLeft");
 
@@ -1617,7 +1620,13 @@ function handleWebSocketMessage(event) {
             }
         } else if (message.type === "error") {
       notification.innerText = message.message;
-    }
+            }
+        else if (message.type === "quizAssigned") {
+            console.log("Quiz has been assigned, reloading list...");
+            if (!isAdmin) { // Chỉ học sinh mới cần tải lại
+                loadQuizzes();
+            }
+        }
   } catch (error) {
     console.error("Error handling WebSocket message:", error);
     notification.innerText = "Lỗi khi xử lý thông tin từ server.";
