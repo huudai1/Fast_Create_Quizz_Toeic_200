@@ -463,6 +463,9 @@ app.post(
 
 app.post('/select-quiz', (req, res) => {
     const { quizId } = req.body;
+    if (!quizId) {
+        return res.status(400).json({ message: 'Quiz ID is required' });
+    }
     const quiz = quizzes.find((q) => q.quizId === quizId);
     if (!quiz) {
         return res.status(404).json({ message: 'Quiz not found' });
@@ -471,14 +474,15 @@ app.post('/select-quiz', (req, res) => {
     broadcast({
         type: 'quizStatus',
         quizId: quiz.quizId,
-        quizName: quiz.quizName
+        quizName: quiz.quizName,
+        quizExists: true
     });
     res.json({
         message: 'Quiz selected successfully!',
         quizName: quiz.quizName,
         timeLimit: quiz.timeLimit,
-        partVisibility: quiz.partVisibility,
-        quizPdfUrl: quiz.quizPdfUrl // Gửi kèm URL của PDF
+        partVisibility: quiz.partVisibility, // <-- THÊM DẤU PHẨY BỊ THIẾU Ở ĐÂY
+        quizPdfUrl: quiz.quizPdfUrl
     });
 });
 
@@ -660,14 +664,17 @@ wss.on('connection', (ws) => {
     try {
         const msg = JSON.parse(message);
         if (msg.type === 'start') {
-            broadcast({
-                type: 'start',
-                timeLimit: msg.timeLimit,
-                quizId: msg.quizId,
-                startTime: msg.startTime,
-                partVisibility: msg.partVisibility
-                quizPdfUrl: quiz.quizPdfUrl
-            });
+            const quiz = quizzes.find(q => q.quizId === msg.quizId);
+            if (quiz) {
+                broadcast({
+                    type: 'start',
+                    timeLimit: msg.timeLimit,
+                    quizId: msg.quizId,
+                    startTime: msg.startTime,
+                    partVisibility: msg.partVisibility, // <-- THÊM DẤU PHẨY BỊ THIẾU Ở ĐÂY
+                    quizPdfUrl: quiz.quizPdfUrl
+                });
+            }
         } else if (msg.type === 'end') {
             if (currentQuiz) {
                 const quizResults = results.filter(r => r.quizId === currentQuiz.quizId);
@@ -694,7 +701,7 @@ wss.on('connection', (ws) => {
                 ws.send(JSON.stringify({ type: 'quizStatus', quizExists: false }));
             }
         } else if (msg.type === 'login' || msg.type === 'quizSelected' || msg.type === 'quizAssigned') {
-            // Không cần xử lý đặc biệt ở đây
+            // Không cần xử lý đặc biệt
         } else if (msg.type === 'heartbeat') {
             console.log("Received heartbeat from a client.");
         }
