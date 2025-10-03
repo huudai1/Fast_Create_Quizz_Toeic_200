@@ -534,73 +534,56 @@ function showUploadQuizzes() {
 }
 
 async function uploadQuizzes() {
-  const notificationElement = document.getElementById("notification-upload");
-  const uploadButton = document.querySelector('#upload-quizzes button[onclick="uploadQuizzes()"]');
-  const modal = document.getElementById("loading-modal");
-  const file = quizzesFileInput.files[0];
+    const notificationElement = document.getElementById("notification-upload");
+    const uploadButton = document.querySelector('#upload-quizzes button[onclick="uploadQuizzes()"]');
+    const modal = document.getElementById("loading-modal");
+    const file = quizzesFileInput.files[0];
 
-  console.log("Selected file:", file ? file.name : null);
-  if (!file) {
-    notificationElement.innerText = "Vui lòng chọn file (.json hoặc .zip)!";
-    return;
-  }
-  if (!user || !user.email) {
-    notificationElement.innerText = "Lỗi: Vui lòng đăng nhập lại!";
-    return;
-  }
+    if (!file) {
+        notificationElement.innerText = "Vui lòng chọn file (.json hoặc .zip)!";
+        return;
+    }
+    if (!user || !user.name) {
+        notificationElement.innerText = "Lỗi: Vui lòng đăng nhập lại!";
+        return;
+    }
 
-  const formData = new FormData();
-  formData.append("quizzes", file);
-  formData.append("createdBy", user.name); // 👈 Đổi từ 'user.email' sang 'user.name'
-  console.log("FormData prepared, createdBy:", user.email);
+    const formData = new FormData();
+    formData.append("quizzes", file);
+    formData.append("createdBy", user.name); 
 
-  modal.classList.remove("hidden");
-  uploadButton.disabled = true;
+    modal.classList.remove("hidden");
+    uploadButton.disabled = true;
 
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 300000);
-    const endpoint = file.name.endsWith('.zip') ? '/upload-quizzes-zip' : '/upload-quizzes';
-    const res = await fetch(endpoint, {
-      method: "POST",
-      body: formData,
-      signal: controller.signal,
-    });
-    clearTimeout(timeoutId);
-
-    console.log("Response status:", res.status, "OK:", res.ok);
-    let result;
     try {
-      result = await res.json();
-      console.log("Server response:", result);
-    } catch (jsonError) {
-      console.error("Error parsing JSON:", jsonError);
-      throw new Error("Phản hồi server không hợp lệ");
-    }
+        const endpoint = file.name.endsWith('.zip') ? '/upload-quizzes-zip' : '/upload-quizzes';
+        const res = await fetch(endpoint, {
+            method: "POST",
+            body: formData,
+        });
 
-    if (!res.ok) {
-      throw new Error(result.message || "Server returned an error");
-    }
+        const result = await res.json();
 
-    notificationElement.innerText = result.message || "Tải lên đề thi thành công!";
-    console.log("Upload successful, calling backToQuizList()");
-    backToQuizList();
-    
-    setTimeout(() => {
-      notificationElement.innerText = "Đã tải lên thành công! Nếu chưa thấy đề, vui lòng làm mới trang.";
-      setTimeout(() => {
-        if (confirm("Bạn có muốn làm mới trang để xem đề thi mới?")) {
-          window.location.reload();
+        if (!res.ok) {
+            throw new Error(result.message || "Server returned an error");
         }
-      }, 5000);
-    }, 1000);
-  } catch (error) {
-    console.error("Error uploading quizzes:", error);
-    notificationElement.innerText = `Lỗi khi tải lên đề thi: ${error.message}. Vui lòng thử lại.`;
-  } finally {
-    modal.classList.add("hidden");
-    uploadButton.disabled = false;
-  }
+
+        // Tải lên thành công, tự động quay lại màn hình admin
+        backToQuizList();
+        // Hiển thị thông báo thành công ở màn hình admin
+        setTimeout(() => {
+            notification.innerText = "Tải lên đề thi thành công! Danh sách đã được cập nhật.";
+        }, 100);
+
+
+    } catch (error) {
+        console.error("Error uploading quizzes:", error);
+        notificationElement.innerText = `Lỗi khi tải lên đề thi: ${error.message}. Vui lòng thử lại.`;
+    } finally {
+        modal.classList.add("hidden");
+        uploadButton.disabled = false;
+        quizzesFileInput.value = ''; // Reset input file
+    }
 }
 
 async function downloadQuizzes(quizId) {
