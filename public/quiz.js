@@ -543,14 +543,18 @@ async function uploadQuizzes() {
         notificationElement.innerText = "Vui lòng chọn file (.json hoặc .zip)!";
         return;
     }
-    if (!user || !user.name) {
+    if (!user || !user.email) {
         notificationElement.innerText = "Lỗi: Vui lòng đăng nhập lại!";
         return;
     }
 
     const formData = new FormData();
     formData.append("quizzes", file);
-    formData.append("createdBy", user.name); 
+    
+    // ---- ĐÂY LÀ THAY ĐỔI QUAN TRỌNG ----
+    // Gửi đi user.email thay vì user.name để thống nhất
+    formData.append("createdBy", user.email); 
+    // ---- KẾT THÚC THAY ĐỔI ----
 
     modal.classList.remove("hidden");
     uploadButton.disabled = true;
@@ -567,14 +571,12 @@ async function uploadQuizzes() {
         if (!res.ok) {
             throw new Error(result.message || "Server returned an error");
         }
-
-        // Tải lên thành công, tự động quay lại màn hình admin
+        
+        // Tải lên thành công, tự động quay lại màn hình admin và thông báo
         backToQuizList();
-        // Hiển thị thông báo thành công ở màn hình admin
         setTimeout(() => {
             notification.innerText = "Tải lên đề thi thành công! Danh sách đã được cập nhật.";
         }, 100);
-
 
     } catch (error) {
         console.error("Error uploading quizzes:", error);
@@ -582,7 +584,7 @@ async function uploadQuizzes() {
     } finally {
         modal.classList.add("hidden");
         uploadButton.disabled = false;
-        quizzesFileInput.value = ''; // Reset input file
+        quizzesFileInput.value = '';
     }
 }
 
