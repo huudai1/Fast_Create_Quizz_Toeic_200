@@ -492,7 +492,17 @@ app.post('/select-quiz', (req, res) => {
         quizPdfUrl: quiz.quizPdfUrl
     });
 });
-
+app.get('/answer-key', (req, res) => {
+    const { quizId } = req.query; // Lấy quizId từ client gửi lên
+    if (!quizId) {
+        return res.status(400).json({ message: 'Quiz ID is required' });
+    }
+    const quiz = quizzes.find(q => q.quizId === quizId); // Tìm đúng quiz trong danh sách
+    if (!quiz) {
+        return res.status(404).json({ message: 'Quiz not found for the given ID' });
+    }
+    res.json(quiz.answerKey); // Trả về answerKey của quiz tìm được
+});
 app.get('/quiz-audio', (req, res) => {
   if (!currentQuiz || !currentQuiz.audio) {
     return res.status(404).json({ message: 'No audio available' });
