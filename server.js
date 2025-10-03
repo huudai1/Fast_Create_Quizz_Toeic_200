@@ -504,11 +504,19 @@ app.get('/answer-key', (req, res) => {
     res.json(quiz.answerKey); // Trả về answerKey của quiz tìm được
 });
 app.get('/quiz-audio', (req, res) => {
-  if (!currentQuiz || !currentQuiz.audio) {
-    return res.status(404).json({ message: 'No audio available' });
-  }
-  const part = req.query.part || 'part1';
-  res.json({ audio: currentQuiz.audio[part] });
+    // THAY ĐỔI: Lấy quizId từ query
+    const { part, quizId } = req.query;
+
+    if (!quizId) {
+        return res.status(400).json({ message: 'Quiz ID is required' });
+    }
+    const quiz = quizzes.find(q => q.quizId === quizId);
+
+    if (!quiz || !quiz.audio) {
+        return res.status(404).json({ message: 'No audio available for this quiz' });
+    }
+    
+    res.json({ audio: quiz.audio[part] });
 });
 
 app.get('/images', (req, res) => {
@@ -520,47 +528,52 @@ app.get('/images', (req, res) => {
 });
 
 app.post('/submit', async (req, res) => {
-  if (!currentQuiz) {
-    return res.status(404).json({ message: 'No quiz selected' });
-  }
+    // THAY ĐỔI: Thêm quizId vào các tham số nhận được
+    const { username, answers, quizId } = req.body;
 
-  const { username, answers } = req.body;
-  if (!username || !answers) {
-    return res.status(400).json({ message: 'Username and answers are required' });
-  }
-  let score = 0;
-  const answerKey = currentQuiz.answerKey;
-
-  for (let i = 1; i <= 200; i++) {
-    const userAnswer = answers[`q${i}`];
-    const correctAnswer = answerKey[`q${i}`];
-    if (userAnswer && userAnswer === correctAnswer) {
-      score++;
+    if (!username || !answers || !quizId) {
+        return res.status(400).json({ message: 'Username, answers, and quizId are required' });
     }
-  }
 
-  const result = {
-    quizId: currentQuiz.quizId,
-    username,
-    score,
-    answers, // Lưu trữ toàn bộ đáp án
-    timestamp: Date.now()
-  };
-  results.push(result);
-  await saveResults();
+    // THAY ĐỔI: Tìm đúng quiz dựa trên quizId, không dùng currentQuiz
+    const quiz = quizzes.find(q => q.quizId === quizId);
+    if (!quiz) {
+        return res.status(404).json({ message: 'Quiz not found' });
+    }
 
-  const quizResults = results.filter((r) => r.quizId === currentQuiz.quizId);
-  broadcast({
-    type: 'submitted',
-    count: quizResults.length,
-    results: quizResults.map((r) => ({
-      username: r.username,
-      score: r.score,
-      submittedAt: new Date(r.timestamp)
-    }))
-  });
+    let score = 0;
+    const answerKey = quiz.answerKey;
 
-  res.json({ score });
+    for (let i = 1; i <= 200; i++) {
+        const userAnswer = answers[`q${i}`];
+        const correctAnswer = answerKey[`q${i}`];
+        if (userAnswer && userAnswer === correctAnswer) {
+            score++;
+        }
+    }
+
+    const result = {
+        quizId: quizId,
+        username,
+        score,
+        answers,
+        timestamp: Date.now()
+    };
+    results.push(result);
+    await saveResults();
+
+    const quizResults = results.filter((r) => r.quizId === quizId);
+    broadcast({
+        type: 'submitted',
+        count: quizResults.length,
+        results: quizResults.map((r) => ({
+            username: r.username,
+            score: r.score,
+            submittedAt: new Date(r.timestamp)
+        }))
+    });
+
+    res.json({ score });
 });
 
 app.get('/results', (req, res) => {

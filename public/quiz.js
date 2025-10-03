@@ -1077,20 +1077,23 @@ async function startQuiz(quizId) {
 async function loadAudio(part) {
     if (part > 4) {
         audio.classList.add("hidden");
-        audio.pause(); // THÊM DÒNG NÀY
-        audio.currentTime = 0; // Reset thời gian về 0
+        audio.pause();
+        audio.currentTime = 0;
         return;
     }
     try {
-        // Phần còn lại của hàm giữ nguyên
         audio.classList.remove("hidden");
-        const audioRes = await fetch(`/quiz-audio?part=part${part}`);
+        // THAY ĐỔI: Gửi kèm quizId khi yêu cầu file audio
+        const currentQuizId = selectedQuizId || localStorage.getItem("selectedQuizId");
+        const audioRes = await fetch(`/quiz-audio?part=part${part}&quizId=${currentQuizId}`);
         const data = await audioRes.json();
         if (data.audio) {
             audioSource.src = data.audio;
             audio.load();
         } else {
             notification.innerText = `Không tìm thấy file nghe cho Part ${part}!`;
+            // Ẩn player nếu không có audio
+            audio.classList.add("hidden");
         }
     } catch (audioError) {
         console.error("Error loading audio:", audioError);
@@ -1439,7 +1442,7 @@ function prevAdminStep(step) {
 }
 
 async function submitQuiz() {
-    audio.pause(); // THÊM DÒNG NÀY ĐỂ DỪNG ÂM THANH NGAY LẬP TỨC
+    audio.pause();
 
     if (!user || !user.name) {
         notification.innerText = "Lỗi: Vui lòng nhập tên lại.";
@@ -1465,6 +1468,10 @@ async function submitQuiz() {
         }
 
         const result = await res.json();
+        
+        // LẤY VÀ LƯU LẠI ANSWER KEY ĐỂ DÙNG CHO MÀN HÌNH XEM LẠI
+        const answerRes = await fetch(`/answer-key?quizId=${currentQuizId}`);
+        answerKey = await answerRes.json();
         
         resultScore.innerText = `Điểm: ${result.score}/200`;
         resultTime.innerText = `Thời gian nộp: ${new Date().toLocaleString()}`;
