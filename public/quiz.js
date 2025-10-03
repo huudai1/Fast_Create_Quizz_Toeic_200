@@ -1444,10 +1444,11 @@ async function submitQuiz() {
     formData.forEach((val, key) => (userAnswers[key] = val));
 
     try {
+        const currentQuizId = selectedQuizId || localStorage.getItem("selectedQuizId");
         const res = await fetch("/submit", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username: user.name, answers: userAnswers, quizId: selectedQuizId || localStorage.getItem("selectedQuizId") }),
+            body: JSON.stringify({ username: user.name, answers: userAnswers, quizId: currentQuizId }),
         });
 
         if (!res.ok) {
@@ -1457,11 +1458,10 @@ async function submitQuiz() {
 
         const result = await res.json();
         
-        // Cập nhật giao diện với kết quả
+        // Cập nhật giao diện với kết quả trước khi chuyển màn hình
         resultScore.innerText = `Điểm: ${result.score}/200`;
         resultTime.innerText = `Thời gian nộp: ${new Date().toLocaleString()}`;
         
-        // DỌN DẸP VÀ CHUYỂN MÀN HÌNH
         quizForm.querySelector("button[type=submit]").disabled = true;
         clearInterval(timerInterval);
         
@@ -1473,7 +1473,7 @@ async function submitQuiz() {
         localStorage.removeItem("currentScreen");
         localStorage.removeItem("timeLeft");
         
-        // GỌI HÀM CHUYỂN MÀN HÌNH MỘT CÁCH TƯỜNG MINH
+        // Gọi hàm chuyển màn hình
         showResultScreen();
 
     } catch (error) {
@@ -1945,52 +1945,42 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 document.addEventListener("DOMContentLoaded", async () => {
-    // Phần khôi phục trạng thái admin giữ nguyên
     if (await restoreAdminState()) {
         console.log("Admin state restored");
     } else {
-        // Phần khôi phục trạng thái học sinh
         const savedUser = localStorage.getItem("user");
         const savedQuizId = localStorage.getItem("selectedQuizId");
         const savedScreen = localStorage.getItem("currentScreen");
 
-        // --- BẮT ĐẦU THAY ĐỔI LOGIC KHÔI PHỤC ---
         if (savedUser && savedQuizId && savedScreen === "quiz-container") {
             user = JSON.parse(savedUser);
             isAdmin = false;
 
-            // Lấy lại toàn bộ thông tin đề thi từ server
             const quizRes = await fetch(`/get-quiz?quizId=${savedQuizId}`);
             if (!quizRes.ok) {
-                // Nếu không tìm thấy đề, quay về trang chủ
-                console.error("Failed to fetch quiz data on restore");
-                logout(); // Dùng logout để dọn dẹp triệt để
+                console.error("Failed to fetch quiz data on restore, logging out.");
+                logout();
                 return;
             }
             const quizData = await quizRes.json();
             
-            // Khôi phục các giá trị
             const savedAnswers = localStorage.getItem("userAnswers");
             userAnswers = savedAnswers ? JSON.parse(savedAnswers) : {};
             timeLeft = parseInt(localStorage.getItem("timeLeft")) || 7200;
             selectedQuizId = savedQuizId;
 
-            // Hiển thị lại giao diện
             hideAllScreens();
             quizContainer.classList.remove("hidden");
             timerDisplay.classList.remove("hidden");
             audio.classList.remove("hidden");
             
-            // TẢI LẠI FILE PDF (ĐÂY LÀ PHẦN BỊ THIẾU)
             await loadQuizPdf(quizData.quizPdfUrl, 'image-display');
 
-            // Khôi phục các câu trả lời đã chọn
             Object.keys(userAnswers).forEach(questionId => {
                 const radio = document.querySelector(`input[name="${questionId}"][value="${userAnswers[questionId]}"]`);
                 if (radio) radio.checked = true;
             });
             
-            // Khởi động lại các chức năng
             applyPartVisibility(quizData.partVisibility);
             const firstVisiblePart = findFirstVisiblePart(quizData.partVisibility) || 1;
             await loadAudio(firstVisiblePart);
@@ -2001,7 +1991,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             downloadNotice.classList.add("hidden");
             initializeWebSocket();
         } 
-        // --- KẾT THÚC THAY ĐỔI LOGIC KHÔI PHỤC ---
         else if (savedUser) {
             user = JSON.parse(savedUser);
             isAdmin = false;
@@ -2016,7 +2005,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             showWelcomeScreen();
         }
     }
-    // Phần addEventListener còn lại giữ nguyên
+
     assignBtn.addEventListener("click", assignQuiz);
     directTestBtn.addEventListener("click", startDirectTest);
     endDirectTestBtn.addEventListener("click", endDirectTest);

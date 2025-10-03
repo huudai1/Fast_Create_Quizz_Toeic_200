@@ -350,63 +350,65 @@ app.delete('/delete-quiz/:quizId', async (req, res) => {
 
 app.get('/download-quiz-zip/:quizId', async (req, res) => {
     try {
-        const quizId = req.params.quizId;
+        const { quizId } = req.params;
         const quiz = quizzes.find((q) => q.quizId === quizId);
         if (!quiz) {
             return res.status(404).json({ message: 'Quiz not found' });
         }
 
         const zip = archiver('zip', { zlib: { level: 9 } });
-        res.attachment(`quiz_${quizId}.zip`);
+        // Đặt tên file zip tải về theo tên đề thi
+        const fileName = `${quiz.quizName || 'quiz'}.zip`;
+        res.attachment(fileName);
         zip.pipe(res);
 
-        // Thêm file quizzes.json chứa thông tin đề thi
-        const quizJson = JSON.stringify(quiz, null, 2);
-        zip.append(quizJson, { name: 'key/quizzes.json' });
+        // 1. Thêm file quizzes.json vào thư mục /key
+        const quizJsonData = { ...quiz };
+        delete quizJsonData.quizId; // Xóa ID cũ để khi upload sẽ tạo ID mới
+        zip.append(JSON.stringify(quizJsonData, null, 2), { name: 'key/quizzes.json' });
 
-        // Thêm các file audio
+        // 2. Thêm file PDF vào thư mục /pdf
+        if (quiz.quizPdfUrl) {
+            const pdfPath = path.join(__dirname, 'public', quiz.quizPdfUrl);
+            if (fsSync.existsSync(pdfPath)) {
+                zip.file(pdfPath, { name: 'pdf/de_thi.pdf' });
+            }
+        }
+
+        // 3. Thêm các file audio vào thư mục /audio
         for (let i = 1; i <= 4; i++) {
-            const audioPath = quiz.audio[`part${i}`];
-            if (audioPath) {
-                const fullPath = path.join(__dirname, 'public', audioPath.substring(1));
-                if (fsSync.existsSync(fullPath)) {
-                    const originalName = path.basename(audioPath);
-                    zip.file(fullPath, { name: `part${i}/audio/${originalName}` });
+            const partKey = `part${i}`;
+            const audioUrl = quiz.audio[partKey];
+            if (audioUrl) {
+                const audioPath = path.join(__dirname, 'public', audioUrl);
+                if (fsSync.existsSync(audioPath)) {
+                    zip.file(audioPath, { name: `audio/${partKey}.mp3` });
                 }
             }
         }
-        
-        // ---- THAY ĐỔI QUAN TRỌNG ----
-        // Thêm file PDF duy nhất vào file zip
-        if (quiz.quizPdfUrl) {
-            const pdfFullPath = path.join(__dirname, 'public', quiz.quizPdfUrl.substring(1));
-            if (fsSync.existsSync(pdfFullPath)) {
-                // Đặt tên file trong zip là de_thi.pdf cho dễ nhận biết
-                zip.file(pdfFullPath, { name: 'de_thi.pdf' });
-            }
-        }
-        
-        await zip.finalize();
 
+        await zip.finalize();
     } catch (err) {
         console.error('Error creating ZIP:', err);
-        res.status(500).json({ message: 'Error creating ZIP file' });
+        res.status(500).json({ message: 'Lỗi khi tạo file ZIP' });
     }
 });
 
 app.post(
     '/upload-quizzes-zip',
-    upload.single('quizzes'),
+    upload.single('quizzes'), // 'quizzes' là tên của input field
     async (req, res) => {
+        const tempPath = path.join(__dirname, 'temp');
+        const extractPath = path.join(tempPath, uuidv4());
+        const zipPath = req.file.path;
+
         try {
             if (!req.file) {
                 return res.status(400).json({ message: 'No ZIP file uploaded' });
             }
-
-            const zipPath = req.file.path;
-            const extractPath = path.join(__dirname, 'temp', uuidv4());
             await fs.mkdir(extractPath, { recursive: true });
 
+            // Giải nén file zip
             await new Promise((resolve, reject) => {
                 fsSync.createReadStream(zipPath)
                     .pipe(unzipper.Extract({ path: extractPath }))
@@ -414,62 +416,54 @@ app.post(
                     .on('error', reject);
             });
 
+            // Đọc file JSON
             const quizzesJsonPath = path.join(extractPath, 'key', 'quizzes.json');
             if (!fsSync.existsSync(quizzesJsonPath)) {
-                await fs.rm(extractPath, { recursive: true, force: true });
-                await fs.unlink(zipPath);
-                return res.status(400).json({ message: 'Lỗi: File ZIP thiếu file key/quizzes.json' });
+                throw new Error('File ZIP không hợp lệ: thiếu key/quizzes.json');
             }
-
             const quizData = JSON.parse(await fs.readFile(quizzesJsonPath, 'utf8'));
+            
             const newQuizId = uuidv4();
             quizData.quizId = newQuizId;
+            quizData.createdBy = req.body.createdBy; // Gán người tạo
 
             // Xử lý file PDF
-            const pdfSrcPath = path.join(extractPath, 'de_thi.pdf');
+            const pdfSrcPath = path.join(extractPath, 'pdf', 'de_thi.pdf');
             if (fsSync.existsSync(pdfSrcPath)) {
                 const pdfDestFilename = `${newQuizId}.pdf`;
                 const pdfDestPath = path.join(__dirname, 'public/uploads/images', pdfDestFilename);
                 await fs.copyFile(pdfSrcPath, pdfDestPath);
                 quizData.quizPdfUrl = `/uploads/images/${pdfDestFilename}`;
             } else {
-                return res.status(400).json({ message: 'Lỗi: File ZIP thiếu file de_thi.pdf' });
+                 throw new Error('File ZIP không hợp lệ: thiếu pdf/de_thi.pdf');
             }
 
             // Xử lý các file audio
             const newAudioPaths = {};
             for (let i = 1; i <= 4; i++) {
                 const partKey = `part${i}`;
-                const audioDir = path.join(extractPath, partKey, 'audio');
-                if (fsSync.existsSync(audioDir)) {
-                    const audioFiles = await fs.readdir(audioDir);
-                    if (audioFiles.length > 0) {
-                        const audioFile = audioFiles[0]; // Giả sử chỉ có 1 file audio mỗi part
-                        const audioSrcPath = path.join(audioDir, audioFile);
-                        const audioExt = path.extname(audioFile);
-                        const newAudioFilename = `${newQuizId}_${partKey}${audioExt}`;
-                        const audioDestPath = path.join(__dirname, 'public/uploads/audio', newAudioFilename);
-                        
-                        await fs.copyFile(audioSrcPath, audioDestPath);
-                        newAudioPaths[partKey] = `/uploads/audio/${newAudioFilename}`;
-                    }
+                const audioSrcPath = path.join(extractPath, 'audio', `${partKey}.mp3`);
+                if (fsSync.existsSync(audioSrcPath)) {
+                    const newAudioFilename = `${newQuizId}_${partKey}.mp3`;
+                    const audioDestPath = path.join(__dirname, 'public/uploads/audio', newAudioFilename);
+                    await fs.copyFile(audioSrcPath, audioDestPath);
+                    newAudioPaths[partKey] = `/uploads/audio/${newAudioFilename}`;
                 }
             }
             quizData.audio = newAudioPaths;
-            
-            // Xóa thuộc tính images cũ không còn dùng đến
-            delete quizData.images;
 
             quizzes.push(quizData);
             await saveQuizzes();
 
-            await fs.rm(extractPath, { recursive: true, force: true });
-            await fs.unlink(zipPath);
-
             res.json({ message: 'Tải lên đề thi từ ZIP thành công!' });
+
         } catch (err) {
             console.error('Error uploading ZIP:', err);
-            res.status(500).json({ message: 'Lỗi khi xử lý file ZIP' });
+            res.status(500).json({ message: err.message || 'Lỗi khi xử lý file ZIP' });
+        } finally {
+            // Dọn dẹp file và thư mục tạm
+            if (fsSync.existsSync(extractPath)) await fs.rm(extractPath, { recursive: true, force: true });
+            if (fsSync.existsSync(zipPath)) await fs.unlink(zipPath);
         }
     }
 );
