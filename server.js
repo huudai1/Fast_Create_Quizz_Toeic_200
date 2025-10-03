@@ -349,49 +349,49 @@ app.delete('/delete-quiz/:quizId', async (req, res) => {
 });
 
 app.get('/download-quiz-zip/:quizId', async (req, res) => {
-  try {
-    const quizId = req.params.quizId;
-    const quiz = quizzes.find((q) => q.quizId === quizId);
-    if (!quiz) {
-      return res.status(404).json({ message: 'Quiz not found' });
-    }
-
-    const zip = archiver('zip', { zlib: { level: 9 } });
-    res.attachment(`quiz_${quizId}.zip`);
-    zip.pipe(res);
-
-    const quizJson = JSON.stringify(quiz, null, 2);
-    zip.append(quizJson, { name: 'key/quizzes.json' });
-
-    for (let i = 1; i <= 4; i++) {
-      const audioPath = quiz.audio[`part${i}`];
-      if (audioPath) {
-        const fullPath = path.join(__dirname, 'public', audioPath.substring(1));
-        if (fsSync.existsSync(fullPath)) {
-          // Use original filename from quiz.audio
-          const originalName = path.basename(audioPath);
-          zip.file(fullPath, { name: `part${i}/audio/${originalName}` });
+    try {
+        const quizId = req.params.quizId;
+        const quiz = quizzes.find((q) => q.quizId === quizId);
+        if (!quiz) {
+            return res.status(404).json({ message: 'Quiz not found' });
         }
-      }
-    }
 
-    for (let i = 1; i <= 7; i++) {
-      const images = quiz.images[`part${i}`] || [];
-      for (let imagePath of images) {
-        const fullPath = path.join(__dirname, 'public', imagePath.substring(1));
-        if (fsSync.existsSync(fullPath)) {
-          // Use original filename from quiz.images
-          const originalName = path.basename(imagePath);
-          zip.file(fullPath, { name: `part${i}/images/${originalName}` });
+        const zip = archiver('zip', { zlib: { level: 9 } });
+        res.attachment(`quiz_${quizId}.zip`);
+        zip.pipe(res);
+
+        // Thêm file quizzes.json chứa thông tin đề thi
+        const quizJson = JSON.stringify(quiz, null, 2);
+        zip.append(quizJson, { name: 'key/quizzes.json' });
+
+        // Thêm các file audio
+        for (let i = 1; i <= 4; i++) {
+            const audioPath = quiz.audio[`part${i}`];
+            if (audioPath) {
+                const fullPath = path.join(__dirname, 'public', audioPath.substring(1));
+                if (fsSync.existsSync(fullPath)) {
+                    const originalName = path.basename(audioPath);
+                    zip.file(fullPath, { name: `part${i}/audio/${originalName}` });
+                }
+            }
         }
-      }
-    }
+        
+        // ---- THAY ĐỔI QUAN TRỌNG ----
+        // Thêm file PDF duy nhất vào file zip
+        if (quiz.quizPdfUrl) {
+            const pdfFullPath = path.join(__dirname, 'public', quiz.quizPdfUrl.substring(1));
+            if (fsSync.existsSync(pdfFullPath)) {
+                // Đặt tên file trong zip là de_thi.pdf cho dễ nhận biết
+                zip.file(pdfFullPath, { name: 'de_thi.pdf' });
+            }
+        }
+        
+        await zip.finalize();
 
-    await zip.finalize();
-  } catch (err) {
-    console.error('Error creating ZIP:', err);
-    res.status(500).json({ message: 'Error creating ZIP file' });
-  }
+    } catch (err) {
+        console.error('Error creating ZIP:', err);
+        res.status(500).json({ message: 'Error creating ZIP file' });
+    }
 });
 
 app.post(
@@ -635,6 +635,23 @@ function broadcast(message) {
   });
 }
 
+function broadcastParticipantList() {
+    const participants = [];
+    // wss.clients là một Set chứa tất cả các kết nối WebSocket đang hoạt động
+    wss.clients.forEach(client => {
+        // Chỉ thêm vào danh sách nếu client đó đã đăng nhập bằng tên
+        if (client.username) {
+            participants.push(client.username);
+        }
+    });
+    // Gửi danh sách cập nhật tới tất cả mọi người
+    broadcast({
+        type: 'participantUpdate',
+        participants: participants,
+        count: participants.length
+    });
+}
+
 const server = app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
@@ -642,86 +659,89 @@ const server = app.listen(port, () => {
 const wss = new WebSocketServer({ server });
 
 wss.on('connection', (ws) => {
-  clients.add(ws);
-  broadcast({ type: 'participantCount', count: clients.size });
-  if (currentQuiz) {
-    const quizResults = results.filter(r => r.quizId === currentQuiz.quizId);
-    ws.send(JSON.stringify({
-      type: 'submitted',
-      count: quizResults.length,
-      results: quizResults.map(r => ({
-        username: r.username,
-        score: r.score,
-        submittedAt: new Date(r.timestamp)
-      }))
-    }));
-    ws.send(JSON.stringify({
-      type: 'quizStatus',
-      quizId: currentQuiz.quizId,
-      quizName: currentQuiz.quizName,
-      quizExists: true
-    }));
-  }
-
-  ws.on('message', (message) => {
-    try {
-        const msg = JSON.parse(message);
-        if (msg.type === 'start') {
-            const quiz = quizzes.find(q => q.quizId === msg.quizId);
-            if (quiz) {
-                broadcast({
-                    type: 'start',
-                    timeLimit: msg.timeLimit,
-                    quizId: msg.quizId,
-                    startTime: msg.startTime,
-                    partVisibility: msg.partVisibility, // <-- THÊM DẤU PHẨY BỊ THIẾU Ở ĐÂY
-                    quizPdfUrl: quiz.quizPdfUrl
-                });
-            }
-        } else if (msg.type === 'end') {
-            if (currentQuiz) {
-                const quizResults = results.filter(r => r.quizId === currentQuiz.quizId);
-                broadcast({
-                    type: 'submitted',
-                    count: quizResults.length,
-                    results: quizResults.map(r => ({
-                        username: r.username,
-                        score: r.score,
-                        submittedAt: new Date(r.timestamp)
-                    }))
-                });
-            }
-            broadcast({ type: 'end' });
-        } else if (msg.type === 'requestQuizStatus') {
-            if (currentQuiz) {
-                ws.send(JSON.stringify({
-                    type: 'quizStatus',
-                    quizId: currentQuiz.quizId,
-                    quizName: currentQuiz.quizName,
-                    quizExists: true
-                }));
-            } else {
-                ws.send(JSON.stringify({ type: 'quizStatus', quizExists: false }));
-            }
-        } else if (msg.type === 'login' || msg.type === 'quizSelected' || msg.type === 'quizAssigned') {
-            // Không cần xử lý đặc biệt
-        } else if (msg.type === 'heartbeat') {
-            console.log("Received heartbeat from a client.");
-        }
-    } catch (err) {
-        console.error('Error processing WebSocket message:', err);
+    clients.add(ws);
+    
+    // Gửi thông tin trạng thái ban đầu cho người mới kết nối
+    broadcastParticipantList();
+    if (currentQuiz) {
+        const quizResults = results.filter(r => r.quizId === currentQuiz.quizId);
+        ws.send(JSON.stringify({
+            type: 'submitted',
+            count: quizResults.length,
+            results: quizResults.map(r => ({
+                username: r.username,
+                score: r.score,
+                submittedAt: new Date(r.timestamp)
+            }))
+        }));
+        ws.send(JSON.stringify({
+            type: 'quizStatus',
+            quizId: currentQuiz.quizId,
+            quizName: currentQuiz.quizName,
+            quizExists: true
+        }));
     }
-});
 
-  ws.on('close', () => {
-    clients.delete(ws);
-    broadcast({ type: 'participantCount', count: clients.size });
-  });
+    // Xử lý các tin nhắn từ client
+    ws.on('message', (message) => {
+        try {
+            const msg = JSON.parse(message);
 
-  app.get('/answer-key', (req, res) => {
-  if (!currentQuiz) {
-    return res.status(404).json({ message: 'No quiz selected' });
-  }
-  res.json(currentQuiz.answerKey);
-});
+            if (msg.type === 'login') {
+                ws.username = msg.username;
+                broadcastParticipantList();
+            } 
+            else if (msg.type === 'start') {
+                const quiz = quizzes.find(q => q.quizId === msg.quizId);
+                if (quiz) {
+                    broadcast({
+                        type: 'start',
+                        timeLimit: msg.timeLimit,
+                        quizId: msg.quizId,
+                        startTime: msg.startTime,
+                        partVisibility: msg.partVisibility,
+                        quizPdfUrl: quiz.quizPdfUrl
+                    });
+                }
+            } 
+            else if (msg.type === 'end') {
+                if (currentQuiz) {
+                    const quizResults = results.filter(r => r.quizId === currentQuiz.quizId);
+                    broadcast({
+                        type: 'submitted',
+                        count: quizResults.length,
+                        results: quizResults.map(r => ({
+                            username: r.username,
+                            score: r.score,
+                            submittedAt: new Date(r.timestamp)
+                        }))
+                    });
+                }
+                broadcast({ type: 'end' });
+            } 
+            else if (msg.type === 'requestQuizStatus') {
+                if (currentQuiz) {
+                    ws.send(JSON.stringify({
+                        type: 'quizStatus',
+                        quizId: currentQuiz.quizId,
+                        quizName: currentQuiz.quizName,
+                        quizExists: true
+                    }));
+                } else {
+                    ws.send(JSON.stringify({ type: 'quizStatus', quizExists: false }));
+                }
+            } 
+            else if (msg.type === 'heartbeat') {
+                console.log("Received heartbeat from a client.");
+            }
+        } catch (err) {
+            console.error('Error processing WebSocket message:', err);
+        }
+    });
+
+    // Xử lý khi client ngắt kết nối
+    ws.on('close', () => {
+        clients.delete(ws);
+        broadcastParticipantList();
+    });
 });
