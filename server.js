@@ -395,35 +395,47 @@ app.get('/download-quiz-zip/:quizId', async (req, res) => {
 });
 
 app.post(
-  '/upload-quizzes-zip',
-  upload.single('quizzes'),
-  async (req, res) => {
-    try {
-      if (!req.file) {
-        return res.status(400).json({ message: 'No ZIP file uploaded' });
-      }
+    '/upload-quizzes-zip',
+    upload.single('quizzes'),
+    async (req, res) => {
+        try {
+            if (!req.file) {
+                return res.status(400).json({ message: 'No ZIP file uploaded' });
+            }
 
-      const zipPath = req.file.path;
-      const extractPath = path.join(__dirname, 'temp', uuidv4());
-      await fs.mkdir(extractPath, { recursive: true });
+            const zipPath = req.file.path;
+            const extractPath = path.join(__dirname, 'temp', uuidv4());
+            await fs.mkdir(extractPath, { recursive: true });
 
-      await new Promise((resolve, reject) => {
-        fsSync.createReadStream(zipPath)
-          .pipe(unzipper.Extract({ path: extractPath }))
-          .on('close', resolve)
-          .on('error', reject);
-      });
+            await new Promise((resolve, reject) => {
+                fsSync.createReadStream(zipPath)
+                    .pipe(unzipper.Extract({ path: extractPath }))
+                    .on('close', resolve)
+                    .on('error', reject);
+            });
 
-      const quizzesJsonPath = path.join(extractPath, 'key', 'quizzes.json');
-      if (!fsSync.existsSync(quizzesJsonPath)) {
-        await fs.rm(extractPath, { recursive: true, force: true });
-        await fs.unlink(zipPath);
-        return res.status(400).json({ message: 'Missing key/quizzes.json in ZIP' });
-      }
+            const quizzesJsonPath = path.join(extractPath, 'key', 'quizzes.json');
+            if (!fsSync.existsSync(quizzesJsonPath)) {
+                // Xóa thư mục tạm và file zip
+                await fs.rm(extractPath, { recursive: true, force: true });
+                await fs.unlink(zipPath);
+                return res.status(400).json({ message: 'Lỗi: File ZIP thiếu file key/quizzes.json' });
+            }
 
-      const quizData = JSON.parse(await fs.readFile(quizzesJsonPath, 'utf8'));
-      const newQuizId = uuidv4();
-      quizData.quizId = newQuizId;
+            const quizData = JSON.parse(await fs.readFile(quizzesJsonPath, 'utf8'));
+            const newQuizId = uuidv4();
+            quizData.quizId = newQuizId;
+
+            // ---- BẮT ĐẦU LOGIC MỚI ĐỂ XỬ LÝ 1 FILE PDF ----
+            const pdfSrcPath = path.join(extractPath, 'de_thi.pdf');
+            if (fsSync.existsSync(pdfSrcPath)) {
+                const pdfDestFilename = `${newQuizId}.pdf`;
+                const pdfDestPath = path.join(__dirname, 'public/uploads/images', pdfDestFilename);
+                await fs.copyFile(pdfSrcPath, pdfDestPath);
+                quizData.quizPdfUrl = `/uploads/images/${pdfDestFilename}`;
+            } else {
+                return res.status(400).json({ message: 'Lỗi: File ZIP thiếu file de_thi.pdf' });
+            }
 
       for (let i = 1; i <= 4; i++) {
         const audioSrcPath = path.join(extractPath, `part${i}`, 'audio', `part${i}.mp3`);
@@ -436,30 +448,16 @@ app.post(
         }
       }
 
-      for (let i = 1; i <= 7; i++) {
-  const imagesDir = path.join(extractPath, `part${i}`, 'images');
-  quizData.images[`part${i}`] = [];
-  if (fsSync.existsSync(imagesDir)) {
-    const imageFiles = await fs.readdir(imagesDir);
-    for (const imageFile of imageFiles) {
-      const imageSrcPath = path.join(imagesDir, imageFile);
-      const imageDestPath = path.join(__dirname, 'public/uploads/images', `${newQuizId}_part${i}_${imageFile}`);
-      await fs.copyFile(imageSrcPath, imageDestPath);
-      quizData.images[`part${i}`].push(`/uploads/images/${path.basename(imageDestPath)}`);
-    }
-  }
-}
-
       quizzes.push(quizData);
-      await saveQuizzes();
+            await saveQuizzes();
 
-      await fs.rm(extractPath, { recursive: true, force: true });
-      await fs.unlink(zipPath);
+            await fs.rm(extractPath, { recursive: true, force: true });
+            await fs.unlink(zipPath);
 
-      res.json({ message: 'Quiz uploaded successfully!' });
-    } catch (err) {
-      console.error('Error uploading ZIP:', err);
-      res.status(500).json({ message: 'Error uploading ZIP file' });
+            res.json({ message: 'Tải lên đề thi từ ZIP thành công!' });
+        } catch (err) {
+            console.error('Error uploading ZIP:', err);
+            res.status(500).json({ message: 'Lỗi khi xử lý file ZIP' });
     }
   }
 );
