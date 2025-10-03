@@ -1566,7 +1566,6 @@ function handleWebSocketMessage(event) {
         if (!event.data) { return; }
         const message = JSON.parse(event.data);
 
-        // Đã sửa lại thành chuỗi IF ... ELSE IF ... hoàn chỉnh
         if (message.type === "participantUpdate") {
             const count = message.count || 0;
             const participants = message.participants || [];
@@ -1578,7 +1577,8 @@ function handleWebSocketMessage(event) {
             const list = document.getElementById('participant-list');
             const listCount = document.getElementById('participant-list-count');
             
-            if (isAdmin && container && list && listCount) {
+            // THAY ĐỔI: Thêm điều kiện kiểm tra màn hình hiện tại
+            if (isAdmin && !quizListScreen.classList.contains('hidden') && container && list && listCount) {
                 container.classList.remove('hidden');
                 listCount.innerText = count;
                 list.innerHTML = '';
@@ -1591,6 +1591,9 @@ function handleWebSocketMessage(event) {
                 } else {
                     list.innerHTML = '<li>Chưa có học sinh nào tham gia.</li>';
                 }
+            } else if(container) {
+                // Nếu không phải admin hoặc không ở đúng màn hình thì ẩn đi
+                container.classList.add('hidden');
             }
         } 
         else if (message.type === "quizAssigned") {
@@ -1898,24 +1901,26 @@ function zoomPDF(iframeId, scaleFactor) {
 }
 
 async function logout() {
-  try {
-    if (user && user.name) {
-      await fetch("/logout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: user.name }),
-      });
+    try {
+        if (user && user.name && socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({ type: "logout", username: user.name }));
+        }
+    } catch (error) {
+        console.error("Error during server logout notification:", error);
     }
-  } catch (error) {
-    console.error("Error during logout:", error);
-  }
-  clearUserAnswers();
-  stopHeartbeat();
-  localStorage.removeItem("user");
-  localStorage.removeItem("selectedQuizId");
-  localStorage.removeItem("currentScreen");
-  localStorage.removeItem("timeLeft");
-  showWelcomeScreen();
+    
+    stopHeartbeat();
+    
+    // XÓA TOÀN BỘ DỮ LIỆU CỦA TRANG WEB TRONG LOCALSTORAGE
+    localStorage.clear();
+    
+    // Reset các biến và hiển thị màn hình chào mừng
+    user = null;
+    isAdmin = false;
+    selectedQuizId = null;
+    userAnswers = null;
+    
+    showWelcomeScreen();
 }
 
 document.addEventListener('DOMContentLoaded', function () {
