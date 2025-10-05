@@ -635,7 +635,7 @@ app.post('/recognize-answers', memoryUpload.array('answer_files', 10), async (re
             return res.status(400).json({ message: 'No files uploaded.' });
         }
 
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
         const prompt = `Từ các tài liệu được cung cấp, hãy trích xuất các đáp án từ câu 1 đến câu 200.
         YÊU CẦU:
