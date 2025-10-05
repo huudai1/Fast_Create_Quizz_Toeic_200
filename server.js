@@ -660,11 +660,14 @@ app.post('/recognize-answers', upload.array('answer_files', 10), async (req, res
                 }
             });
         }
+        
+        // ---- ĐÂY LÀ DÒNG ĐÃ ĐƯỢC SỬA LỖI ----
+        const result = await model.generateContent(contentParts);
+        // ------------------------------------
 
-        const result = await model.generateContent({ contents: [{ parts: contentParts }] });
         const responseText = result.response.text();
         
-        const jsonString = responseText.replace(/```json/g, ''.replace(/```/g, '').trim();
+        const jsonString = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
         const data = JSON.parse(jsonString);
 
         res.json(data);
