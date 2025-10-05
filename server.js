@@ -670,10 +670,11 @@ app.post('/recognize-answers', memoryUpload.array('answer_files', 10), async (re
 
         let data;
         try {
-            const jsonString = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
-            data = JSON.parse(jsonString);
+        const jsonString = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+          data = JSON.parse(jsonString);
         } catch (parseErr) {
-            return res.status(500).json({ message: "Gemini trả về dữ liệu không phải JSON hợp lệ.", raw: responseText });
+        console.error("JSON parse error:", parseErr.message, "Raw:", responseText);
+        return res.status(500).json({ message: "Gemini trả về dữ liệu không hợp lệ", raw: responseText });
         }
 
         res.json(data);
