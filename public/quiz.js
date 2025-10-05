@@ -243,68 +243,69 @@ adminLoginForm.onsubmit = async (e) => {
 };
 
 function getCurrentScreen() {
-  if (!welcomeScreen.classList.contains("hidden")) return "welcome-screen";
-  if (!adminLogin.classList.contains("hidden")) return "admin-login";
-  if (!studentLogin.classList.contains("hidden")) return "student-login";
-  if (!quizListScreen.classList.contains("hidden")) return "quiz-list-screen";
-  if (!directTestScreen.classList.contains("hidden")) return "direct-test-screen";
-  if (!uploadQuizzesSection.classList.contains("hidden")) return "upload-quizzes";
-  if (!quizContainer.classList.contains("hidden")) return "quiz-container";
-  if (!resultScreen.classList.contains("hidden")) return "result-screen";
-  if (!reviewScreen.classList.contains("hidden")) return "review-answers";
-  if (!staticScreen.classList.contains("hidden")) return "statistics-screen";
-  if (!document.getElementById("admin-step-audio").classList.contains("hidden")) return "admin-step-audio";
-  for (let i = 1; i <= 7; i++) {
-    if (!document.getElementById(`admin-step-part${i}`).classList.contains("hidden")) {
-      return `admin-step-part${i}`;
+    if (!welcomeScreen.classList.contains("hidden")) return "welcome-screen";
+    if (!adminLogin.classList.contains("hidden")) return "admin-login";
+    if (!studentLogin.classList.contains("hidden")) return "student-login";
+    if (!quizListScreen.classList.contains("hidden")) return "quiz-list-screen";
+    if (!directTestScreen.classList.contains("hidden")) return "direct-test-screen";
+    if (!uploadQuizzesSection.classList.contains("hidden")) return "upload-quizzes";
+    if (!quizContainer.classList.contains("hidden")) return "quiz-container";
+    if (!resultScreen.classList.contains("hidden")) return "result-screen";
+    if (!reviewScreen.classList.contains("hidden")) return "review-answers";
+    if (!staticScreen.classList.contains("hidden")) return "statistics-screen";
+    // Sửa lại để chỉ kiểm tra màn hình tạo quiz duy nhất
+    if (document.getElementById("admin-step-create-quiz") && !document.getElementById("admin-step-create-quiz").classList.contains("hidden")) {
+        return "admin-step-create-quiz";
     }
-  }
-  return "welcome-screen";
+    return "welcome-screen";
 }
 
 async function restoreAdminState() {
-  const adminState = localStorage.getItem("adminState");
-  if (adminState) {
-    const state = JSON.parse(adminState);
-    if (state.isAdmin && state.user) {
-      user = state.user;
-      isAdmin = true;
-      selectedQuizId = state.selectedQuizId;
-      isDirectTestMode = state.isDirectTestMode;
-      isTestEnded = state.isTestEnded;
-      currentAdminStep = state.currentAdminStep;
+    const adminState = localStorage.getItem("adminState");
+    if (adminState) {
+        const state = JSON.parse(adminState);
+        if (state.isAdmin && state.user) {
+            user = state.user;
+            isAdmin = true;
+            selectedQuizId = state.selectedQuizId;
+            isDirectTestMode = state.isDirectTestMode;
+            isTestEnded = state.isTestEnded;
+            currentAdminStep = state.currentAdminStep;
 
-      hideAllScreens();
-      if (state.screen === "quiz-list-screen") {
-        quizListScreen.classList.remove("hidden");
-        adminOptions.classList.remove("hidden");
-        adminControls.classList.remove("hidden");
-        if (selectedQuizId) {
-          assignBtn.classList.remove("hidden");
-          directTestBtn.classList.remove("hidden");
-        }
-        await loadQuizzes();
-      } else if (state.screen === "direct-test-screen") {
-        directTestScreen.classList.remove("hidden");
-        endDirectTestBtn.disabled = isTestEnded;
-        if (isTestEnded) {
-          await fetchDirectResults();
-        }
-      } else if (state.screen === "upload-quizzes") {
-        uploadQuizzesSection.classList.remove("hidden");
-      } else if (state.screen.startsWith("admin-step-")) {
-        document.getElementById(state.screen).classList.remove("hidden");
-      }
-
-      initializeWebSocket();
-      if (isAdmin) {
-        startHeartbeat(); // ⭐ Add this line
+            hideAllScreens();
+            if (state.screen === "quiz-list-screen") {
+                quizListScreen.classList.remove("hidden");
+                adminOptions.classList.remove("hidden");
+                adminControls.classList.remove("hidden");
+                if (selectedQuizId) {
+                    assignBtn.classList.remove("hidden");
+                    directTestBtn.classList.remove("hidden");
+                    resetAndShowPartControls();
+                }
+                await loadQuizzes();
+            } else if (state.screen === "direct-test-screen") {
+                directTestScreen.classList.remove("hidden");
+                endDirectTestBtn.disabled = isTestEnded;
+                if (isTestEnded) {
+                    await fetchDirectResults();
+                }
+            } else if (state.screen === "upload-quizzes") {
+                uploadQuizzesSection.classList.remove("hidden");
+            } 
+            // Sửa lại để chỉ kiểm tra màn hình tạo quiz duy nhất
+            else if (state.screen === "admin-step-create-quiz") {
+                document.getElementById("admin-step-create-quiz").classList.remove("hidden");
             }
-      downloadNotice.classList.add("hidden");
-      return true;
+
+            initializeWebSocket();
+            if (isAdmin) {
+                startHeartbeat();
+            }
+            downloadNotice.classList.add("hidden");
+            return true;
+        }
     }
-  }
-  return false;
+    return false;
 }
 
 async function showStatistics() {

@@ -27,16 +27,18 @@ async function handleAiRecognition() {
     const resultContainer = document.getElementById('ai-result-container');
 
     if (fileInput.files.length === 0) {
-        statusElement.textContent = 'Vui lòng chọn một file ảnh hoặc PDF.';
+        statusElement.textContent = 'Vui lòng chọn một hoặc nhiều file ảnh/PDF.';
         statusElement.className = 'text-red-500';
         return;
     }
 
-    const file = fileInput.files[0];
     const formData = new FormData();
-    formData.append('answer_file', file);
+    // Lặp qua tất cả các file đã chọn và thêm vào FormData
+    for (const file of fileInput.files) {
+        // Sử dụng key 'answer_files' (có chữ s) để server nhận dạng là một mảng file
+        formData.append('answer_files', file);
+    }
 
-    // Hiển thị trạng thái đang xử lý
     statusElement.textContent = 'Đang phân tích, vui lòng chờ...';
     statusElement.className = 'text-blue-500';
     resultContainer.classList.add('hidden');
@@ -53,7 +55,6 @@ async function handleAiRecognition() {
             throw new Error(result.message || 'Lỗi từ server');
         }
         
-        // Hiển thị kết quả thành công
         statusElement.textContent = 'Đã nhận diện thành công! Vui lòng sao chép và dán vào các ô đáp án.';
         statusElement.className = 'text-green-500';
         displayAiResults(result);

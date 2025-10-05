@@ -624,15 +624,15 @@ app.get('/get-quiz', (req, res) => {
     }
 });
 // Gemini endpoint
-app.post('/recognize-answers', upload.single('answer_file'), async (req, res) => {
+app.post('/recognize-answers', upload.array('answer_files', 10), async (req, res) => {
     try {
-        if (!req.file) {
-            return res.status(400).json({ message: 'No file uploaded.' });
+        if (!req.files || req.files.length === 0) {
+            return res.status(400).json({ message: 'No files uploaded.' });
         }
 
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-        const prompt = `Từ tài liệu được cung cấp, hãy trích xuất các đáp án từ câu 1 đến câu 200.
+        const prompt = `Từ các tài liệu được cung cấp, hãy trích xuất các đáp án từ câu 1 đến câu 200.
         YÊU CẦU:
         1. Chỉ lấy các chữ cái đáp án (A, B, C, hoặc D).
         2. Phân chia 200 đáp án đó thành 7 phần theo đúng số lượng sau:
@@ -645,22 +645,17 @@ app.post('/recognize-answers', upload.single('answer_file'), async (req, res) =>
            - Part 7: 54 câu (147-200)
         3. Với mỗi phần, định dạng chuỗi đáp án thành các chữ cái viết hoa, ngăn cách bởi dấu phẩy, KHÔNG có khoảng trắng.
         4. Trả về kết quả cuối cùng dưới dạng một đối tượng JSON hợp lệ. Không thêm bất kỳ văn bản giải thích nào khác. Cấu trúc JSON phải là:
-           {
-             "part1": "A,B,C,...",
-             "part2": "C,D,A,...",
-             "part3": "...",
-             "part4": "...",
-             "part5": "...",
-             "part6": "...",
-             "part7": "..."
-           }`;
+           { "part1": "A,B,C,...", "part2": "C,D,A,...", ... }`;
+        
+        // Tạo một mảng chứa prompt và tất cả các file đã được chuyển đổi
+        const contentParts = [prompt];
+        for (const file of req.files) {
+            contentParts.push(bufferToGenerativePart(file.buffer, file.mimetype));
+        }
 
-        const imagePart = bufferToGenerativePart(req.file.buffer, req.file.mimetype);
-
-        const result = await model.generateContent([prompt, imagePart]);
+        const result = await model.generateContent(contentParts);
         const responseText = result.response.text();
         
-        // Làm sạch và parse JSON từ text mà AI trả về
         const jsonString = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
         const data = JSON.parse(jsonString);
 
@@ -668,7 +663,7 @@ app.post('/recognize-answers', upload.single('answer_file'), async (req, res) =>
 
     } catch (error) {
         console.error('Error with Gemini API:', error);
-        res.status(500).json({ message: 'Lỗi khi nhận diện bằng AI.' });
+        res.status(500).json({ message: 'Lỗi khi nhận diện bằng AI. Vui lòng kiểm tra lại API Key và file tải lên.' });
     }
 });
 
