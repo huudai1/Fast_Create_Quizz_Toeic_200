@@ -1,15 +1,3 @@
-const { GoogleGenerativeAI } = require("@google/generative-ai");
-
-// KIỂM TRA API KEY
-if (!process.env.GEMINI_API_KEY) {
-    console.warn("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-    console.warn("!!! CẢNH BÁO: GEMINI_API_KEY CHƯA ĐƯỢC THIẾT LẬP.         !!!");
-    console.warn("!!! Chức năng AI sẽ không hoạt động.                     !!!");
-    console.warn("!!! Hãy thêm biến môi trường này trên dashboard Render. !!!");
-    console.warn("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-}
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 let user = null;
 let heartbeatInterval = null;
