@@ -626,6 +626,10 @@ app.get('/get-quiz', (req, res) => {
 // Gemini endpoint
 app.post('/recognize-answers', upload.array('answer_files', 10), async (req, res) => {
     try {
+        if (!process.env.GEMINI_API_KEY) {
+            throw new Error("GEMINI_API_KEY is not configured on the server.");
+        }
+
         if (!req.files || req.files.length === 0) {
             return res.status(400).json({ message: 'No files uploaded.' });
         }
@@ -644,19 +648,23 @@ app.post('/recognize-answers', upload.array('answer_files', 10), async (req, res
            - Part 6: 16 câu (131-146)
            - Part 7: 54 câu (147-200)
         3. Với mỗi phần, định dạng chuỗi đáp án thành các chữ cái viết hoa, ngăn cách bởi dấu phẩy, KHÔNG có khoảng trắng.
-        4. Trả về kết quả cuối cùng dưới dạng một đối tượng JSON hợp lệ. Không thêm bất kỳ văn bản giải thích nào khác. Cấu trúc JSON phải là:
+        4. Trả về kết quả cuối cùng dưới dạng một đối tượng JSON hợp lệ. Không thêm bất kỳ văn bản giải thích nào khác hoặc các dấu ```json. Cấu trúc JSON phải là:
            { "part1": "A,B,C,...", "part2": "C,D,A,...", ... }`;
         
-        // Tạo một mảng chứa prompt và tất cả các file đã được chuyển đổi
         const contentParts = [prompt];
         for (const file of req.files) {
-            contentParts.push(bufferToGenerativePart(file.buffer, file.mimetype));
+            contentParts.push({
+                inlineData: {
+                    data: file.buffer.toString("base64"),
+                    mimeType: file.mimetype
+                }
+            });
         }
 
-        const result = await model.generateContent(contentParts);
+        const result = await model.generateContent({ contents: [{ parts: contentParts }] });
         const responseText = result.response.text();
         
-        const jsonString = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+        const jsonString = responseText.replace(/```json/g, ''.replace(/```/g, '').trim();
         const data = JSON.parse(jsonString);
 
         res.json(data);
