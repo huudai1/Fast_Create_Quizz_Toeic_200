@@ -7,6 +7,65 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="quiz.css">
 </head>
+<div id="ai-recognize-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50">
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-2xl">
+        <h2 class="text-2xl font-bold mb-4">Nhận diện đáp án bằng AI</h2>
+        
+        <div class="space-y-4">
+            <div>
+                <label for="ai-file-input" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Chọn file ảnh hoặc PDF chứa đáp án (1-200):</label>
+                <input id="ai-file-input" type="file" accept="image/*,application/pdf" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
+            </div>
+            
+            <button onclick="handleAiRecognition()" class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded hover:bg-blue-700 transition-colors">
+                Bắt đầu nhận diện
+            </button>
+            
+            <p id="ai-status" class="text-center font-medium"></p>
+            
+            <div id="ai-result-container" class="hidden space-y-2">
+                <p>Kết quả từ AI. Bấm "Sao chép" và dán vào ô tương ứng.</p>
+                <div class="flex items-center space-x-2">
+                    <label for="ai-result-part1" class="w-24">Part 1:</label>
+                    <textarea id="ai-result-part1" rows="1" class="flex-1 border p-1 rounded dark:bg-gray-700" readonly></textarea>
+                    <button onclick="copyAnswer(1)" class="bg-gray-500 text-white px-3 py-1 rounded text-sm hover:bg-gray-600">Sao chép</button>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <label for="ai-result-part2" class="w-24">Part 2:</label>
+                    <textarea id="ai-result-part2" rows="1" class="flex-1 border p-1 rounded dark:bg-gray-700" readonly></textarea>
+                    <button onclick="copyAnswer(2)" class="bg-gray-500 text-white px-3 py-1 rounded text-sm hover:bg-gray-600">Sao chép</button>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <label for="ai-result-part3" class="w-24">Part 3:</label>
+                    <textarea id="ai-result-part3" rows="1" class="flex-1 border p-1 rounded dark:bg-gray-700" readonly></textarea>
+                    <button onclick="copyAnswer(3)" class="bg-gray-500 text-white px-3 py-1 rounded text-sm hover:bg-gray-600">Sao chép</button>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <label for="ai-result-part4" class="w-24">Part 4:</label>
+                    <textarea id="ai-result-part4" rows="1" class="flex-1 border p-1 rounded dark:bg-gray-700" readonly></textarea>
+                    <button onclick="copyAnswer(4)" class="bg-gray-500 text-white px-3 py-1 rounded text-sm hover:bg-gray-600">Sao chép</button>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <label for="ai-result-part5" class="w-24">Part 5:</label>
+                    <textarea id="ai-result-part5" rows="1" class="flex-1 border p-1 rounded dark:bg-gray-700" readonly></textarea>
+                    <button onclick="copyAnswer(5)" class="bg-gray-500 text-white px-3 py-1 rounded text-sm hover:bg-gray-600">Sao chép</button>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <label for="ai-result-part6" class="w-24">Part 6:</label>
+                    <textarea id="ai-result-part6" rows="1" class="flex-1 border p-1 rounded dark:bg-gray-700" readonly></textarea>
+                    <button onclick="copyAnswer(6)" class="bg-gray-500 text-white px-3 py-1 rounded text-sm hover:bg-gray-600">Sao chép</button>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <label for="ai-result-part7" class="w-24">Part 7:</label>
+                    <textarea id="ai-result-part7" rows="1" class="flex-1 border p-1 rounded dark:bg-gray-700" readonly></textarea>
+                    <button onclick="copyAnswer(7)" class="bg-gray-500 text-white px-3 py-1 rounded text-sm hover:bg-gray-600">Sao chép</button>
+                </div>
+            </div>
+        </div>
+        
+        <button onclick="closeAiModal()" class="mt-6 bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 w-full">Đóng</button>
+    </div>
+</div>
 <body class="bg-gray-100 font-sans">
   <div id="download-notice" class="fixed top-4 right-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 hidden">
     <p class="font-bold">Admin Chú Ý</p>
@@ -180,6 +239,17 @@
                     <input id="quiz-pdf-file" type="file" accept="application/pdf" required>
                 </div>
             </div>
+
+            <legend class="text-xl font-semibold px-2">Đáp án (Các đáp án cách nhau bằng dấu phẩy)</legend>
+    
+    <div class="my-4 text-center">
+        <button type="button" onclick="showAiModal()" class="bg-purple-600 text-white font-bold py-2 px-4 rounded hover:bg-purple-700 transition-colors">
+            🤖 Dùng AI nhận diện đáp án từ ảnh/PDF
+        </button>
+    </div>
+    
+    <div class="grid grid-cols-2 gap-x-6 gap-y-4 mt-2">
+        </div>
         </fieldset>
 
         <fieldset class="border p-4 rounded">
@@ -366,6 +436,7 @@
     ❤️
 </div>
   <script src="quiz.js"></script>
+  <script src="AIrecognize.js"></script>
 </body>
 <div id="loading-screen">
   <div id="loading-text">Get Ready!</div>

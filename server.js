@@ -7,6 +7,8 @@ const fs = require("fs").promises;
 const fsSync = require("fs");
 const archiver = require("archiver");
 const unzipper = require("unzipper");
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -621,6 +623,54 @@ app.get('/get-quiz', (req, res) => {
         res.status(404).json({ message: 'Quiz not found' });
     }
 });
+// Gemini endpoint
+app.post('/recognize-answers', upload.single('answer_file'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: 'No file uploaded.' });
+        }
+
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+        const prompt = `Từ tài liệu được cung cấp, hãy trích xuất các đáp án từ câu 1 đến câu 200.
+        YÊU CẦU:
+        1. Chỉ lấy các chữ cái đáp án (A, B, C, hoặc D).
+        2. Phân chia 200 đáp án đó thành 7 phần theo đúng số lượng sau:
+           - Part 1: 6 câu (1-6)
+           - Part 2: 25 câu (7-31)
+           - Part 3: 39 câu (32-70)
+           - Part 4: 30 câu (71-100)
+           - Part 5: 30 câu (101-130)
+           - Part 6: 16 câu (131-146)
+           - Part 7: 54 câu (147-200)
+        3. Với mỗi phần, định dạng chuỗi đáp án thành các chữ cái viết hoa, ngăn cách bởi dấu phẩy, KHÔNG có khoảng trắng.
+        4. Trả về kết quả cuối cùng dưới dạng một đối tượng JSON hợp lệ. Không thêm bất kỳ văn bản giải thích nào khác. Cấu trúc JSON phải là:
+           {
+             "part1": "A,B,C,...",
+             "part2": "C,D,A,...",
+             "part3": "...",
+             "part4": "...",
+             "part5": "...",
+             "part6": "...",
+             "part7": "..."
+           }`;
+
+        const imagePart = bufferToGenerativePart(req.file.buffer, req.file.mimetype);
+
+        const result = await model.generateContent([prompt, imagePart]);
+        const responseText = result.response.text();
+        
+        // Làm sạch và parse JSON từ text mà AI trả về
+        const jsonString = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+        const data = JSON.parse(jsonString);
+
+        res.json(data);
+
+    } catch (error) {
+        console.error('Error with Gemini API:', error);
+        res.status(500).json({ message: 'Lỗi khi nhận diện bằng AI.' });
+    }
+});
 
 app.post(
   '/upload-files',
@@ -651,6 +701,15 @@ app.get('/', (req, res) => {
   });
 });
 
+function bufferToGenerativePart(buffer, mimeType) {
+  return {
+    inlineData: {
+      data: buffer.toString("base64"),
+      mimeType
+    },
+  };
+}
+
 function broadcast(message) {
   clients.forEach((client) => {
     if (client.readyState === 1) {
@@ -658,6 +717,7 @@ function broadcast(message) {
     }
   });
 }
+
 
 function broadcastParticipantList() {
     const participants = [];
@@ -681,6 +741,7 @@ const server = app.listen(port, () => {
 });
 
 const wss = new WebSocketServer({ server });
+
 
 wss.on('connection', (ws) => {
     clients.add(ws);
