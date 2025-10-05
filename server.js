@@ -636,6 +636,7 @@ app.post('/recognize-answers', upload.array('answer_files', 10), async (req, res
 
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
+        // ---- PROMPT ĐÃ ĐƯỢC SỬA LỖI CÚ PHÁP ----
         const prompt = `Từ các tài liệu được cung cấp, hãy trích xuất các đáp án từ câu 1 đến câu 200.
         YÊU CẦU:
         1. Chỉ lấy các chữ cái đáp án (A, B, C, hoặc D).
@@ -648,8 +649,8 @@ app.post('/recognize-answers', upload.array('answer_files', 10), async (req, res
            - Part 6: 16 câu (131-146)
            - Part 7: 54 câu (147-200)
         3. Với mỗi phần, định dạng chuỗi đáp án thành các chữ cái viết hoa, ngăn cách bởi dấu phẩy, KHÔNG có khoảng trắng.
-        4. Trả về kết quả cuối cùng dưới dạng một đối tượng JSON hợp lệ. Không thêm bất kỳ văn bản giải thích nào khác hoặc các dấu ```json. Cấu trúc JSON phải là:
-           { "part1": "A,B,C,...", "part2": "C,D,A,...", ... }`;
+        4. Trả về kết quả cuối cùng dưới dạng một đối tượng JSON hợp lệ. Không thêm bất kỳ văn bản giải thích nào khác. Cấu trúc JSON phải là:
+           { "part1": "A,B,C,...", "part2": "C,D,A,...", "part3": "...", "part4": "...", "part5": "...", "part6": "...", "part7": "..." }`;
         
         const contentParts = [prompt];
         for (const file of req.files) {
@@ -661,12 +662,11 @@ app.post('/recognize-answers', upload.array('answer_files', 10), async (req, res
             });
         }
         
-        // ---- ĐÂY LÀ DÒNG ĐÃ ĐƯỢC SỬA LỖI ----
-        const result = await model.generateContent(contentParts);
-        // ------------------------------------
-
+        // Cấu trúc generateContent đã được cập nhật để tương thích với phiên bản mới của thư viện
+        const result = await model.generateContent({ contents: [{ parts: contentParts }] });
         const responseText = result.response.text();
         
+        // Làm sạch và parse JSON từ text mà AI trả về
         const jsonString = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
         const data = JSON.parse(jsonString);
 
