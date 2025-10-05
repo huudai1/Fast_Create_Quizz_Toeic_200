@@ -228,54 +228,48 @@
     
     <div class="space-y-6">
         <fieldset class="border p-4 rounded">
-            <legend class="text-xl font-semibold px-2">Thông tin chung</legend>
+            <legend class="text-xl font-semibold px-2">1. Thông tin chung</legend>
             <div class="space-y-4 mt-2">
                 <div>
                     <label for="quiz-name" class="block text-lg">Tên đề thi:</label>
                     <input id="quiz-name" type="text" class="border p-2 rounded w-full" required>
                 </div>
                 <div>
-                    <label for="quiz-pdf-file" class="block text-lg">Tải lên File PDF của đề thi (1 file duy nhất):</label>
+                    <label for="quiz-pdf-file" class="block text-lg">File PDF của đề thi (1 file duy nhất):</label>
                     <input id="quiz-pdf-file" type="file" accept="application/pdf" required>
                 </div>
             </div>
-
-            <legend class="text-xl font-semibold px-2">Đáp án (Các đáp án cách nhau bằng dấu phẩy)</legend>
-    
-    <div class="my-4 text-center">
-        <button type="button" onclick="showAiModal()" class="bg-purple-600 text-white font-bold py-2 px-4 rounded hover:bg-purple-700 transition-colors">
-            🤖 Dùng AI nhận diện đáp án từ ảnh/PDF
-        </button>
-    </div>
-    
-    <div class="grid grid-cols-2 gap-x-6 gap-y-4 mt-2">
-        </div>
         </fieldset>
 
         <fieldset class="border p-4 rounded">
-            <legend class="text-xl font-semibold px-2">Files Nghe</legend>
+            <legend class="text-xl font-semibold px-2">2. Files Nghe (Part 1-4)</legend>
             <div class="grid grid-cols-2 gap-4 mt-2">
                 <div>
-                    <label for="audio-file-part1" class="block text-lg">File nghe Part 1:</label>
+                    <label for="audio-file-part1">File nghe Part 1:</label>
                     <input id="audio-file-part1" type="file" accept="audio/*">
                 </div>
                 <div>
-                    <label for="audio-file-part2" class="block text-lg">File nghe Part 2:</label>
+                    <label for="audio-file-part2">File nghe Part 2:</label>
                     <input id="audio-file-part2" type="file" accept="audio/*">
                 </div>
                 <div>
-                    <label for="audio-file-part3" class="block text-lg">File nghe Part 3:</label>
+                    <label for="audio-file-part3">File nghe Part 3:</label>
                     <input id="audio-file-part3" type="file" accept="audio/*">
                 </div>
                 <div>
-                    <label for="audio-file-part4" class="block text-lg">File nghe Part 4:</label>
+                    <label for="audio-file-part4">File nghe Part 4:</label>
                     <input id="audio-file-part4" type="file" accept="audio/*">
                 </div>
             </div>
         </fieldset>
 
         <fieldset class="border p-4 rounded">
-            <legend class="text-xl font-semibold px-2">Đáp án (Các đáp án cách nhau bằng dấu phẩy)</legend>
+            <legend class="text-xl font-semibold px-2">3. Đáp án (Các đáp án cách nhau bằng dấu phẩy)</legend>
+            <div class="my-4 text-center">
+                <button type="button" onclick="showAiModal()" class="bg-purple-600 text-white font-bold py-2 px-4 rounded hover:bg-purple-700 transition-colors">
+                    🤖 Dùng AI nhận diện đáp án từ ảnh/PDF
+                </button>
+            </div>
             <div class="grid grid-cols-2 gap-x-6 gap-y-4 mt-2">
                 <div>
                     <label for="answer-key-part1">Đáp án Part 1 (6 câu):</label>

@@ -1,3 +1,16 @@
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+
+// KIỂM TRA API KEY
+if (!process.env.GEMINI_API_KEY) {
+    console.warn("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+    console.warn("!!! CẢNH BÁO: GEMINI_API_KEY CHƯA ĐƯỢC THIẾT LẬP.         !!!");
+    console.warn("!!! Chức năng AI sẽ không hoạt động.                     !!!");
+    console.warn("!!! Hãy thêm biến môi trường này trên dashboard Render. !!!");
+    console.warn("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+}
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
 let user = null;
 let heartbeatInterval = null;
 let isAdmin = false;
@@ -273,6 +286,7 @@ async function restoreAdminState() {
             currentAdminStep = state.currentAdminStep;
 
             hideAllScreens();
+            // Logic đã được đơn giản hóa, chỉ kiểm tra các màn hình còn tồn tại
             if (state.screen === "quiz-list-screen") {
                 quizListScreen.classList.remove("hidden");
                 adminOptions.classList.remove("hidden");
@@ -291,10 +305,15 @@ async function restoreAdminState() {
                 }
             } else if (state.screen === "upload-quizzes") {
                 uploadQuizzesSection.classList.remove("hidden");
-            } 
-            // Sửa lại để chỉ kiểm tra màn hình tạo quiz duy nhất
-            else if (state.screen === "admin-step-create-quiz") {
-                document.getElementById("admin-step-create-quiz").classList.remove("hidden");
+            } else if (state.screen === "admin-step-create-quiz") {
+                // Chỉ khôi phục màn hình tạo quiz duy nhất
+                const createQuizScreen = document.getElementById("admin-step-create-quiz");
+                if (createQuizScreen) createQuizScreen.classList.remove("hidden");
+            } else {
+                // Nếu không khớp màn hình nào, quay về trang danh sách quiz
+                quizListScreen.classList.remove("hidden");
+                adminOptions.classList.remove("hidden");
+                adminControls.classList.remove("hidden");
             }
 
             initializeWebSocket();

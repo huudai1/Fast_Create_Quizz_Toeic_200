@@ -427,7 +427,7 @@ app.post(
             
             const newQuizId = uuidv4();
             quizData.quizId = newQuizId;
-            quizData.createdBy = req.body.createdBy || 'unknown';
+            quizData.createdBy = req.body.createdBy;
 
             const pdfSrcPath = path.join(extractPath, 'pdf', 'de_thi.pdf');
             if (fsSync.existsSync(pdfSrcPath)) {
