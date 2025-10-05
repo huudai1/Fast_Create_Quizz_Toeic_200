@@ -1,10 +1,17 @@
 // File: public/AIrecognize.js
-
+let lastAiResult = null;
 // Hàm hiển thị cửa sổ pop-up (modal) của AI
 function showAiModal() {
     const modal = document.getElementById('ai-recognize-modal');
     if (modal) {
         modal.classList.remove('hidden');
+        // Nếu đã có kết quả từ lần trước, hiển thị lại ngay lập tức
+        if (lastAiResult) {
+            displayAiResults(lastAiResult);
+            const statusElement = document.getElementById('ai-status');
+            statusElement.textContent = 'Hiển thị kết quả nhận diện gần nhất. Bạn có thể chọn file mới để chạy lại.';
+            statusElement.className = 'text-yellow-600 dark:text-yellow-400';
+        }
     }
 }
 
@@ -13,10 +20,7 @@ function closeAiModal() {
     const modal = document.getElementById('ai-recognize-modal');
     if (modal) {
         modal.classList.add('hidden');
-        // Reset lại giao diện modal khi đóng
-        document.getElementById('ai-file-input').value = '';
-        document.getElementById('ai-result-container').classList.add('hidden');
-        document.getElementById('ai-status').textContent = '';
+        // Không xóa kết quả nữa, chỉ đơn giản là ẩn cửa sổ đi
     }
 }
 
@@ -33,12 +37,12 @@ async function handleAiRecognition() {
     }
 
     const formData = new FormData();
-    // Lặp qua tất cả các file đã chọn và thêm vào FormData
     for (const file of fileInput.files) {
-        // Sử dụng key 'answer_files' (có chữ s) để server nhận dạng là một mảng file
         formData.append('answer_files', file);
     }
 
+    // Reset trạng thái trước khi gửi yêu cầu mới
+    lastAiResult = null;
     statusElement.textContent = 'Đang phân tích, vui lòng chờ...';
     statusElement.className = 'text-blue-500';
     resultContainer.classList.add('hidden');
@@ -54,6 +58,9 @@ async function handleAiRecognition() {
         if (!res.ok) {
             throw new Error(result.message || 'Lỗi từ server');
         }
+        
+        // LƯU KẾT QUẢ VÀO BIẾN LƯU TRỮ
+        lastAiResult = result;
         
         statusElement.textContent = 'Đã nhận diện thành công! Vui lòng sao chép và dán vào các ô đáp án.';
         statusElement.className = 'text-green-500';
