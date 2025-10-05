@@ -25,6 +25,9 @@
             
             <div id="ai-result-container" class="hidden space-y-2">
                 <p>Kết quả từ AI. Bấm "Sao chép" và dán vào ô tương ứng.</p>
+                <button onclick="copyAllAiAnswers()" class="w-full bg-green-600 text-white font-bold py-2 px-4 rounded hover:bg-green-700 transition-colors mt-4">
+        Sao chép tất cả (Dùng cho đề tùy chỉnh)
+    </button>
                 <div class="flex items-center space-x-2">
                     <label for="ai-result-part1" class="w-24">Part 1:</label>
                     <textarea id="ai-result-part1" rows="1" class="flex-1 border p-1 rounded dark:bg-gray-700" readonly></textarea>
@@ -72,6 +75,20 @@
     <p>HÃY TẢI ĐỀ XUỐNG TRƯỚC THOÁT !</p>
   </div>
 
+  <div id="create-quiz-choice-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-xl text-center">
+        <h2 class="text-2xl font-bold mb-6">Bạn muốn tạo loại đề nào?</h2>
+        <div class="flex justify-center space-x-6">
+            <button onclick="showToeicQuizCreator()" class="bg-blue-600 text-white font-bold py-3 px-6 rounded hover:bg-blue-700 transition-colors">
+                Full Đề TOEIC (200 câu)
+            </button>
+            <button onclick="showCustomQuizCreator()" class="bg-green-600 text-white font-bold py-3 px-6 rounded hover:bg-green-700 transition-colors">
+                Đề Tùy chỉnh
+            </button>
+        </div>
+        <button onclick="document.getElementById('create-quiz-choice-modal').classList.add('hidden')" class="mt-8 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">Đóng</button>
+    </div>
+  </div>
 
   <div id="welcome-screen" class="container mx-auto p-4">
     <h1 class="text-3xl font-bold mb-4">Quiz App</h1>
@@ -82,6 +99,64 @@
       <button onclick="showStudentLogin()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Đăng nhập Học sinh</button>
     </div>
   </div>
+
+  <div id="custom-quiz-creator-screen" class="container mx-auto p-4 hidden">
+    <h1 class="text-3xl font-bold mb-4">Tạo Đề thi Tùy chỉnh</h1>
+    <p id="custom-notification" class="text-red-500 mb-4"></p>
+    <form id="custom-quiz-form" class="space-y-6">
+        <fieldset class="border p-4 rounded">
+            <legend class="text-xl font-semibold px-2">1. Thông tin cơ bản</legend>
+            <div class="space-y-4 mt-2">
+                <div>
+                    <label for="custom-quiz-name">Tên đề thi:</label>
+                    <input id="custom-quiz-name" type="text" class="border p-2 rounded w-full" required>
+                </div>
+                <div>
+                    <label for="custom-total-questions">Tổng số câu:</label>
+                    <input id="custom-total-questions" type="number" min="1" class="border p-2 rounded w-full" required>
+                </div>
+                <div>
+                    <label for="custom-quiz-pdf">File PDF của đề (1 file duy nhất):</label>
+                    <input id="custom-quiz-pdf" type="file" accept="application/pdf" required>
+                </div>
+            </div>
+        </fieldset>
+        <fieldset class="border p-4 rounded">
+            <legend class="text-xl font-semibold px-2">2. Cấu hình Phần nghe (Tùy chọn)</legend>
+            <div id="listening-ranges-container" class="space-y-2">
+                </div>
+            <button type="button" onclick="addListeningRange()" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">+ Thêm khoảng nghe</button>
+        </fieldset>
+        <fieldset class="border p-4 rounded">
+            <legend class="text-xl font-semibold px-2">3. Đáp án</legend>
+             <div class="my-4 text-center">
+                <button type="button" onclick="handleCustomAiRecognition()" class="bg-purple-600 text-white font-bold py-2 px-4 rounded hover:bg-purple-700">🤖 AI Nhận diện đáp án</button>
+            </div>
+            <div>
+                <label for="custom-answer-key">Nhập chuỗi đáp án (cách nhau bằng dấu phẩy):</label>
+                <textarea id="custom-answer-key" rows="4" class="border p-2 rounded w-full"></textarea>
+            </div>
+        </fieldset>
+        <div class="flex space-x-4">
+            <button type="button" onclick="saveCustomQuiz()" class="bg-green-500 text-white px-6 py-2 rounded font-semibold">Lưu đề thi</button>
+            <button type="button" onclick="backToQuizList()" class="bg-gray-500 text-white px-4 py-2 rounded">Quay lại</button>
+        </div>
+    </form>
+</div>
+  
+  <div id="quiz-container" class="container mx-auto p-4 hidden">
+    <div class="split-container"> <div class="image-section">...</div>
+      <div class="question-section">
+        <form id="quizForm" class="space-y-4">
+          </form>
+      </div>
+    </div>
+    <div id="quiz-controls" class="flex space-x-4 bg-gray-100 dark:bg-gray-800 p-4 shadow-md">
+        <button type="button" id="prev-button" onclick="prevQuizPart(currentQuizPart)" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Phần trước</button>
+        <button type="button" id="next-button" onclick="nextQuizPart(currentQuizPart)" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Phần tiếp theo</button>
+        <button type="submit" form="quizForm" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Nộp bài</button>
+    </div>
+</div>
 
   <div id="admin-login" class="container mx-auto p-4 hidden">
     <h1 class="text-3xl font-bold mb-4">Đăng nhập Admin</h1>
@@ -429,6 +504,7 @@
 <div id="heartbeat-indicator" class="fixed bottom-4 right-4 z-50 text-2xl hidden">
     ❤️
 </div>
+  <script src="AIrecognize.js"></script>
   <script src="quiz.js"></script>
   <script src="AIrecognize.js"></script>
 </body>

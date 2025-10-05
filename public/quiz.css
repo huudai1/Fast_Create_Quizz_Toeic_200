@@ -882,3 +882,41 @@ body.dark-mode .answer-item {
     box-shadow: 0 0 20px rgba(59, 130, 246, 0.8), 0 0 30px rgba(59, 130, 246, 0.5);
   }
 }
+
+
+.split-container {
+    display: flex;
+    flex-direction: column; /* Quan trọng */
+    height: calc(100vh - 120px); /* Điều chỉnh chiều cao phù hợp */
+}
+
+.image-section, .question-section {
+    overflow-y: auto;
+}
+
+#custom-quiz-container .split-container {
+    flex-direction: row; /* Giữ nguyên cho màn hình làm bài */
+}
+
+@media (max-width: 768px) {
+    #custom-quiz-container .split-container {
+        flex-direction: column;
+    }
+}
+
+#quiz-container {
+    display: flex;
+    flex-direction: column;
+    /* Chiều cao bằng chiều cao màn hình trừ đi một chút padding/margin của container cha */
+    height: calc(100vh - 2rem); 
+}
+
+#quiz-container .split-container {
+    flex: 1; /* Cho phép vùng này chiếm hết không gian còn lại */
+    min-height: 0; /* Quan trọng để tránh overflow trong flexbox */
+}
+
+/* Bỏ thuộc tính sticky cũ nếu có */
+#quiz-controls {
+    flex-shrink: 0; /* Ngăn thanh điều khiển bị co lại */
+}

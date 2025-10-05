@@ -527,11 +527,7 @@ function backToQuizList() {
 }
 
 function createNewQuiz() {
-    hideAllScreens();
-    // THAY ĐỔI: Hiển thị form tạo đề mới
-    document.getElementById("admin-step-create-quiz").classList.remove("hidden");
-    downloadNotice.classList.add("hidden");
-    saveAdminState();
+    showCreateQuizChoice();
 }
 
 function showUploadQuizzes() {
@@ -690,60 +686,52 @@ async function fetchWithRetry(url, retries = 5, delay = 2000) {
 }
 
 async function loadQuizzes() {
-  const url = isAdmin ? `/quizzes?email=${encodeURIComponent(user.email)}` : '/quizzes';
-  try {
-    const res = await fetchWithRetry(url);
-    const quizzes = await res.json();
-    quizList.innerHTML = "";
-    
-    const directTestState = localStorage.getItem("directTestState");
-    const directTestNotice = document.getElementById("direct-test-notice");
-    const directTestMessage = document.getElementById("direct-test-message");
-    const joinDirectTestBtn = document.getElementById("join-direct-test-btn");
-    
-    if (!isAdmin && directTestState) {
-      const { isDirectTestMode, quizId, timeLimit, startTime } = JSON.parse(directTestState);
-      if (isDirectTestMode && !isTestEnded) {
-        const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
-        const remainingTime = timeLimit - elapsedTime;
-        if (remainingTime > 0) {
-          directTestMessage.innerText = `Kiểm tra trực tiếp đang diễn ra! (Còn: ${Math.floor(remainingTime / 60)}:${remainingTime % 60 < 10 ? "0" : ""}${remainingTime % 60})`;
-          joinDirectTestBtn.onclick = () => joinDirectTest(quizId, remainingTime, startTime);
-          directTestNotice.classList.remove("hidden");
-        }
-      }
-    } else {
-      directTestNotice.classList.add("hidden");
-    }
-
-    if (quizzes.length === 0) {
-      quizList.innerHTML = "<p>Chưa có đề thi nào.</p>";
-    } else {
-      quizzes.forEach(quiz => {
-        const div = document.createElement("div");
-        div.className = "flex items-center space-x-2";
-        const isSelected = selectedQuizId === quiz.quizId;
-        if (isAdmin) {
-          div.innerHTML = `
-            <span class="text-lg font-medium">${quiz.quizName}${isSelected ? ' ✅' : ''}</span>
-            <button onclick="selectQuiz('${quiz.quizId}')" class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">Chọn</button>
-            <button onclick="downloadQuizzes('${quiz.quizId}')" class="bg-purple-500 text-white px-2 py-1 rounded hover:bg-purple-600">Tải xuống</button>
-            <button onclick="deleteQuiz('${quiz.quizId}')" class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Xóa</button>
-          `;
+    const url = isAdmin ? `/quizzes` : '/quizzes/assigned'; // Cập nhật API endpoint
+    try {
+        const res = await fetchWithRetry(url);
+        const quizzes = await res.json();
+        quizList.innerHTML = "";
+        
+        if (quizzes.length === 0) {
+            quizList.innerHTML = "<p>Chưa có đề thi nào.</p>";
         } else {
-          div.innerHTML = `
-            <span class="text-lg font-medium">${quiz.quizName}${isSelected ? ' ✅' : ''}</span>
-            <button onclick="startQuiz('${quiz.quizId}')" class="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 ${quiz.isAssigned ? '' : 'hidden'}">Bắt đầu làm bài</button>
-          `;
+            quizzes.forEach(quiz => {
+                const div = document.createElement("div");
+                div.className = "p-4 border rounded-lg flex justify-between items-center";
+                
+                // Hiển thị loại đề
+                const quizTypeLabel = quiz.type === 'custom' ? '[Tùy chỉnh]' : '[TOEIC]';
+                
+                if (isAdmin) {
+                    div.innerHTML = `
+                        <div>
+                            <span class="text-lg font-medium">${quiz.quizName}</span>
+                            <span class="text-sm text-gray-500 ml-2">${quizTypeLabel}</span>
+                        </div>
+                        <div>
+                            <button onclick="selectQuiz('${quiz.quizId}')" class="bg-blue-500 text-white px-2 py-1 rounded text-sm">Chọn</button>
+                            <button onclick="downloadQuizzes('${quiz.quizId}')" class="bg-purple-500 text-white px-2 py-1 rounded text-sm">Tải xuống</button>
+                            <button onclick="deleteQuiz('${quiz.quizId}')" class="bg-red-500 text-white px-2 py-1 rounded text-sm">Xóa</button>
+                        </div>
+                    `;
+                } else { // Giao diện học sinh
+                    // Dựa vào loại đề để gọi đúng hàm start
+                    const startFunction = quiz.type === 'custom' ? `startCustomQuiz('${quiz.quizId}')` : `startQuiz('${quiz.quizId}')`;
+                    div.innerHTML = `
+                        <div>
+                            <span class="text-lg font-medium">${quiz.quizName}</span>
+                             <span class="text-sm text-gray-500 ml-2">${quizTypeLabel}</span>
+                        </div>
+                        <button onclick="${startFunction}" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Bắt đầu làm bài</button>
+                    `;
+                }
+                quizList.appendChild(div);
+            });
         }
-        quizList.appendChild(div);
-      });
+    } catch (error) {
+        console.error("Error loading quizzes:", error);
+        quizList.innerHTML = "<p>Lỗi khi tải danh sách đề thi.</p>";
     }
-  } catch (error) {
-    console.error("Error loading quizzes:", error);
-    notification.innerText = "Không thể tải danh sách đề thi.";
-    quizList.innerHTML = "<p>Lỗi khi tải danh sách đề thi.</p>";
-  }
 }
 
 async function joinDirectTest(quizId, remainingTime, startTime) {
@@ -1225,6 +1213,16 @@ async function loadImages(part) {
     console.error("Error loading images:", error);
     notification.innerText = `Lỗi khi tải ảnh hoặc PDF cho Part ${part}.`;
   }
+}
+
+function showCreateQuizChoice() {
+    document.getElementById('create-quiz-choice-modal').classList.remove('hidden');
+}
+
+function showToeicQuizCreator() {
+    document.getElementById('create-quiz-choice-modal').classList.add('hidden');
+    hideAllScreens();
+    document.getElementById("admin-step-create-quiz").classList.remove("hidden");
 }
 
 function nextQuizPart(current) {
@@ -1806,22 +1804,6 @@ async function showReviewAnswers() {
   }
 }
 
-function nextReviewPart(current) {
-  if (current >= 7) return;
-  document.getElementById(`review-part${current}`).classList.add("hidden");
-  document.getElementById(`review-part${current + 1}`).classList.remove("hidden");
-  currentReviewPart = current + 1;
-  loadReviewImages(current + 1);
-}
-
-function prevReviewPart(current) {
-  if (current <= 1) return;
-  document.getElementById(`review-part${current}`).classList.add("hidden");
-  document.getElementById(`review-part${current - 1}`).classList.remove("hidden");
-  currentReviewPart = current - 1;
-  loadReviewImages(current - 1);
-}
-
 async function loadReviewImages(part) {
   try {
     const res = await fetch(`/images?part=${part}`);
@@ -2022,9 +2004,75 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     });
 });
+document.getElementById("assignBtn").addEventListener("click", (e) => {
+    if (e.target.disabled) return; // chặn khi bị disable
+    assignQuiz();
+});
 
 document.addEventListener("DOMContentLoaded", function () {
   setTimeout(() => {
     document.getElementById("loading-screen").classList.add("hidden");
   }, 2000);
 });
+
+document.addEventListener('DOMContentLoaded', () => {
+    const customQuizForm = document.getElementById('custom-quiz-form-student');
+    if (customQuizForm) {
+        customQuizForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (confirm("Bạn có chắc muốn nộp bài không?")) {
+                submitCustomQuiz();
+            }
+        });
+    }
+});
+
+// Hàm nộp bài và chấm điểm cho đề tùy chỉnh
+async function submitCustomQuiz() {
+    audio.pause(); // Dừng âm thanh nếu có
+    clearInterval(timerInterval); // Dừng đồng hồ
+
+    if (!user || !user.name || !currentCustomQuizData) {
+        notification.innerText = "Lỗi: Mất thông tin người dùng hoặc đề thi.";
+        showWelcomeScreen();
+        return;
+    }
+
+    const formData = new FormData(document.getElementById('custom-quiz-form-student'));
+    const userAnswers = {};
+    formData.forEach((val, key) => (userAnswers[key] = val));
+
+    try {
+        const res = await fetch("/submit-custom", { // <-- Sử dụng một endpoint mới
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                username: user.name,
+                answers: userAnswers,
+                quizId: currentCustomQuizData.quizId
+            }),
+        });
+
+        if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(errorData.message || 'Lỗi server');
+        }
+
+        const result = await res.json();
+
+        // Hiển thị màn hình kết quả chỉ với điểm số
+        hideAllScreens();
+        resultScreen.classList.remove("hidden");
+        resultScore.innerText = `Điểm: ${result.score}/${currentCustomQuizData.totalQuestions}`;
+        resultTime.innerText = `Thời gian nộp: ${new Date().toLocaleString()}`;
+        
+        // Vô hiệu hóa nút xem đáp án cho đề tùy chỉnh
+        const reviewButton = resultScreen.querySelector('button[onclick="showReviewAnswers()"]');
+        if(reviewButton) reviewButton.classList.add('hidden');
+
+
+    } catch (error) {
+        console.error("Error submitting custom quiz:", error);
+        notification.innerText = `Lỗi khi nộp bài: ${error.message}.`;
+    }
+}

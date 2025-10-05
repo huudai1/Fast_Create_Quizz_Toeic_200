@@ -41,6 +41,10 @@ async function handleAiRecognition() {
         formData.append('answer_files', file);
     }
 
+    if (totalQuestions) {
+        formData.append('totalQuestions', totalQuestions);
+    }
+
     // Reset trạng thái trước khi gửi yêu cầu mới
     lastAiResult = null;
     statusElement.textContent = 'Đang phân tích, vui lòng chờ...';
@@ -98,4 +102,41 @@ function copyAnswer(partNumber) {
             console.error('Failed to copy text: ', err);
         });
     }
+}
+
+function copyAllAiAnswers() {
+    let allAnswers = [];
+    for (let i = 1; i <= 7; i++) {
+        const textArea = document.getElementById(`ai-result-part${i}`);
+        if (textArea && textArea.value) {
+            // Tách các đáp án trong từng part và thêm vào mảng lớn
+            const partAnswers = textArea.value.split(',').filter(ans => ans.trim() !== '');
+            allAnswers.push(...partAnswers);
+        }
+    }
+
+    if (allAnswers.length > 0) {
+        const finalString = allAnswers.join(',');
+        navigator.clipboard.writeText(finalString).then(() => {
+            alert(`Đã sao chép ${allAnswers.length} đáp án!`);
+        }).catch(err => {
+            console.error('Failed to copy all answers: ', err);
+        });
+    } else {
+        alert('Không có đáp án nào để sao chép.');
+    }
+}
+
+function handleCustomAiRecognition() {
+    const totalQuestionsInput = document.getElementById('custom-total-questions');
+    const totalQuestions = totalQuestionsInput.value;
+
+    if (!totalQuestions || parseInt(totalQuestions) <= 0) {
+        alert('Vui lòng nhập Tổng số câu trước khi dùng AI nhận diện!');
+        return;
+    }
+
+    // Mở modal và bắt đầu nhận diện, truyền đi tổng số câu
+    showAiModal(); 
+    handleAiRecognition(totalQuestions);
 }
