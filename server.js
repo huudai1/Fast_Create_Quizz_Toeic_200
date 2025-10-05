@@ -628,7 +628,7 @@ app.get('/get-quiz', (req, res) => {
 app.post('/recognize-answers', memoryUpload.array('answer_files', 10), async (req, res) => {
     try {
         if (!process.env.GEMINI_API_KEY) {
-            throw new Error("GEMINI_API_KEY is not configured on the server.");
+            return res.status(500).json({ message: "Server chưa cấu hình GEMINI_API_KEY." });
         }
 
         if (!req.files || req.files.length === 0) {
@@ -650,8 +650,8 @@ app.post('/recognize-answers', memoryUpload.array('answer_files', 10), async (re
            - Part 7: 54 câu (147-200)
         3. Với mỗi phần, định dạng chuỗi đáp án thành các chữ cái viết hoa, ngăn cách bởi dấu phẩy, KHÔNG có khoảng trắng.
         4. Trả về kết quả cuối cùng dưới dạng một đối tượng JSON hợp lệ. Không thêm bất kỳ văn bản giải thích nào khác hoặc các dấu . Cấu trúc JSON phải là:
-           { "part1": "A,B,C,...", "part2": "C,D,A,...", "part3": "...", "part4": "...", "part5": "...", "part6": "...", "part7": "..." }`;
-        
+           { "part1": "A,B,C,...", "part2": "C,D,A,...", "part3": "...", "part4": "...", "part5": "...", "part6": "...", "part7": "..." }`; // prompt bạn viết
+
         const contentParts = [prompt];
         for (const file of req.files) {
             contentParts.push({
@@ -661,12 +661,20 @@ app.post('/recognize-answers', memoryUpload.array('answer_files', 10), async (re
                 }
             });
         }
-        
-        const result = await model.generateContent({ contents: [{ parts: contentParts }] });
-        const responseText = result.response.text();
-        
-        const jsonString = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
-        const data = JSON.parse(jsonString);
+
+        // 🔥 Cách gọi đúng
+        const result = await model.generateContent(contentParts);
+        const responseText = await result.response.text();
+
+        console.log("Gemini raw:", responseText); // debug xem có đúng JSON không
+
+        let data;
+        try {
+            const jsonString = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+            data = JSON.parse(jsonString);
+        } catch (parseErr) {
+            return res.status(500).json({ message: "Gemini trả về dữ liệu không phải JSON hợp lệ.", raw: responseText });
+        }
 
         res.json(data);
 
