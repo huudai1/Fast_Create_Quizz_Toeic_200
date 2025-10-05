@@ -9,8 +9,6 @@ const archiver = require("archiver");
 const unzipper = require("unzipper");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const upload = multer({ storage });
-const memoryUpload = multer({ storage: multer.memoryStorage() });
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -67,6 +65,9 @@ const storage = multer.diskStorage({
     cb(null, `${uuidv4()}${ext}`);
   },
 });
+
+const upload = multer({ storage });
+const memoryUpload = multer({ storage: multer.memoryStorage() });
 
 async function saveQuizzes() {
   try {
