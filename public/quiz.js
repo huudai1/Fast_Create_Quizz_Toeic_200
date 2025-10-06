@@ -21,6 +21,45 @@ let studentPartVisibility = null;
 
 const ADMIN_PASSWORD = "admin123";
 
+const welcomeScreen = document.getElementById("welcome-screen");
+const adminLogin = document.getElementById("admin-login");
+const studentLogin = document.getElementById("student-login");
+const quizListScreen = document.getElementById("quiz-list-screen");
+const adminOptions = document.getElementById("admin-options");
+const adminControls = document.getElementById("admin-controls");
+const uploadQuizzesSection = document.getElementById("upload-quizzes");
+const quizzesFileInput = document.getElementById("quizzes-file");
+const quizList = document.getElementById("quiz-list");
+const quizContainer = document.getElementById("quiz-container");
+const notification = document.getElementById("notification"); // Lưu ý: ID này có thể bị trùng, hãy kiểm tra lại HTML
+const quizStatus = document.getElementById("quiz-status");
+const participantCount = document.getElementById("participant-count");
+const submittedCount = document.getElementById("submitted-count");
+const assignBtn = document.getElementById("assignBtn");
+const directTestBtn = document.getElementById("directTestBtn");
+const directTestScreen = document.getElementById("direct-test-screen");
+const endDirectTestBtn = document.getElementById("endDirectTestBtn");
+const directParticipantCount = document.getElementById("direct-participant-count");
+const directSubmittedCount = document.getElementById("direct-submitted-count");
+const directResultsTable = document.getElementById("direct-results-table");
+const directResultsBody = document.getElementById("direct-results-body");
+const resultsTable = document.getElementById("results-table");
+const resultsBody = document.getElementById("results-body");
+const imageDisplay = document.getElementById("image-display");
+const audio = document.getElementById("audio");
+const audioSource = document.getElementById("audio-source");
+const timerDisplay = document.getElementById("timer");
+const quizForm = document.getElementById("quizForm");
+const resultScreen = document.getElementById("result-screen");
+const resultScore = document.getElementById("result-score");
+const resultTime = document.getElementById("result-time");
+const downloadNotice = document.getElementById("download-notice");
+const reviewScreen = document.getElementById("review-answers");
+const staticScreen = document.getElementById("statistics-screen");
+const adminLoginForm = document.getElementById("admin-login-form");
+const adminPasswordInput = document.getElementById("admin-password");
+const notificationAdmin = document.getElementById("notification-admin");
+
 const wsProtocol = location.protocol === 'https:' ? 'wss://' : 'ws://';
 let socket = null;
 let currentQuizPart = 1;
@@ -31,6 +70,8 @@ const parts = [
     { id: "section5", count: 30, part: 5 }, { id: "section6", count: 16, part: 6 },
     { id: "section7", count: 54, part: 7 },
 ];
+
+
 
 
 // =========================================================================
