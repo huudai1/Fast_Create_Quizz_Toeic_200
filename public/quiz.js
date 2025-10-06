@@ -366,18 +366,33 @@ async function showStatistics() {
 }
 
 function hideAllScreens() {
-  welcomeScreen.classList.add("hidden");
-  adminLogin.classList.add("hidden");
-  studentLogin.classList.add("hidden");
-  quizListScreen.classList.add("hidden");
-  directTestScreen.classList.add("hidden");
-  uploadQuizzesSection.classList.add("hidden");
-  quizContainer.classList.add("hidden");
-  resultScreen.classList.add("hidden");
-  staticScreen.classList.add("hidden");
-  const reviewScreen = document.getElementById("review-answers");
-  if (reviewScreen) reviewScreen.classList.add("hidden");
-  document.querySelectorAll(".admin-step").forEach(step => step.classList.add("hidden"));
+    // Liệt kê ID của tất cả các màn hình chính
+    const screenIds = [
+        'welcome-screen',
+        'admin-login',
+        'student-login',
+        'quiz-list-screen',
+        'admin-step-create-quiz',
+        'custom-quiz-creator-screen',
+        'quiz-container',
+        'custom-quiz-container',
+        'result-screen',
+        'review-answers',
+        'statistics-screen',
+        'direct-test-screen',
+        'upload-quizzes'
+    ];
+
+    // Vòng lặp qua từng ID
+    screenIds.forEach(id => {
+        const screen = document.getElementById(id);
+        // Quan trọng: Chỉ thực hiện ẩn nếu tìm thấy phần tử đó
+        if (screen) {
+            screen.classList.add('hidden');
+        } else {
+            console.warn(`Không tìm thấy màn hình với ID: ${id}`); // Báo cho bạn biết nếu có ID nào bị thiếu
+        }
+    });
 }
 
 function clearState() {
