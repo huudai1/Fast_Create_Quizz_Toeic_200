@@ -756,7 +756,7 @@ app.post('/recognize-answers', memoryUpload.array('answer_files', 10), async (re
                { "part1": "...", "part2": "...", "part3": "...", "part4": "...", "part5": "...", "part6": "...", "part7": "..." }`;
         }
 
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
         const contentParts = [{ text: prompt }]; 
         for (const file of req.files) {
             contentParts.push({
