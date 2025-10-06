@@ -547,6 +547,9 @@ async function deleteQuiz(quizId) {
 }
 
 async function selectQuiz(quizId) {
+    // Lấy đúng phần tử thông báo của màn hình hiện tại
+    const notificationElement = document.getElementById('quiz-list-notification');
+
     try {
         const res = await fetch("/select-quiz", {
             method: "POST",
@@ -554,26 +557,27 @@ async function selectQuiz(quizId) {
             body: JSON.stringify({ quizId }),
         });
         const result = await res.json();
-        if (res.ok) {
-            selectedQuizId = quizId;
-            assignBtn.classList.remove("hidden");
-            directTestBtn.classList.remove("hidden");
-            
-            // THAY ĐỔI: Reset và hiển thị các nút điều khiển part
-            resetAndShowPartControls();
-            
-            await loadQuizzes();
-            notification.innerText = `Đã chọn đề: ${result.quizName}`;
-            if (socket && socket.readyState === WebSocket.OPEN) {
-                socket.send(JSON.stringify({ type: "quizSelected", quizId }));
-            }
-            saveAdminState();
-        } else {
-            notification.innerText = result.message;
+    if (res.ok) {
+        selectedQuizId = quizId;
+        assignBtn.classList.remove("hidden");
+        directTestBtn.classList.remove("hidden");
+
+        resetAndShowPartControls();
+
+        await loadQuizzes();
+            // Sử dụng biến đã khai báo đúng ở trên
+    if (notificationElement) notificationElement.innerText = `Đã chọn đề: ${result.quizName}`;
+
+    if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({ type: "quizSelected", quizId }));
+        }
+            // saveAdminState(); // Bạn có thể cần xem lại hàm này nếu nó tồn tại
+    } else {
+    if (notificationElement) notificationElement.innerText = result.message;
         }
     } catch (error) {
         console.error("Error selecting quiz:", error);
-        notification.innerText = "Lỗi khi chọn đề thi. Vui lòng thử lại.";
+    if (notificationElement) notificationElement.innerText = "Lỗi khi chọn đề thi. Vui lòng thử lại.";
     }
 }
 
