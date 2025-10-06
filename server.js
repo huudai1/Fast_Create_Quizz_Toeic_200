@@ -757,7 +757,7 @@ app.post('/recognize-answers', memoryUpload.array('answer_files', 10), async (re
         }
 
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
-        const contentParts = [prompt];
+        const contentParts = [{ text: prompt }]; 
         for (const file of req.files) {
             contentParts.push({
                 inlineData: { data: file.buffer.toString("base64"), mimeType: file.mimetype }
