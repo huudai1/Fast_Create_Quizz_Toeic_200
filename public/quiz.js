@@ -1,4 +1,6 @@
-
+// =========================================================================
+// PHẦN 1: KHAI BÁO BIẾN TOÀN CỤC (Giữ nguyên)
+// =========================================================================
 let user = null;
 let heartbeatInterval = null;
 let isAdmin = false;
@@ -11,158 +13,166 @@ let isTestEnded = false;
 let userAnswers = null;
 let answerKey = null;
 let currentReviewPart = 1;
-let initialTimeLimit = null; // Lưu thời gian ban đầu (giây)
+let initialTimeLimit = null;
+let currentCustomQuizData = null;
 
 let partVisibility = { 1: true, 2: true, 3: true, 4: true, 5: true, 6: true, 7: true };
 let studentPartVisibility = null;
 
 const ADMIN_PASSWORD = "admin123";
-const adminLoginForm = document.getElementById("admin-login-form"); // Thêm dòng này
-const adminPasswordInput = document.getElementById("admin-password"); // Thêm dòng này
-const notificationAdmin = document.getElementById("notification-admin"); // Thêm dòng này
-
-
-const directTestProgressBar = document.getElementById("direct-test-progress-bar");
-const directTestTimer = document.getElementById("direct-test-timer");
-const answerNotification = document.getElementById("answer-notification");
-const answerImageDisplay = document.getElementById("answer-image-display");
-const welcomeScreen = document.getElementById("welcome-screen");
-const adminLogin = document.getElementById("admin-login");
-const studentLogin = document.getElementById("student-login");
-const studentNameForm = document.getElementById("student-name-form");
-const quizListScreen = document.getElementById("quiz-list-screen");
-const adminOptions = document.getElementById("admin-options");
-const adminControls = document.getElementById("admin-controls");
-const uploadQuizzesSection = document.getElementById("upload-quizzes");
-const quizzesFileInput = document.getElementById("quizzes-file");
-const quizList = document.getElementById("quiz-list");
-const quizContainer = document.getElementById("quiz-container");
-const notification = document.getElementById("notification");
-const quizStatus = document.getElementById("quiz-status");
-const participantCount = document.getElementById("participant-count");
-const submittedCount = document.getElementById("submitted-count");
-const assignBtn = document.getElementById("assignBtn");
-const directTestBtn = document.getElementById("directTestBtn");
-const directTestScreen = document.getElementById("direct-test-screen");
-const endDirectTestBtn = document.getElementById("endDirectTestBtn");
-const directParticipantCount = document.getElementById("direct-participant-count");
-const directSubmittedCount = document.getElementById("direct-submitted-count");
-const directResultsTable = document.getElementById("direct-results-table");
-const directResultsBody = document.getElementById("direct-results-body");
-const resultsTable = document.getElementById("results-table");
-const resultsBody = document.getElementById("results-body");
-const historyBody = document.getElementById("history-body");
-const imageDisplay = document.getElementById("image-display");
-const audio = document.getElementById("audio");
-const audioSource = document.getElementById("audio-source");
-const timerDisplay = document.getElementById("timer");
-const quizForm = document.getElementById("quizForm");
-const resultScreen = document.getElementById("result-screen");
-const resultScore = document.getElementById("result-score");
-const resultTime = document.getElementById("result-time");
-const downloadNotice = document.getElementById("download-notice");
-const reviewScreen = document.getElementById("review-answers");
-const staticScreen = document.getElementById("statistics-screen");
 
 const wsProtocol = location.protocol === 'https:' ? 'wss://' : 'ws://';
 let socket = null;
-let currentAdminStep = 0;
 let currentQuizPart = 1;
 const partAnswerCounts = [6, 25, 39, 30, 30, 16, 54];
+const parts = [
+    { id: "section1", count: 6, part: 1 }, { id: "section2", count: 25, part: 2 },
+    { id: "section3", count: 39, part: 3 }, { id: "section4", count: 30, part: 4 },
+    { id: "section5", count: 30, part: 5 }, { id: "section6", count: 16, part: 6 },
+    { id: "section7", count: 54, part: 7 },
+];
 
 
-function togglePartVisibility(part) {
-    partVisibility[part] = !partVisibility[part];
-    renderPartVisibilityControls();
+// =========================================================================
+// PHẦN 2: DÁN TẤT CẢ CÁC HÀM CHỨC NĂNG VÀO ĐÂY
+// =========================================================================
+
+ //=========================================================================
+    DANH SÁCH CÁC HÀM CẦN DÁN VÀO ĐÂY TỪ FILE CŨ CỦA BẠN
+//=========================================================================
+
+// --- QUẢN LÝ GIAO DIỆN ---
+function hideAllScreens() {
+    // Liệt kê ID của tất cả các màn hình chính
+    const screenIds = [
+        'welcome-screen',
+        'admin-login',
+        'student-login',
+        'quiz-list-screen',
+        'admin-step-create-quiz',
+        'custom-quiz-creator-screen',
+        'quiz-container',
+        'custom-quiz-container',
+        'result-screen',
+        'review-answers',
+        'statistics-screen',
+        'direct-test-screen',
+        'upload-quizzes'
+    ];
+
+    // Vòng lặp qua từng ID
+    screenIds.forEach(id => {
+        const screen = document.getElementById(id);
+        // Quan trọng: Chỉ thực hiện ẩn nếu tìm thấy phần tử đó
+        if (screen) {
+            screen.classList.add('hidden');
+        } else {
+            console.warn(`Không tìm thấy màn hình với ID: ${id}`); // Báo cho bạn biết nếu có ID nào bị thiếu
+        }
+    });
 }
 
-/**
- * Hàm tạo và vẽ 7 nút bấm
- */
-function renderPartVisibilityControls() {
-    const container = document.getElementById("part-visibility-controls");
-    if (!container) return;
-    container.innerHTML = '<span class="font-semibold align-middle">Các phần hiển thị:</span>';
-    for (let i = 1; i <= 7; i++) {
-        const isVisible = partVisibility[i];
-        const button = document.createElement('button');
-        button.innerText = `Part ${i}`;
-        button.className = `px-3 py-1 rounded text-white font-medium transition-colors duration-200 ${
-            isVisible ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'
-        }`;
-        button.onclick = () => togglePartVisibility(i);
-        container.appendChild(button);
+
+function showWelcomeScreen() {
+    hideAllScreens();
+    welcomeScreen.classList.remove("hidden");
+    notification.innerText = "";
+    user = null;
+    isAdmin = false;
+    selectedQuizId = null; // Reset ID ở đây
+    isDirectTestMode = false;
+    isTestEnded = false;
+    currentAdminStep = 0;
+    currentQuizPart = 1;
+    if (socket) {
+        socket.close();
+        socket = null;
     }
+    clearState();
+    clearUserAnswers();
+    
+    // THÊM DÒNG NÀY ĐỂ DỌN DẸP SẠCH SẼ
+    localStorage.removeItem("selectedQuizId");
+
+    downloadNotice.classList.remove("hidden");
+    startDownloadNotice();
 }
 
-/**
- * Hàm reset trạng thái về "hiện tất cả" và hiển thị thanh điều khiển
- */
-function resetAndShowPartControls() {
-    partVisibility = { 1: true, 2: true, 3: true, 4: true, 5: true, 6: true, 7: true };
-    renderPartVisibilityControls();
-    document.getElementById('part-visibility-controls').classList.remove('hidden');
+
+function showAdminLogin() {
+    hideAllScreens();
+    adminLogin.classList.remove("hidden");
+    notificationAdmin.innerText = ""; // 👈 Đổi từ 'notification' thành 'notificationAdmin'
+    downloadNotice.classList.add("hidden");
+    saveAdminState();
 }
 
-// --- Các hàm hỗ trợ cho phía học sinh ---
 
-function applyPartVisibility(visibility) {
-    if (!visibility) return;
-    studentPartVisibility = visibility;
-    for (let i = 1; i <= 7; i++) {
-        const partContainer = document.getElementById(`quiz-part${i}`);
-        if (partContainer) partContainer.classList.add('hidden');
+function showStudentLogin() {
+  hideAllScreens();
+  studentLogin.classList.remove("hidden");
+  notification.innerText = "";
+  downloadNotice.classList.add("hidden");
+}
+
+
+function createNewQuiz() {
+    showCreateQuizChoice();
+}
+
+function showToeicQuizCreator() {
+    document.getElementById('create-quiz-choice-modal').classList.add('hidden');
+    hideAllScreens();
+    document.getElementById("admin-step-create-quiz").classList.remove("hidden");
+}
+
+function showCustomQuizCreator() {
+    hideAllScreens();
+    document.getElementById('custom-quiz-creator-screen').classList.remove('hidden');
+    // Reset form khi mở
+    document.getElementById('custom-quiz-form').reset();
+    document.getElementById('listening-ranges-container').innerHTML = '';
+}
+
+function backToQuizList() {
+  hideAllScreens();
+  quizListScreen.classList.remove("hidden");
+  if (isAdmin) {
+    adminOptions.classList.remove("hidden");
+    adminControls.classList.remove("hidden");
+    if (selectedQuizId) {
+      assignBtn.classList.remove("hidden");
+      directTestBtn.classList.remove("hidden");
     }
-    const firstVisiblePart = findFirstVisiblePart(visibility);
-    if (firstVisiblePart) {
-        document.getElementById(`quiz-part${firstVisiblePart}`).classList.remove('hidden');
-    } else {
-        notification.innerText = "Đề thi này không có phần nào được mở.";
-        document.querySelector("#quizForm button[type=submit]").disabled = true;
-    }
+  } else {
+    adminOptions.classList.add("hidden");
+    adminControls.classList.add("hidden");
+  }
+  notification.innerText = "";
+  isDirectTestMode = false;
+  isTestEnded = false;
+  endDirectTestBtn.disabled = false;
+  directResultsTable.classList.add("hidden");
+  downloadNotice.classList.add("hidden");
+  loadQuizzes();
+  if (isAdmin) saveAdminState();
 }
 
-function findFirstVisiblePart(visibility) {
-    if (!visibility) return 1;
-    for (let i = 1; i <= 7; i++) {
-        if (visibility[i]) return i;
-    }
-    return null;
+function showUploadQuizzes() {
+  hideAllScreens();
+  uploadQuizzesSection.classList.remove("hidden");
+  downloadNotice.classList.add("hidden");
+  saveAdminState();
 }
-
-function findNextVisiblePart(current, visibility) {
-    if (!visibility) return current + 1 > 7 ? null : current + 1;
-    for (let i = current + 1; i <= 7; i++) {
-        if (visibility[i]) return i;
-    }
-    return null;
-}
-
-function findPrevVisiblePart(current, visibility) {
-    if (!visibility) return current - 1 < 1 ? null : current - 1;
-    for (let i = current - 1; i >= 1; i--) {
-        if (visibility[i]) return i;
-    }
-    return null;
-}
-
-function updateQuizNavigation(current, visibility) {
-    const prevBtn = document.getElementById('prev-button');
-    const nextBtn = document.getElementById('next-button');
-    if (!prevBtn || !nextBtn) return;
-    const nextVisible = findNextVisiblePart(current, visibility);
-    const prevVisible = findPrevVisiblePart(current, visibility);
-    prevBtn.disabled = !prevVisible;
-    nextBtn.disabled = !nextVisible;
-}
-
-// ===== KẾT THÚC KHỐI CODE MỚI =====
 
 function showResultScreen() {
   hideAllScreens();
   resultScreen.classList.remove("hidden");
 }
 
+
+
+// --- QUẢN LÝ TRẠNG THÁI & WEBSOCKET ---
 function startHeartbeat() {
     if (heartbeatInterval) {
         return; // Already running
@@ -192,6 +202,7 @@ function stopHeartbeat() {
     console.log("Heartbeat stopped.");
 }
 
+
 function saveAdminState() {
   if (isAdmin && user) {
     localStorage.setItem("adminState", JSON.stringify({
@@ -206,42 +217,6 @@ function saveAdminState() {
   }
 }
 
-adminLoginForm.onsubmit = async (e) => {
-    e.preventDefault(); // Ngăn trang tải lại
-    const password = adminPasswordInput.value;
-
-    // Kiểm tra mật khẩu
-    if (password === ADMIN_PASSWORD) {
-        // Nếu đúng, thiết lập trạng thái admin
-        isAdmin = true;
-        user = { name: "Admin", email: "admin@example.com" }; // Tạo một user admin tạm thời
-
-        // Ẩn các màn hình khác và hiển thị màn hình danh sách quiz cho admin
-        hideAllScreens();
-        quizListScreen.classList.remove("hidden");
-        adminOptions.classList.remove("hidden");
-        adminControls.classList.remove("hidden");
-        downloadNotice.classList.add("hidden");
-
-        initializeWebSocket();
-        startHeartbeat(); // Bắt đầu gửi tín hiệu heartbeat cho admin
-
-        // Tải danh sách các đề thi
-        try {
-            await loadQuizzes();
-        } catch (error) {
-            console.error("Lỗi khi tải đề thi cho admin:", error);
-            notification.innerText = "Không thể tải danh sách đề thi.";
-        }
-        
-        saveAdminState(); // Lưu lại trạng thái đăng nhập của admin
-
-    } else {
-        // Nếu sai, hiển thị thông báo lỗi
-        notificationAdmin.innerText = "Mật khẩu không đúng!";
-        adminPasswordInput.value = ""; // Xóa trường nhập mật khẩu
-    }
-};
 
 function getCurrentScreen() {
     if (!welcomeScreen.classList.contains("hidden")) return "welcome-screen";
@@ -315,145 +290,6 @@ async function restoreAdminState() {
     return false;
 }
 
-async function showStatistics() {
-  if (!selectedQuizId) {
-    notification.innerText = "Vui lòng chọn một đề thi trước!";
-    return;
-  }
-
-  try {
-    const res = await fetch(`/statistics?quizId=${selectedQuizId}`);
-    if (!res.ok) {
-      throw new Error(`Lỗi server: ${res.status}`);
-    }
-    const data = await res.json();
-    console.log("Statistics data:", data);
-
-    hideAllScreens();
-    const statisticsScreen = document.getElementById("statistics-screen");
-    statisticsScreen.classList.remove("hidden");
-    const notificationStatistics = document.getElementById("notification-statistics");
-    notificationStatistics.innerText = "";
-
-    const averageScore = data.averageScore || 0;
-    const averageScoreBar = document.getElementById("average-score-bar");
-    const averageScoreText = document.getElementById("average-score-text");
-    const percentage = (averageScore / 200) * 100;
-    averageScoreBar.style.width = `${percentage}%`;
-    averageScoreText.innerText = `Điểm trung bình: ${averageScore.toFixed(2)}/200`;
-
-    const statisticsBody = document.getElementById("statistics-body");
-    statisticsBody.innerHTML = "";
-    
-    data.questionStats.forEach(stat => {
-      const tr = document.createElement("tr");
-      const questionNumber = parseInt(stat.questionId.replace("q", ""));
-      const wrongPercentage = stat.totalCount > 0 ? ((stat.wrongCount / stat.totalCount) * 100).toFixed(2) : 0;
-      tr.innerHTML = `
-        <td class="border p-2">${questionNumber}</td>
-        <td class="border p-2">${stat.wrongCount}</td>
-        <td class="border p-2">${stat.totalCount}</td>
-        <td class="border p-2">${wrongPercentage}%</td>
-      `;
-      statisticsBody.appendChild(tr);
-    });
-
-    saveAdminState();
-  } catch (error) {
-    console.error("Error fetching statistics:", error);
-    document.getElementById("notification-statistics").innerText = "Lỗi khi tải thống kê. Vui lòng thử lại.";
-  }
-}
-
-function hideAllScreens() {
-    // Liệt kê ID của tất cả các màn hình chính
-    const screenIds = [
-        'welcome-screen',
-        'admin-login',
-        'student-login',
-        'quiz-list-screen',
-        'admin-step-create-quiz',
-        'custom-quiz-creator-screen',
-        'quiz-container',
-        'custom-quiz-container',
-        'result-screen',
-        'review-answers',
-        'statistics-screen',
-        'direct-test-screen',
-        'upload-quizzes'
-    ];
-
-    // Vòng lặp qua từng ID
-    screenIds.forEach(id => {
-        const screen = document.getElementById(id);
-        // Quan trọng: Chỉ thực hiện ẩn nếu tìm thấy phần tử đó
-        if (screen) {
-            screen.classList.add('hidden');
-        } else {
-            console.warn(`Không tìm thấy màn hình với ID: ${id}`); // Báo cho bạn biết nếu có ID nào bị thiếu
-        }
-    });
-}
-
-function clearState() {
-  localStorage.removeItem("adminState");
-}
-
-function showDownloadNotice() {
-  downloadNotice.classList.remove("hidden");
-  setTimeout(() => {
-    downloadNotice.classList.add("hidden");
-  }, 5000);
-}
-
-function startDownloadNotice() {
-  showDownloadNotice();
-  setInterval(() => {
-    if (!downloadNotice.classList.contains("hidden")) return;
-    showDownloadNotice();
-  }, 30000);
-}
-
-function showAdminLogin() {
-    hideAllScreens();
-    adminLogin.classList.remove("hidden");
-    notificationAdmin.innerText = ""; // 👈 Đổi từ 'notification' thành 'notificationAdmin'
-    downloadNotice.classList.add("hidden");
-    saveAdminState();
-}
-
-function showStudentLogin() {
-  hideAllScreens();
-  studentLogin.classList.remove("hidden");
-  notification.innerText = "";
-  downloadNotice.classList.add("hidden");
-}
-
-function showWelcomeScreen() {
-    hideAllScreens();
-    welcomeScreen.classList.remove("hidden");
-    notification.innerText = "";
-    user = null;
-    isAdmin = false;
-    selectedQuizId = null; // Reset ID ở đây
-    isDirectTestMode = false;
-    isTestEnded = false;
-    currentAdminStep = 0;
-    currentQuizPart = 1;
-    if (socket) {
-        socket.close();
-        socket = null;
-    }
-    clearState();
-    clearUserAnswers();
-    
-    // THÊM DÒNG NÀY ĐỂ DỌN DẸP SẠCH SẼ
-    localStorage.removeItem("selectedQuizId");
-
-    downloadNotice.classList.remove("hidden");
-    startDownloadNotice();
-}
-
 function initializeWebSocket() {
   try {
     socket = new WebSocket(wsProtocol + location.host);
@@ -482,75 +318,231 @@ function initializeWebSocket() {
   }
 }
 
-studentNameForm.onsubmit = async (e) => {
-  e.preventDefault();
-  const nameInput = document.getElementById("student-name");
-  const name = nameInput.value.trim();
-  
-  if (!name) {
-    notification.innerText = "Vui lòng nhập tên!";
-    return;
-  }
-  if (name.length > 50) {
-    notification.innerText = "Tên không được dài quá 50 ký tự!";
-    return;
-  }
 
-  user = { name };
-  isAdmin = false;
-  localStorage.setItem("user", JSON.stringify(user));
-  localStorage.setItem("currentScreen", "quiz-list-screen");
+function handleWebSocketMessage(event) {
+    try {
+        if (!event.data) { return; }
+        const message = JSON.parse(event.data);
 
-  hideAllScreens();
-  quizListScreen.classList.remove("hidden");
-  adminOptions.classList.add("hidden");
-  adminControls.classList.add("hidden");
-  downloadNotice.classList.add("hidden");
+        const safeUpdateText = (element, text) => {
+            if (element) {
+                element.innerText = text;
+            }
+        };
 
-  initializeWebSocket();
-  try {
-    await loadQuizzes();
-  } catch (error) {
-    console.error("Error loading quizzes:", error);
-    notification.innerText = "Không thể tải danh sách đề thi. Vui lòng thử lại.";
-    quizList.innerHTML = "<p>Lỗi khi tải danh sách đề thi. Vui lòng làm mới trang.</p>";
-  }
-};
+        if (message.type === "participantUpdate") {
+            const count = message.count || 0;
+            safeUpdateText(participantCount, `Số người tham gia: ${count}`);
+            safeUpdateText(directParticipantCount, `Số người tham gia: ${count}`);
 
-function backToQuizList() {
-  hideAllScreens();
-  quizListScreen.classList.remove("hidden");
-  if (isAdmin) {
-    adminOptions.classList.remove("hidden");
-    adminControls.classList.remove("hidden");
-    if (selectedQuizId) {
-      assignBtn.classList.remove("hidden");
-      directTestBtn.classList.remove("hidden");
+            const container = document.getElementById('participant-list-container');
+            const list = document.getElementById('participant-list');
+            const listCount = document.getElementById('participant-list-count');
+            
+            // THAY ĐỔI: Thêm điều kiện kiểm tra màn hình hiện tại
+            if (isAdmin && !quizListScreen.classList.contains('hidden') && container && list && listCount) {
+                container.classList.remove('hidden');
+                listCount.innerText = count;
+                list.innerHTML = '';
+                if (message.participants && message.participants.length > 0) { // Sửa ở đây
+                    message.participants.forEach(name => { // Và sửa ở đây
+                        const li = document.createElement('li');
+                        li.textContent = name;
+                        list.appendChild(li);
+                    });
+                } else {
+                    list.innerHTML = '<li>Chưa có học sinh nào tham gia.</li>';
+                }
+            } else if(container) {
+                // Nếu không phải admin hoặc không ở đúng màn hình thì ẩn đi
+                container.classList.add('hidden');
+            }
+        } 
+        else if (message.type === "quizAssigned") {
+            if (!isAdmin) {
+                loadQuizzes();
+            }
+        } 
+        else if (message.type === "submitted" || message.type === "submittedCount") {
+            const count = message.count !== undefined ? message.count : 0;
+            safeUpdateText(submittedCount, `Số bài đã nộp: ${count}`);
+            safeUpdateText(directSubmittedCount, `Số bài đã nộp: ${count}`);
+            
+            if (isAdmin && message.results) {
+                resultsBody.innerHTML = "";
+                message.results.forEach(result => {
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                        <td class="border p-2">${result.username || 'Unknown'}</td>
+                        <td class="border p-2">${result.score || 0}</td>
+                        <td class="border p-2">${new Date(result.submittedAt).toLocaleString() || 'N/A'}</td>
+                    `;
+                    resultsBody.appendChild(tr);
+                });
+                resultsTable.classList.remove("hidden");
+            }
+        } 
+        else if (message.type === "start") {
+            isAdminControlled = true;
+            initialTimeLimit = message.timeLimit || 7200;
+            timeLeft = message.timeLimit || 7200;
+            const visibility = message.partVisibility;
+            const pdfUrl = message.quizPdfUrl;
+
+            localStorage.setItem("directTestState", JSON.stringify({
+                isDirectTestMode: true,
+                quizId: message.quizId,
+                timeLimit: message.timeLimit,
+                startTime: message.startTime,
+            }));
+
+            if (!isAdmin) {
+                hideAllScreens();
+                quizContainer.classList.remove("hidden");
+                timerDisplay.classList.remove("hidden");
+                audio.classList.remove("hidden");
+                
+                selectedQuizId = message.quizId;
+                localStorage.setItem("selectedQuizId", message.quizId);
+                localStorage.setItem("currentScreen", "quiz-container");
+                localStorage.setItem("timeLeft", timeLeft);
+                
+                loadQuizPdf(pdfUrl, 'image-display');
+                
+                applyPartVisibility(visibility);
+                const firstVisiblePart = findFirstVisiblePart(visibility) || 1;
+
+                loadAudio(firstVisiblePart);
+                startTimer();
+                updateProgressBar();
+                currentQuizPart = firstVisiblePart;
+                updateQuizNavigation(currentQuizPart, studentPartVisibility);
+
+                downloadNotice.classList.add("hidden");
+                notification.innerText = "Bài thi đã bắt đầu!";
+            }
+        } 
+        else if (message.type === "end") {
+            isTestEnded = true;
+            localStorage.removeItem("directTestState");
+            clearInterval(timerInterval);
+            if (!isAdmin) {
+                submitQuiz();
+                notification.innerText = "Bài thi đã kết thúc!";
+            } else {
+                fetchDirectResults();
+            }
+        } 
+        else if (message.type === "quizStatus") {
+            const statusText = message.quizId ? `Đề thi hiện tại: ${message.quizName}` : "Chưa có đề thi được chọn.";
+            safeUpdateText(quizStatus, statusText);
+            if (!isAdmin) {
+                loadQuizzes();
+            }
+        } 
+        else if (message.type === "error") {
+            notification.innerText = message.message;
+        }
+    } catch (error) {
+        console.error("Error handling WebSocket message:", error);
+        // Tìm một nơi an toàn để hiển thị lỗi, ví dụ như quiz-list-notification
+        const notificationElement = document.getElementById('quiz-list-notification');
+        if(notificationElement) {
+            notificationElement.innerText = "Lỗi khi xử lý thông tin từ server.";
+        }
     }
-  } else {
-    adminOptions.classList.add("hidden");
-    adminControls.classList.add("hidden");
+}
+
+async function logout() {
+    try {
+        if (user && user.name && socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({ type: "logout", username: user.name }));
+        }
+    } catch (error) {
+        console.error("Error during server logout notification:", error);
+    }
+    
+    stopHeartbeat();
+    
+    // XÓA TOÀN BỘ DỮ LIỆU CỦA TRANG WEB TRONG LOCALSTORAGE
+    localStorage.clear();
+    
+    // Reset các biến và hiển thị màn hình chào mừng
+    user = null;
+    isAdmin = false;
+    selectedQuizId = null;
+    userAnswers = null;
+    
+    showWelcomeScreen();
+}
+
+function clearState() {
+  localStorage.removeItem("adminState");
+}
+
+// --- CHỨC NĂNG ADMIN & DỮ LIỆU ---
+async function loadQuizzes() {
+    const url = isAdmin ? `/quizzes` : '/quizzes/assigned'; // Cập nhật API endpoint
+    try {
+        const res = await fetchWithRetry(url);
+        const quizzes = await res.json();
+        quizList.innerHTML = "";
+        
+        if (quizzes.length === 0) {
+            quizList.innerHTML = "<p>Chưa có đề thi nào.</p>";
+        } else {
+            quizzes.forEach(quiz => {
+                const div = document.createElement("div");
+                div.className = "p-4 border rounded-lg flex justify-between items-center";
+                
+                // Hiển thị loại đề
+                const quizTypeLabel = quiz.type === 'custom' ? '[Tùy chỉnh]' : '[TOEIC]';
+                
+                if (isAdmin) {
+                    div.innerHTML = `
+                        <div>
+                            <span class="text-lg font-medium">${quiz.quizName}</span>
+                            <span class="text-sm text-gray-500 ml-2">${quizTypeLabel}</span>
+                        </div>
+                        <div>
+                            <button onclick="selectQuiz('${quiz.quizId}')" class="bg-blue-500 text-white px-2 py-1 rounded text-sm">Chọn</button>
+                            <button onclick="downloadQuizzes('${quiz.quizId}')" class="bg-purple-500 text-white px-2 py-1 rounded text-sm">Tải xuống</button>
+                            <button onclick="deleteQuiz('${quiz.quizId}')" class="bg-red-500 text-white px-2 py-1 rounded text-sm">Xóa</button>
+                        </div>
+                    `;
+                } else { // Giao diện học sinh
+                    // Dựa vào loại đề để gọi đúng hàm start
+                    const startFunction = quiz.type === 'custom' ? `startCustomQuiz('${quiz.quizId}')` : `startQuiz('${quiz.quizId}')`;
+                    div.innerHTML = `
+                        <div>
+                            <span class="text-lg font-medium">${quiz.quizName}</span>
+                             <span class="text-sm text-gray-500 ml-2">${quizTypeLabel}</span>
+                        </div>
+                        <button onclick="${startFunction}" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Bắt đầu làm bài</button>
+                    `;
+                }
+                quizList.appendChild(div);
+            });
+        }
+    } catch (error) {
+        console.error("Error loading quizzes:", error);
+        quizList.innerHTML = "<p>Lỗi khi tải danh sách đề thi.</p>";
+    }
+}
+
+async function fetchWithRetry(url, retries = 5, delay = 2000) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const res = await fetch(url);
+      if (res.ok) return res;
+      throw new Error(`HTTP error! Status: ${res.status}`);
+    } catch (error) {
+      if (i === retries - 1) throw error;
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
   }
-  notification.innerText = "";
-  isDirectTestMode = false;
-  isTestEnded = false;
-  endDirectTestBtn.disabled = false;
-  directResultsTable.classList.add("hidden");
-  downloadNotice.classList.add("hidden");
-  loadQuizzes();
-  if (isAdmin) saveAdminState();
 }
 
-function createNewQuiz() {
-    showCreateQuizChoice();
-}
-
-function showUploadQuizzes() {
-  hideAllScreens();
-  uploadQuizzesSection.classList.remove("hidden");
-  downloadNotice.classList.add("hidden");
-  saveAdminState();
-}
 
 async function uploadQuizzes() {
     const notificationElement = document.getElementById("notification-upload");
@@ -665,7 +657,6 @@ async function downloadQuizzes(quizId) {
   }
 }
 
-
 async function clearDatabase() {
   if (!confirm("Bạn có chắc muốn xóa toàn bộ database? Hành động này không thể hoàn tác!")) return;
   try {
@@ -684,120 +675,6 @@ async function clearDatabase() {
   } catch (error) {
     console.error("Error clearing database:", error);
     notification.innerText = `Lỗi khi xóa database: ${error.message}. Vui lòng thử lại.`;
-  }
-}
-
-async function fetchWithRetry(url, retries = 5, delay = 2000) {
-  for (let i = 0; i < retries; i++) {
-    try {
-      const res = await fetch(url);
-      if (res.ok) return res;
-      throw new Error(`HTTP error! Status: ${res.status}`);
-    } catch (error) {
-      if (i === retries - 1) throw error;
-      await new Promise(resolve => setTimeout(resolve, delay));
-    }
-  }
-}
-
-async function loadQuizzes() {
-    const url = isAdmin ? `/quizzes` : '/quizzes/assigned'; // Cập nhật API endpoint
-    try {
-        const res = await fetchWithRetry(url);
-        const quizzes = await res.json();
-        quizList.innerHTML = "";
-        
-        if (quizzes.length === 0) {
-            quizList.innerHTML = "<p>Chưa có đề thi nào.</p>";
-        } else {
-            quizzes.forEach(quiz => {
-                const div = document.createElement("div");
-                div.className = "p-4 border rounded-lg flex justify-between items-center";
-                
-                // Hiển thị loại đề
-                const quizTypeLabel = quiz.type === 'custom' ? '[Tùy chỉnh]' : '[TOEIC]';
-                
-                if (isAdmin) {
-                    div.innerHTML = `
-                        <div>
-                            <span class="text-lg font-medium">${quiz.quizName}</span>
-                            <span class="text-sm text-gray-500 ml-2">${quizTypeLabel}</span>
-                        </div>
-                        <div>
-                            <button onclick="selectQuiz('${quiz.quizId}')" class="bg-blue-500 text-white px-2 py-1 rounded text-sm">Chọn</button>
-                            <button onclick="downloadQuizzes('${quiz.quizId}')" class="bg-purple-500 text-white px-2 py-1 rounded text-sm">Tải xuống</button>
-                            <button onclick="deleteQuiz('${quiz.quizId}')" class="bg-red-500 text-white px-2 py-1 rounded text-sm">Xóa</button>
-                        </div>
-                    `;
-                } else { // Giao diện học sinh
-                    // Dựa vào loại đề để gọi đúng hàm start
-                    const startFunction = quiz.type === 'custom' ? `startCustomQuiz('${quiz.quizId}')` : `startQuiz('${quiz.quizId}')`;
-                    div.innerHTML = `
-                        <div>
-                            <span class="text-lg font-medium">${quiz.quizName}</span>
-                             <span class="text-sm text-gray-500 ml-2">${quizTypeLabel}</span>
-                        </div>
-                        <button onclick="${startFunction}" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Bắt đầu làm bài</button>
-                    `;
-                }
-                quizList.appendChild(div);
-            });
-        }
-    } catch (error) {
-        console.error("Error loading quizzes:", error);
-        quizList.innerHTML = "<p>Lỗi khi tải danh sách đề thi.</p>";
-    }
-}
-
-async function joinDirectTest(quizId, remainingTime, startTime) {
-  try {
-    const res = await fetch("/select-quiz", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ quizId }),
-    });
-    const result = await res.json();
-    if (res.ok) {
-      isAdminControlled = true;
-      initialTimeLimit = remainingTime; // Lưu thời gian ban đầu
-      timeLeft = remainingTime;
-      selectedQuizId = quizId;
-      hideAllScreens();
-      quizContainer.classList.remove("hidden");
-      timerDisplay.classList.remove("hidden");
-      audio.classList.remove("hidden");
-
-      const savedAnswers = localStorage.getItem("userAnswers");
-      userAnswers = savedAnswers ? JSON.parse(savedAnswers) : {};
-
-      if (userAnswers) {
-        Object.keys(userAnswers).forEach(questionId => {
-          const radio = document.querySelector(`input[name="${questionId}"][value="${userAnswers[questionId]}"]`);
-          if (radio) radio.checked = true;
-        });
-      }
-
-      localStorage.setItem("selectedQuizId", quizId);
-      localStorage.setItem("currentScreen", "quiz-container");
-      localStorage.setItem("timeLeft", remainingTime);
-
-      await loadAudio(1);
-      await loadImages(1);
-      startTimer();
-      updateProgressBar(); // Cập nhật thanh tiến trình ngay khi tham gia
-      currentQuizPart = 1;
-      downloadNotice.classList.add("hidden");
-      notification.innerText = "Đã tham gia kiểm tra trực tiếp!";
-      
-      if (socket && socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({ type: "joinDirectTest", username: user.name }));
-      }
-    } else {
-      notification.innerText = result.message;
-    }
-  } catch (error) {
-    console.error("Error joining direct test:", error);
-    notification.innerText = "Lỗi khi tham gia kiểm tra trực tiếp.";
   }
 }
 
@@ -891,6 +768,57 @@ async function assignQuiz() {
     }
 }
 
+async function showStatistics() {
+  if (!selectedQuizId) {
+    notification.innerText = "Vui lòng chọn một đề thi trước!";
+    return;
+  }
+
+  try {
+    const res = await fetch(`/statistics?quizId=${selectedQuizId}`);
+    if (!res.ok) {
+      throw new Error(`Lỗi server: ${res.status}`);
+    }
+    const data = await res.json();
+    console.log("Statistics data:", data);
+
+    hideAllScreens();
+    const statisticsScreen = document.getElementById("statistics-screen");
+    statisticsScreen.classList.remove("hidden");
+    const notificationStatistics = document.getElementById("notification-statistics");
+    notificationStatistics.innerText = "";
+
+    const averageScore = data.averageScore || 0;
+    const averageScoreBar = document.getElementById("average-score-bar");
+    const averageScoreText = document.getElementById("average-score-text");
+    const percentage = (averageScore / 200) * 100;
+    averageScoreBar.style.width = `${percentage}%`;
+    averageScoreText.innerText = `Điểm trung bình: ${averageScore.toFixed(2)}/200`;
+
+    const statisticsBody = document.getElementById("statistics-body");
+    statisticsBody.innerHTML = "";
+    
+    data.questionStats.forEach(stat => {
+      const tr = document.createElement("tr");
+      const questionNumber = parseInt(stat.questionId.replace("q", ""));
+      const wrongPercentage = stat.totalCount > 0 ? ((stat.wrongCount / stat.totalCount) * 100).toFixed(2) : 0;
+      tr.innerHTML = `
+        <td class="border p-2">${questionNumber}</td>
+        <td class="border p-2">${stat.wrongCount}</td>
+        <td class="border p-2">${stat.totalCount}</td>
+        <td class="border p-2">${wrongPercentage}%</td>
+      `;
+      statisticsBody.appendChild(tr);
+    });
+
+    saveAdminState();
+  } catch (error) {
+    console.error("Error fetching statistics:", error);
+    document.getElementById("notification-statistics").innerText = "Lỗi khi tải thống kê. Vui lòng thử lại.";
+  }
+}
+
+// --- CHỨC NĂNG KIỂM TRA TRỰC TIẾP ---
 async function startDirectTest() {
     if (!selectedQuizId) {
         notification.innerText = "Vui lòng chọn một đề!";
@@ -1017,6 +945,96 @@ async function endDirectTest() {
   }
 }
 
+async function fetchDirectResults() {
+  const retries = 3;
+  const delay = 2000;
+  for (let i = 0; i < retries; i++) {
+    try {
+      const res = await fetch("/direct-results");
+      if (!res.ok) {
+        throw new Error(`HTTP error! Status: ${res.status}`);
+      }
+      const results = await res.json();
+      directResultsBody.innerHTML = "";
+      if (results.length === 0) {
+        directResultsBody.innerHTML = "<tr><td colspan='3' class='border p-2 text-center'>Chưa có kết quả nào.</td></tr>";
+      } else {
+        results.forEach(result => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td class="border p-2">${result.username || 'Unknown'}</td>
+            <td class="border p-2">${result.score || 0}</td>
+            <td class="border p-2">${result.submittedAt ? new Date(result.submittedAt).toLocaleString() : 'N/A'}</td>
+          `;
+          directResultsBody.appendChild(tr);
+        });
+      }
+      directResultsTable.classList.remove("hidden");
+      return;
+    } catch (error) {
+      console.error(`Attempt ${i + 1} failed:`, error);
+      if (i === retries - 1) {
+        notification.innerText = "Lỗi khi tải kết quả kiểm tra trực tiếp. Vui lòng kiểm tra kết nối và thử lại.";
+      }
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+}
+
+async function joinDirectTest(quizId, remainingTime, startTime) {
+  try {
+    const res = await fetch("/select-quiz", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ quizId }),
+    });
+    const result = await res.json();
+    if (res.ok) {
+      isAdminControlled = true;
+      initialTimeLimit = remainingTime; // Lưu thời gian ban đầu
+      timeLeft = remainingTime;
+      selectedQuizId = quizId;
+      hideAllScreens();
+      quizContainer.classList.remove("hidden");
+      timerDisplay.classList.remove("hidden");
+      audio.classList.remove("hidden");
+
+      const savedAnswers = localStorage.getItem("userAnswers");
+      userAnswers = savedAnswers ? JSON.parse(savedAnswers) : {};
+
+      if (userAnswers) {
+        Object.keys(userAnswers).forEach(questionId => {
+          const radio = document.querySelector(`input[name="${questionId}"][value="${userAnswers[questionId]}"]`);
+          if (radio) radio.checked = true;
+        });
+      }
+
+      localStorage.setItem("selectedQuizId", quizId);
+      localStorage.setItem("currentScreen", "quiz-container");
+      localStorage.setItem("timeLeft", remainingTime);
+
+      await loadAudio(1);
+      await loadImages(1);
+      startTimer();
+      updateProgressBar(); // Cập nhật thanh tiến trình ngay khi tham gia
+      currentQuizPart = 1;
+      downloadNotice.classList.add("hidden");
+      notification.innerText = "Đã tham gia kiểm tra trực tiếp!";
+      
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: "joinDirectTest", username: user.name }));
+      }
+    } else {
+      notification.innerText = result.message;
+    }
+  } catch (error) {
+    console.error("Error joining direct test:", error);
+    notification.innerText = "Lỗi khi tham gia kiểm tra trực tiếp.";
+  }
+}
+
+
+// --- LOGIC ĐỀ THI TOEIC ---
 function generateQuizQuestions() {
     // Đây chính là đoạn code bị xóa ở trên, giờ được đặt trong hàm
     let questionIndex = 1;
@@ -1086,198 +1104,58 @@ async function startQuiz(quizId) {
     }
 }
 
-async function loadAudio(part) {
-    if (part > 4) {
-        audio.classList.add("hidden");
-        audio.pause();
-        audio.currentTime = 0;
+async function submitQuiz() {
+    audio.pause();
+
+    if (!user || !user.name) {
+        notification.innerText = "Lỗi: Vui lòng nhập tên lại.";
+        showWelcomeScreen();
         return;
     }
+
+    const formData = new FormData(quizForm);
+    userAnswers = {};
+    formData.forEach((val, key) => (userAnswers[key] = val));
+
     try {
-        audio.classList.remove("hidden");
-        // THAY ĐỔI: Gửi kèm quizId khi yêu cầu file audio
         const currentQuizId = selectedQuizId || localStorage.getItem("selectedQuizId");
-        const audioRes = await fetch(`/quiz-audio?part=part${part}&quizId=${currentQuizId}`);
-        const data = await audioRes.json();
-        if (data.audio) {
-            audioSource.src = data.audio;
-            audio.load();
-        } else {
-            notification.innerText = `Không tìm thấy file nghe cho Part ${part}!`;
-            // Ẩn player nếu không có audio
-            audio.classList.add("hidden");
+        const res = await fetch("/submit", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username: user.name, answers: userAnswers, quizId: currentQuizId }),
+        });
+
+        if (!res.ok) {
+            const errorData = await res.json().catch(() => ({}));
+            throw new Error(errorData.message || `Lỗi server: ${res.status}`);
         }
-    } catch (audioError) {
-        console.error("Error loading audio:", audioError);
-        notification.innerText = `Lỗi khi tải file nghe cho Part ${part}!`;
+
+        const result = await res.json();
+        
+        // LẤY VÀ LƯU LẠI ANSWER KEY ĐỂ DÙNG CHO MÀN HÌNH XEM LẠI
+        const answerRes = await fetch(`/answer-key?quizId=${currentQuizId}`);
+        answerKey = await answerRes.json();
+        
+        resultScore.innerText = `Điểm: ${result.score}/200`;
+        resultTime.innerText = `Thời gian nộp: ${new Date().toLocaleString()}`;
+        
+        quizForm.querySelector("button[type=submit]").disabled = true;
+        clearInterval(timerInterval);
+        
+        if (isAdminControlled && socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({ type: "submitted", username: user.name }));
+        }
+
+        localStorage.setItem("userAnswers", JSON.stringify(userAnswers));
+        localStorage.removeItem("currentScreen");
+        localStorage.removeItem("timeLeft");
+        
+        showResultScreen();
+
+    } catch (error) {
+        console.error("Error submitting quiz:", error);
+        notification.innerText = "Lỗi khi nộp bài. Đáp án của bạn vẫn được lưu. Vui lòng thử lại.";
     }
-}
-
-const createQuestion = (id, num, part) => {
-  const div = document.createElement("div");
-  div.className = "question-block";
-  div.innerHTML = `
-    <p class="question-text font-semibold">Câu ${num} (Part ${part})</p>
-    <div class="answer-options">
-      <label class="answer-item">
-        <input type="radio" name="${id}" value="A" />
-        <span>A</span>
-      </label>
-      <label class="answer-item">
-        <input type="radio" name="${id}" value="B" />
-        <span>B</span>
-      </label>
-      <label class="answer-item">
-        <input type="radio" name="${id}" value="C" />
-        <span>C</span>
-      </label>
-      <label class="answer-item">
-        <input type="radio" name="${id}" value="D" />
-        <span>D</span>
-      </label>
-    </div>
-  `;
-
-  const radios = div.querySelectorAll(`input[name="${id}"]`);
-  radios.forEach(radio => {
-    radio.addEventListener("change", () => {
-      if (!userAnswers) {
-        userAnswers = {};
-      }
-      userAnswers[id] = radio.value;
-      saveUserAnswers();
-    });
-  });
-
-  return div;
-};
-
-const parts = [
-  { id: "section1", count: 6, part: 1 },
-  { id: "section2", count: 25, part: 2 },
-  { id: "section3", count: 39, part: 3 },
-  { id: "section4", count: 30, part: 4 },
-  { id: "section5", count: 30, part: 5 },
-  { id: "section6", count: 16, part: 6 },
-  { id: "section7", count: 54, part: 7 },
-];
-let questionIndex = 1;
-parts.forEach(({ id, count, part }) => {
-  const section = document.getElementById(id);
-  for (let i = 1; i <= count; i++) {
-    section.appendChild(createQuestion(`q${questionIndex}`, questionIndex, part));
-    questionIndex++;
-  }
-});
-
-function startTimer() {
-  clearInterval(timerInterval);
-  timerInterval = setInterval(() => {
-    if (timeLeft <= 0) {
-      clearInterval(timerInterval);
-      submitQuiz();
-      return;
-    }
-    const minutes = Math.floor(timeLeft / 60);
-    const seconds = timeLeft % 60;
-    timerDisplay.innerText = `Còn: ${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
-    updateProgressBar(); // Cập nhật thanh tiến trình
-    timeLeft--;
-    localStorage.setItem("timeLeft", timeLeft);
-  }, 1000);
-}
-
-async function loadImages(part) {
-  try {
-    const res = await fetch(`/images?part=${part}`);
-    if (!res.ok) {
-      throw new Error(`HTTP error! Status: ${res.status}`);
-    }
-    let files = await res.json();
-    console.log(`Images/PDFs for Part ${part} (before sorting):`, files);
-
-    // Sort files based on numeric index in filename (e.g., partX_Y.extension)
-    files.sort((a, b) => {
-      const getIndex = (url) => {
-        const match = url.match(/part\d+_(\d+)\.(jpg|jpeg|png|pdf)/i);
-        return match ? parseInt(match[1]) : Infinity;
-      };
-      return getIndex(a) - getIndex(b);
-    });
-    console.log(`Images/PDFs for Part ${part} (after sorting):`, files);
-
-    imageDisplay.innerHTML = `<h3 class="text-lg font-semibold mb-2">Part ${part}</h3>`;
-    if (files.length === 0) {
-      imageDisplay.innerHTML += `<p>Không có ảnh hoặc PDF cho Part ${part}</p>`;
-      return;
-    }
-
-    files.forEach((url, index) => {
-      const isPDF = url.endsWith('.pdf');
-      if (isPDF) {
-        const pdfContainer = document.createElement("div");
-        pdfContainer.className = "pdf-container mb-4";
-        pdfContainer.innerHTML = `
-          <div class="pdf-toolbar mb-2 flex space-x-2">
-            <button onclick="zoomPDF('pdf-${part}-${index}', 1.2)" class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">Phóng to</button>
-            <button onclick="zoomPDF('pdf-${part}-${index}', 0.8)" class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">Thu nhỏ</button>
-            <button onclick="zoomPDF('pdf-${part}-${index}', 1)" class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">Đặt lại</button>
-          </div>
-          <iframe id="pdf-${part}-${index}" src="${url}" class="w-full h-[90vh] rounded" style="transform: scale(1); transform-origin: top left;"></iframe>
-        `;
-        imageDisplay.appendChild(pdfContainer);
-      } else {
-        const img = document.createElement("img");
-        img.src = url;
-        img.className = "w-full max-w-[1600px] max-h-[90vh] mb-4 rounded";
-        img.onerror = () => {
-          console.error(`Failed to load image: ${url}`);
-          notification.innerText = `Lỗi khi tải ảnh: ${url}`;
-        };
-        img.onload = () => {
-          console.log(`Image loaded successfully: ${url}`);
-        };
-        imageDisplay.appendChild(img);
-      }
-    });
-  } catch (error) {
-    console.error("Error loading images:", error);
-    notification.innerText = `Lỗi khi tải ảnh hoặc PDF cho Part ${part}.`;
-  }
-}
-
-function showCreateQuizChoice() {
-    document.getElementById('create-quiz-choice-modal').classList.remove('hidden');
-}
-
-function showToeicQuizCreator() {
-    document.getElementById('create-quiz-choice-modal').classList.add('hidden');
-    hideAllScreens();
-    document.getElementById("admin-step-create-quiz").classList.remove("hidden");
-}
-
-function nextQuizPart(current) {
-    audio.pause(); // THÊM DÒNG NÀY
-    const nextPart = findNextVisiblePart(current, studentPartVisibility);
-    if (nextPart === null) return;
-
-    document.getElementById(`quiz-part${current}`).classList.add("hidden");
-    document.getElementById(`quiz-part${nextPart}`).classList.remove("hidden");
-    currentQuizPart = nextPart;
-    loadAudio(nextPart);
-    updateQuizNavigation(currentQuizPart, studentPartVisibility);
-}
-
-function prevQuizPart(current) {
-    audio.pause(); // THÊM DÒNG NÀY
-    const prevPart = findPrevVisiblePart(current, studentPartVisibility);
-    if (prevPart === null) return;
-
-    document.getElementById(`quiz-part${current}`).classList.add("hidden");
-    document.getElementById(`quiz-part${prevPart}`).classList.remove("hidden");
-    currentQuizPart = prevPart;
-    loadAudio(prevPart);
-    updateQuizNavigation(currentQuizPart, studentPartVisibility);
 }
 
 async function saveQuiz() {
@@ -1379,406 +1257,423 @@ async function saveQuiz() {
     }
 }
 
-function nextAdminStep(step) {
-  let notificationElement;
-
-  if (step === 1) {
-    notificationElement = document.getElementById("notification-audio");
-    const quizName = document.getElementById("quiz-name").value.trim();
-    if (!quizName) {
-      notificationElement.innerText = "Vui lòng nhập tên đề thi!";
-      return;
-    }
-    const audioFiles = [
-      document.getElementById("audio-file-part1").files[0],
-      document.getElementById("audio-file-part2").files[0],
-      document.getElementById("audio-file-part3").files[0],
-      document.getElementById("audio-file-part4").files[0],
-    ];
-    for (let i = 0; i < audioFiles.length; i++) {
-      if (!audioFiles[i]) {
-        notificationElement.innerText = `Vui lòng tải file nghe cho Part ${i + 1}!`;
+async function loadAudio(part) {
+    if (part > 4) {
+        audio.classList.add("hidden");
+        audio.pause();
+        audio.currentTime = 0;
         return;
-      }
     }
-    hideAllScreens();
-    document.getElementById("admin-step-part1").classList.remove("hidden");
-    notificationElement.innerText = "";
-    currentAdminStep = step;
-    saveAdminState();
-    return;
-  }
-
-  if (step >= 2 && step <= 7) {
-    const part = step - 1;
-    notificationElement = document.getElementById(`notification-part${part}`);
-    const imagesInput = document.getElementById(`images-part${part}`);
-    if (!imagesInput.files.length) {
-      notificationElement.innerText = `Vui lòng tải ít nhất một ảnh cho Part ${part}!`;
-      return;
+    try {
+        audio.classList.remove("hidden");
+        // THAY ĐỔI: Gửi kèm quizId khi yêu cầu file audio
+        const currentQuizId = selectedQuizId || localStorage.getItem("selectedQuizId");
+        const audioRes = await fetch(`/quiz-audio?part=part${part}&quizId=${currentQuizId}`);
+        const data = await audioRes.json();
+        if (data.audio) {
+            audioSource.src = data.audio;
+            audio.load();
+        } else {
+            notification.innerText = `Không tìm thấy file nghe cho Part ${part}!`;
+            // Ẩn player nếu không có audio
+            audio.classList.add("hidden");
+        }
+    } catch (audioError) {
+        console.error("Error loading audio:", audioError);
+        notification.innerText = `Lỗi khi tải file nghe cho Part ${part}!`;
     }
-    for (let file of imagesInput.files) {
-      const validExtension = file.name.match(/\.(jpg|jpeg|png|pdf)$/i);
-      if (!validExtension) {
-        notificationElement.innerText = `File không hợp lệ cho Part ${part}: ${file.name}. Chỉ hỗ trợ jpg, jpeg, png, pdf.`;
-        return;
-      }
-    }
-    const answerKeyInput = document.getElementById(`answer-key-part${part}`).value.trim();
-    if (!answerKeyInput) {
-      notificationElement.innerText = `Vui lòng nhập đáp án cho Part ${part}!`;
-      return;
-    }
-    const answers = answerKeyInput.split(",").map(a => a.trim().toUpperCase());
-    const expectedCount = partAnswerCounts[part - 1];
-    if (answers.length !== expectedCount) {
-      notificationElement.innerText = `Đã nhập ${answers.length} đáp án, yêu cầu đúng ${expectedCount} đáp án cho Part ${part}!`;
-      return;
-    }
-    if (!answers.every(a => ["A", "B", "C", "D"].includes(a))) {
-      notificationElement.innerText = `Đáp án Part ${part} chỉ được chứa A, B, C, D!`;
-      return;
-    }
-  }
-
-  hideAllScreens();
-  document.getElementById(`admin-step-part${step}`).classList.remove("hidden");
-  notificationElement.innerText = "";
-  currentAdminStep = step;
-  saveAdminState();
 }
 
-function prevAdminStep(step) {
-  hideAllScreens();
-  let notificationElement;
-  if (step === 1) {
-    document.getElementById("admin-step-audio").classList.remove("hidden");
-    notificationElement = document.getElementById("notification-audio");
-  } else {
-    document.getElementById(`admin-step-part${step - 1}`).classList.remove("hidden");
-    notificationElement = document.getElementById(`notification-part${step - 1}`);
+async function loadImages(part) {
+  try {
+    const res = await fetch(`/images?part=${part}`);
+    if (!res.ok) {
+      throw new Error(`HTTP error! Status: ${res.status}`);
+    }
+    let files = await res.json();
+    console.log(`Images/PDFs for Part ${part} (before sorting):`, files);
+
+    // Sort files based on numeric index in filename (e.g., partX_Y.extension)
+    files.sort((a, b) => {
+      const getIndex = (url) => {
+        const match = url.match(/part\d+_(\d+)\.(jpg|jpeg|png|pdf)/i);
+        return match ? parseInt(match[1]) : Infinity;
+      };
+      return getIndex(a) - getIndex(b);
+    });
+    console.log(`Images/PDFs for Part ${part} (after sorting):`, files);
+
+    imageDisplay.innerHTML = `<h3 class="text-lg font-semibold mb-2">Part ${part}</h3>`;
+    if (files.length === 0) {
+      imageDisplay.innerHTML += `<p>Không có ảnh hoặc PDF cho Part ${part}</p>`;
+      return;
+    }
+
+    files.forEach((url, index) => {
+      const isPDF = url.endsWith('.pdf');
+      if (isPDF) {
+        const pdfContainer = document.createElement("div");
+        pdfContainer.className = "pdf-container mb-4";
+        pdfContainer.innerHTML = `
+          <div class="pdf-toolbar mb-2 flex space-x-2">
+            <button onclick="zoomPDF('pdf-${part}-${index}', 1.2)" class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">Phóng to</button>
+            <button onclick="zoomPDF('pdf-${part}-${index}', 0.8)" class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">Thu nhỏ</button>
+            <button onclick="zoomPDF('pdf-${part}-${index}', 1)" class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">Đặt lại</button>
+          </div>
+          <iframe id="pdf-${part}-${index}" src="${url}" class="w-full h-[90vh] rounded" style="transform: scale(1); transform-origin: top left;"></iframe>
+        `;
+        imageDisplay.appendChild(pdfContainer);
+      } else {
+        const img = document.createElement("img");
+        img.src = url;
+        img.className = "w-full max-w-[1600px] max-h-[90vh] mb-4 rounded";
+        img.onerror = () => {
+          console.error(`Failed to load image: ${url}`);
+          notification.innerText = `Lỗi khi tải ảnh: ${url}`;
+        };
+        img.onload = () => {
+          console.log(`Image loaded successfully: ${url}`);
+        };
+        imageDisplay.appendChild(img);
+      }
+    });
+  } catch (error) {
+    console.error("Error loading images:", error);
+    notification.innerText = `Lỗi khi tải ảnh hoặc PDF cho Part ${part}.`;
   }
-  notificationElement.innerText = "";
-  currentAdminStep = step - 1;
-  saveAdminState();
 }
 
-async function submitQuiz() {
-    audio.pause();
+const createQuestion = (id, num, part) => {
+  const div = document.createElement("div");
+  div.className = "question-block";
+  div.innerHTML = `
+    <p class="question-text font-semibold">Câu ${num} (Part ${part})</p>
+    <div class="answer-options">
+      <label class="answer-item">
+        <input type="radio" name="${id}" value="A" />
+        <span>A</span>
+      </label>
+      <label class="answer-item">
+        <input type="radio" name="${id}" value="B" />
+        <span>B</span>
+      </label>
+      <label class="answer-item">
+        <input type="radio" name="${id}" value="C" />
+        <span>C</span>
+      </label>
+      <label class="answer-item">
+        <input type="radio" name="${id}" value="D" />
+        <span>D</span>
+      </label>
+    </div>
+  `;
 
-    if (!user || !user.name) {
-        notification.innerText = "Lỗi: Vui lòng nhập tên lại.";
+  const radios = div.querySelectorAll(`input[name="${id}"]`);
+  radios.forEach(radio => {
+    radio.addEventListener("change", () => {
+      if (!userAnswers) {
+        userAnswers = {};
+      }
+      userAnswers[id] = radio.value;
+      saveUserAnswers();
+    });
+  });
+
+  return div;
+};
+
+function nextQuizPart(current) {
+    audio.pause(); // THÊM DÒNG NÀY
+    const nextPart = findNextVisiblePart(current, studentPartVisibility);
+    if (nextPart === null) return;
+
+    document.getElementById(`quiz-part${current}`).classList.add("hidden");
+    document.getElementById(`quiz-part${nextPart}`).classList.remove("hidden");
+    currentQuizPart = nextPart;
+    loadAudio(nextPart);
+    updateQuizNavigation(currentQuizPart, studentPartVisibility);
+}
+
+function prevQuizPart(current) {
+    audio.pause(); // THÊM DÒNG NÀY
+    const prevPart = findPrevVisiblePart(current, studentPartVisibility);
+    if (prevPart === null) return;
+
+    document.getElementById(`quiz-part${current}`).classList.add("hidden");
+    document.getElementById(`quiz-part${prevPart}`).classList.remove("hidden");
+    currentQuizPart = prevPart;
+    loadAudio(prevPart);
+    updateQuizNavigation(currentQuizPart, studentPartVisibility);
+}
+
+function updateQuizNavigation(current, visibility) {
+    const prevBtn = document.getElementById('prev-button');
+    const nextBtn = document.getElementById('next-button');
+    if (!prevBtn || !nextBtn) return;
+    const nextVisible = findNextVisiblePart(current, visibility);
+    const prevVisible = findPrevVisiblePart(current, visibility);
+    prevBtn.disabled = !prevVisible;
+    nextBtn.disabled = !nextVisible;
+}
+
+// --- LOGIC ĐỀ THI TÙY CHỈNH ---
+function addListeningRange() {
+    const container = document.getElementById('listening-ranges-container');
+    const rangeId = Date.now(); // Tạo ID duy nhất cho mỗi dòng
+    const newRangeDiv = document.createElement('div');
+    newRangeDiv.className = 'flex items-center space-x-2 p-2 border-t';
+    newRangeDiv.id = `range-${rangeId}`;
+    newRangeDiv.innerHTML = `
+        <label>Từ câu:</label>
+        <input type="number" class="w-20 border p-1 rounded from-question" min="1">
+        <label>Đến câu:</label>
+        <input type="number" class="w-20 border p-1 rounded to-question" min="1">
+        <label>File nghe:</label>
+        <input type="file" class="audio-file" accept="audio/*">
+        <button type="button" onclick="document.getElementById('range-${rangeId}').remove()" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Xóa</button>
+    `;
+    container.appendChild(newRangeDiv);
+}
+
+async function saveCustomQuiz() {
+    const notificationElement = document.getElementById('custom-notification');
+    const modal = document.getElementById('loading-modal');
+    notificationElement.innerText = '';
+
+    const quizName = document.getElementById('custom-quiz-name').value.trim();
+    const totalQuestions = parseInt(document.getElementById('custom-total-questions').value);
+    const pdfFile = document.getElementById('custom-quiz-pdf').files[0];
+    const answerKeyInput = document.getElementById('custom-answer-key').value.trim();
+
+    // --- Validation ---
+    if (!quizName || !totalQuestions || !pdfFile || !answerKeyInput) {
+        notificationElement.innerText = 'Vui lòng điền đầy đủ Tên, Số câu, File PDF và Đáp án.';
+        return;
+    }
+    const answers = answerKeyInput.split(',');
+    if (answers.length !== totalQuestions) {
+        notificationElement.innerText = `Số lượng đáp án (${answers.length}) không khớp với tổng số câu (${totalQuestions}).`;
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('quizType', 'custom'); // Đánh dấu đây là đề tùy chỉnh
+    formData.append('quizName', quizName);
+    formData.append('totalQuestions', totalQuestions);
+    formData.append('pdfFile', pdfFile);
+    formData.append('answerKey', answerKeyInput);
+    formData.append('createdBy', user.email);
+
+    const listeningRanges = [];
+    const rangeDivs = document.querySelectorAll('#listening-ranges-container > div');
+    for (let i = 0; i < rangeDivs.length; i++) {
+        const div = rangeDivs[i];
+        const from = div.querySelector('.from-question').value;
+        const to = div.querySelector('.to-question').value;
+        const audioFile = div.querySelector('.audio-file').files[0];
+        if (!from || !to || !audioFile) {
+            notificationElement.innerText = `Vui lòng điền đầy đủ thông tin và file nghe cho tất cả các khoảng nghe.`;
+            return;
+        }
+        const rangeData = { from: parseInt(from), to: parseInt(to) };
+        listeningRanges.push(rangeData);
+        formData.append(`audio_file_${i}`, audioFile);
+    }
+    formData.append('listeningRanges', JSON.stringify(listeningRanges));
+
+    modal.classList.remove('hidden');
+
+    try {
+        const res = await fetch('/save-quiz', { method: 'POST', body: formData });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.message);
+        backToQuizList();
+        setTimeout(() => { notification.innerText = "Tạo đề thi tùy chỉnh thành công!"; }, 100);
+    } catch (error) {
+        notificationElement.innerText = `Lỗi: ${error.message}`;
+    } finally {
+        modal.classList.add('hidden');
+    }
+}
+
+async function startCustomQuiz(quizId) {
+    try {
+        const res = await fetch(`/get-quiz?quizId=${quizId}`);
+        if (!res.ok) throw new Error("Không thể tải thông tin đề thi.");
+        
+        currentCustomQuizData = await res.json();
+        
+        hideAllScreens();
+        document.getElementById('custom-quiz-container').classList.remove('hidden');
+        
+        // Setup giao diện làm bài
+        document.getElementById('custom-quiz-title').innerText = currentCustomQuizData.quizName;
+        await loadQuizPdf(currentCustomQuizData.quizPdfUrl, 'custom-image-display');
+        createCustomQuestionElements(currentCustomQuizData.totalQuestions);
+        setupCustomAudioPlayer(currentCustomQuizData.listeningRanges);
+        
+        // Setup timer (lấy từ hàm assignQuiz - cần cập nhật server)
+        timeLeft = currentCustomQuizData.timeLimit || 7200; 
+        startTimer();
+
+    } catch (error) {
+        notification.innerText = error.message;
+    }
+}
+
+function createCustomQuestionElements(totalQuestions) {
+    const container = document.getElementById('custom-question-list');
+    container.innerHTML = '';
+    for (let i = 1; i <= totalQuestions; i++) {
+        const questionDiv = createQuestion(`custom_q${i}`, i, ''); // Dùng lại hàm createQuestion cũ
+        questionDiv.dataset.questionNumber = i; // Đánh dấu số câu
+        container.appendChild(questionDiv);
+    }
+}
+
+function setupCustomAudioPlayer(listeningRanges) {
+    const questionList = document.getElementById('custom-question-list');
+    const audioPlayer = document.getElementById('custom-audio-player');
+    const audioSource = document.getElementById('custom-audio-source');
+
+    if (!listeningRanges || listeningRanges.length === 0) {
+        audioPlayer.classList.add('hidden');
+        return;
+    }
+
+    // Theo dõi vị trí cuộn của người dùng
+    questionList.addEventListener('scroll', () => {
+        const questions = questionList.querySelectorAll('[data-question-number]');
+        let activeRange = null;
+
+        // Tìm xem câu hỏi đang hiển thị trên màn hình thuộc khoảng nghe nào
+        for (const q of questions) {
+            const rect = q.getBoundingClientRect();
+            if (rect.top >= 0 && rect.top < window.innerHeight / 2) {
+                const qNum = parseInt(q.dataset.questionNumber);
+                activeRange = listeningRanges.find(r => qNum >= r.from && qNum <= r.to);
+                break;
+            }
+        }
+
+        if (activeRange) {
+            // Nếu audio source chưa đúng, thay đổi nó
+            if (audioSource.src.includes(activeRange.audioUrl) === false) {
+                audioSource.src = activeRange.audioUrl;
+                audioPlayer.load();
+                audioPlayer.play();
+            }
+            audioPlayer.classList.remove('hidden');
+        } else {
+            // Nếu không nằm trong khoảng nghe, ẩn và dừng audio
+            audioPlayer.classList.add('hidden');
+            audioPlayer.pause();
+        }
+    });
+}
+
+async function submitCustomQuiz() {
+    audio.pause(); // Dừng âm thanh nếu có
+    clearInterval(timerInterval); // Dừng đồng hồ
+
+    if (!user || !user.name || !currentCustomQuizData) {
+        notification.innerText = "Lỗi: Mất thông tin người dùng hoặc đề thi.";
         showWelcomeScreen();
         return;
     }
 
-    const formData = new FormData(quizForm);
-    userAnswers = {};
+    const formData = new FormData(document.getElementById('custom-quiz-form-student'));
+    const userAnswers = {};
     formData.forEach((val, key) => (userAnswers[key] = val));
 
     try {
-        const currentQuizId = selectedQuizId || localStorage.getItem("selectedQuizId");
-        const res = await fetch("/submit", {
+        const res = await fetch("/submit-custom", { // <-- Sử dụng một endpoint mới
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username: user.name, answers: userAnswers, quizId: currentQuizId }),
+            body: JSON.stringify({
+                username: user.name,
+                answers: userAnswers,
+                quizId: currentCustomQuizData.quizId
+            }),
         });
 
         if (!res.ok) {
-            const errorData = await res.json().catch(() => ({}));
-            throw new Error(errorData.message || `Lỗi server: ${res.status}`);
+            const errorData = await res.json();
+            throw new Error(errorData.message || 'Lỗi server');
         }
 
         const result = await res.json();
-        
-        // LẤY VÀ LƯU LẠI ANSWER KEY ĐỂ DÙNG CHO MÀN HÌNH XEM LẠI
-        const answerRes = await fetch(`/answer-key?quizId=${currentQuizId}`);
-        answerKey = await answerRes.json();
-        
-        resultScore.innerText = `Điểm: ${result.score}/200`;
+
+        // Hiển thị màn hình kết quả chỉ với điểm số
+        hideAllScreens();
+        resultScreen.classList.remove("hidden");
+        resultScore.innerText = `Điểm: ${result.score}/${currentCustomQuizData.totalQuestions}`;
         resultTime.innerText = `Thời gian nộp: ${new Date().toLocaleString()}`;
         
-        quizForm.querySelector("button[type=submit]").disabled = true;
-        clearInterval(timerInterval);
-        
-        if (isAdminControlled && socket && socket.readyState === WebSocket.OPEN) {
-            socket.send(JSON.stringify({ type: "submitted", username: user.name }));
-        }
+        // Vô hiệu hóa nút xem đáp án cho đề tùy chỉnh
+        const reviewButton = resultScreen.querySelector('button[onclick="showReviewAnswers()"]');
+        if(reviewButton) reviewButton.classList.add('hidden');
 
-        localStorage.setItem("userAnswers", JSON.stringify(userAnswers));
-        localStorage.removeItem("currentScreen");
-        localStorage.removeItem("timeLeft");
-        
-        showResultScreen();
 
     } catch (error) {
-        console.error("Error submitting quiz:", error);
-        notification.innerText = "Lỗi khi nộp bài. Đáp án của bạn vẫn được lưu. Vui lòng thử lại.";
+        console.error("Error submitting custom quiz:", error);
+        notification.innerText = `Lỗi khi nộp bài: ${error.message}.`;
     }
 }
 
-async function fetchDirectResults() {
-  const retries = 3;
-  const delay = 2000;
-  for (let i = 0; i < retries; i++) {
-    try {
-      const res = await fetch("/direct-results");
-      if (!res.ok) {
-        throw new Error(`HTTP error! Status: ${res.status}`);
-      }
-      const results = await res.json();
-      directResultsBody.innerHTML = "";
-      if (results.length === 0) {
-        directResultsBody.innerHTML = "<tr><td colspan='3' class='border p-2 text-center'>Chưa có kết quả nào.</td></tr>";
-      } else {
-        results.forEach(result => {
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td class="border p-2">${result.username || 'Unknown'}</td>
-            <td class="border p-2">${result.score || 0}</td>
-            <td class="border p-2">${result.submittedAt ? new Date(result.submittedAt).toLocaleString() : 'N/A'}</td>
-          `;
-          directResultsBody.appendChild(tr);
-        });
-      }
-      directResultsTable.classList.remove("hidden");
-      return;
-    } catch (error) {
-      console.error(`Attempt ${i + 1} failed:`, error);
-      if (i === retries - 1) {
-        notification.innerText = "Lỗi khi tải kết quả kiểm tra trực tiếp. Vui lòng kiểm tra kết nối và thử lại.";
-      }
-      await new Promise(resolve => setTimeout(resolve, delay));
-    }
-  }
-}
-
-async function loadQuizPdf(pdfUrl, displayDivId) {
-    const displayElement = document.getElementById(displayDivId);
-    if (!displayElement) {
-        console.error(`Display element with ID '${displayDivId}' not found.`);
-        return;
-    }
-
-    if (!pdfUrl) {
-        displayElement.innerHTML = `<p class="p-4">Không có file PDF nào cho đề thi này.</p>`;
-        return;
-    }
-    
-    // Tạo ID duy nhất cho iframe để các nút zoom hoạt động chính xác
-    const iframeId = `${displayDivId}-iframe`;
-
-    displayElement.innerHTML = `
-        <div class="pdf-toolbar mb-2 flex space-x-2 p-2 bg-gray-100 dark:bg-gray-800 rounded">
-            <button onclick="zoomPDF('${iframeId}', 1.2)" class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">Phóng to</button>
-            <button onclick="zoomPDF('${iframeId}', 0.8)" class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">Thu nhỏ</button>
-            <button onclick="zoomPDF('${iframeId}', 1)" class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">Đặt lại</button>
-        </div>
-        <iframe id="${iframeId}" src="${pdfUrl}" class="w-full h-[85vh] rounded" style="transform: scale(1); transform-origin: top left;"></iframe>
-    `;
-}
-
-function saveUserAnswers() {
-  if (!userAnswers) {
-    userAnswers = {};
-  }
-  try {
-    localStorage.setItem("userAnswers", JSON.stringify(userAnswers));
-    console.log("User answers saved:", userAnswers);
-  } catch (error) {
-    console.error("Error saving user answers to localStorage:", error);
-    notification.innerText = "Lỗi khi lưu đáp án. Vui lòng thử lại.";
-  }
-}
-
-function clearUserAnswers() {
-  localStorage.removeItem("userAnswers");
-  userAnswers = null;
-}
-
-function handleWebSocketMessage(event) {
-    try {
-        if (!event.data) { return; }
-        const message = JSON.parse(event.data);
-
-        const safeUpdateText = (element, text) => {
-            if (element) {
-                element.innerText = text;
-            }
-        };
-
-        if (message.type === "participantUpdate") {
-            const count = message.count || 0;
-            safeUpdateText(participantCount, `Số người tham gia: ${count}`);
-            safeUpdateText(directParticipantCount, `Số người tham gia: ${count}`);
-
-            const container = document.getElementById('participant-list-container');
-            const list = document.getElementById('participant-list');
-            const listCount = document.getElementById('participant-list-count');
-            
-            // THAY ĐỔI: Thêm điều kiện kiểm tra màn hình hiện tại
-            if (isAdmin && !quizListScreen.classList.contains('hidden') && container && list && listCount) {
-                container.classList.remove('hidden');
-                listCount.innerText = count;
-                list.innerHTML = '';
-                if (participants.length > 0) {
-                    participants.forEach(name => {
-                        const li = document.createElement('li');
-                        li.textContent = name;
-                        list.appendChild(li);
-                    });
-                } else {
-                    list.innerHTML = '<li>Chưa có học sinh nào tham gia.</li>';
-                }
-            } else if(container) {
-                // Nếu không phải admin hoặc không ở đúng màn hình thì ẩn đi
-                container.classList.add('hidden');
-            }
-        } 
-        else if (message.type === "quizAssigned") {
-            if (!isAdmin) {
-                loadQuizzes();
-            }
-        } 
-        else if (message.type === "submitted" || message.type === "submittedCount") {
-            const count = message.count !== undefined ? message.count : 0;
-            safeUpdateText(submittedCount, `Số bài đã nộp: ${count}`);
-            safeUpdateText(directSubmittedCount, `Số bài đã nộp: ${count}`);
-            
-            if (isAdmin && message.results) {
-                resultsBody.innerHTML = "";
-                message.results.forEach(result => {
-                    const tr = document.createElement("tr");
-                    tr.innerHTML = `
-                        <td class="border p-2">${result.username || 'Unknown'}</td>
-                        <td class="border p-2">${result.score || 0}</td>
-                        <td class="border p-2">${new Date(result.submittedAt).toLocaleString() || 'N/A'}</td>
-                    `;
-                    resultsBody.appendChild(tr);
-                });
-                resultsTable.classList.remove("hidden");
-            }
-        } 
-        else if (message.type === "start") {
-            isAdminControlled = true;
-            initialTimeLimit = message.timeLimit || 7200;
-            timeLeft = message.timeLimit || 7200;
-            const visibility = message.partVisibility;
-            const pdfUrl = message.quizPdfUrl;
-
-            localStorage.setItem("directTestState", JSON.stringify({
-                isDirectTestMode: true,
-                quizId: message.quizId,
-                timeLimit: message.timeLimit,
-                startTime: message.startTime,
-            }));
-
-            if (!isAdmin) {
-                hideAllScreens();
-                quizContainer.classList.remove("hidden");
-                timerDisplay.classList.remove("hidden");
-                audio.classList.remove("hidden");
-                
-                selectedQuizId = message.quizId;
-                localStorage.setItem("selectedQuizId", message.quizId);
-                localStorage.setItem("currentScreen", "quiz-container");
-                localStorage.setItem("timeLeft", timeLeft);
-                
-                loadQuizPdf(pdfUrl, 'image-display');
-                
-                applyPartVisibility(visibility);
-                const firstVisiblePart = findFirstVisiblePart(visibility) || 1;
-
-                loadAudio(firstVisiblePart);
-                startTimer();
-                updateProgressBar();
-                currentQuizPart = firstVisiblePart;
-                updateQuizNavigation(currentQuizPart, studentPartVisibility);
-
-                downloadNotice.classList.add("hidden");
-                notification.innerText = "Bài thi đã bắt đầu!";
-            }
-        } 
-        else if (message.type === "end") {
-            isTestEnded = true;
-            localStorage.removeItem("directTestState");
-            clearInterval(timerInterval);
-            if (!isAdmin) {
-                submitQuiz();
-                notification.innerText = "Bài thi đã kết thúc!";
-            } else {
-                fetchDirectResults();
-            }
-        } 
-        else if (message.type === "quizStatus") {
-            const statusText = message.quizId ? `Đề thi hiện tại: ${message.quizName}` : "Chưa có đề thi được chọn.";
-            safeUpdateText(quizStatus, statusText);
-            if (!isAdmin) {
-                loadQuizzes();
-            }
-        } 
-        else if (message.type === "error") {
-            notification.innerText = message.message;
-        }
-    } catch (error) {
-        console.error("Error handling WebSocket message:", error);
-        // Tìm một nơi an toàn để hiển thị lỗi, ví dụ như quiz-list-notification
-        const notificationElement = document.getElementById('quiz-list-notification');
-        if(notificationElement) {
-            notificationElement.innerText = "Lỗi khi xử lý thông tin từ server.";
-        }
-    }
-}
-
+// --- XEM LẠI BÀI & TIỆN ÍCH ---
 async function showReviewAnswers() {
-    try {
-        const reviewScreen = document.getElementById("review-answers");
-        if (!reviewScreen) {
-            console.error("Element with ID 'review-answers' not found in DOM");
-            return;
-        }
+  try {
+    const reviewScreen = document.getElementById("review-answers");
+    const notification = document.getElementById("notification"); // đảm bảo tồn tại
+    const downloadNotice = document.getElementById("download-notice");
+    const resultScore = document.getElementById("result-score");
+    const resultTime = document.getElementById("result-time");
 
-        // ---- THAY ĐỔI QUAN TRỌNG ----
-        // Lấy ID đề thi từ biến toàn cục, nếu không có thì lấy từ localStorage
-        const quizIdForReview = selectedQuizId || localStorage.getItem("selectedQuizId");
+    if (!reviewScreen) {
+      console.error("Element with ID 'review-answers' not found in DOM");
+      return;
+    }
 
-        if (!quizIdForReview) {
-            notification.innerText = "Lỗi: Không tìm thấy mã đề thi để xem lại đáp án.";
-            return;
-        }
-        // ---- KẾT THÚC THAY ĐỔI ----
+    // Lấy ID đề thi từ biến toàn cục hoặc localStorage
+    const quizIdForReview = window.selectedQuizId || localStorage.getItem("selectedQuizId");
+    if (!quizIdForReview) {
+      if (notification) notification.innerText = "Lỗi: Không tìm thấy mã đề thi để xem lại đáp án.";
+      return;
+    }
 
-        const quizRes = await fetch(`/get-quiz?quizId=${quizIdForReview}`);
-        const quizData = await quizRes.json();
-        
-        if (!quizData || !quizData.quizPdfUrl) {
-            notification.innerText = "Không tìm thấy thông tin đề thi để xem lại.";
-            return;
-        }
+    // Lấy thông tin đề thi
+    const quizRes = await fetch(`/get-quiz?quizId=${quizIdForReview}`);
+    const quizData = await quizRes.json();
+    if (!quizData || !quizData.quizPdfUrl) {
+      if (notification) notification.innerText = "Không tìm thấy thông tin đề thi để xem lại.";
+      return;
+    }
 
-        // Phần còn lại của hàm giữ nguyên như cũ để xử lý đáp án
-        if (!userAnswers) {
-            const savedAnswers = localStorage.getItem("userAnswers");
-            if (savedAnswers) userAnswers = JSON.parse(savedAnswers);
-        }
-        if (!answerKey) {
-            const answerRes = await fetch(`/answer-key?quizId=${quizIdForReview}`);
-            if (!answerRes.ok) throw new Error("Không thể lấy đáp án đúng");
-            answerKey = await answerRes.json();
-        }
-        if (!answerKey || !userAnswers) {
-            notification.innerText = "Lỗi: Không thể tải đáp án hoặc câu trả lời của bạn.";
-            return;
-        }
+    // Lấy đáp án người dùng
+    let userAnswers = JSON.parse(localStorage.getItem("userAnswers") || "{}");
 
-        hideAllScreens();
-        reviewScreen.classList.remove("hidden");
-        document.getElementById("review-score").innerText = resultScore.innerText;
-        document.getElementById("review-time").innerText = resultTime.innerText;
-        notification.innerText = "";
-        
-        await loadQuizPdf(quizData.quizPdfUrl, 'review-image-display');
-    currentReviewPart = 1;
+    // Lấy đáp án đúng
+    const answerRes = await fetch(`/answer-key?quizId=${quizIdForReview}`);
+    if (!answerRes.ok) throw new Error("Không thể lấy đáp án đúng");
+    const answerKey = await answerRes.json();
+
+    if (!userAnswers || !answerKey) {
+      if (notification) notification.innerText = "Lỗi: Không thể tải đáp án hoặc câu trả lời của bạn.";
+      return;
+    }
+
+    // Ẩn tất cả màn hình, hiển thị màn hình review
+    hideAllScreens();
+    reviewScreen.classList.remove("hidden");
+    if (resultScore) document.getElementById("review-score").innerText = resultScore.innerText;
+    if (resultTime) document.getElementById("review-time").innerText = resultTime.innerText;
+    if (notification) notification.innerText = "";
+
+    await loadQuizPdf(quizData.quizPdfUrl, 'review-image-display');
+
+    let currentReviewPart = 1;
+    let questionIndex = 1;
 
     const parts = [
       { id: "review-section1", count: 6, part: 1 },
@@ -1790,22 +1685,25 @@ async function showReviewAnswers() {
       { id: "review-section7", count: 54, part: 7 },
     ];
 
+    for (const partObj of parts) {
+      const section = document.getElementById(partObj.id);
+      if (!section) {
+        console.warn(`Section ${partObj.id} not found`);
+        continue;
+      }
       section.innerHTML = "";
+      const count = partObj.count;
+      const part = partObj.part;
+
       for (let i = 1; i <= count; i++) {
         const qId = `q${questionIndex}`;
         const userAnswer = userAnswers[qId] || "Chưa chọn";
         const correctAnswer = answerKey[qId] || "N/A";
-        const isCorrect = userAnswer === correctAnswer && userAnswer !== "Chưa chọn";
         let answerClass = "";
-        if (isCorrect) {
-          answerClass = "correct-answer";
-        } else if (userAnswer === "Chưa chọn") {
-          answerClass = "unselected-answer";
-        } else {
-          answerClass = "wrong-answer";
-        }
 
-        console.log(`Question ${qId}: User answer = ${userAnswer}, Correct answer = ${correctAnswer}, Class = ${answerClass}`);
+        if (userAnswer === correctAnswer && userAnswer !== "Chưa chọn") answerClass = "correct-answer";
+        else if (userAnswer === "Chưa chọn") answerClass = "unselected-answer";
+        else answerClass = "wrong-answer";
 
         const div = document.createElement("div");
         div.className = "question-block";
@@ -1821,19 +1719,16 @@ async function showReviewAnswers() {
         section.appendChild(div);
         questionIndex++;
       }
-    });
+    }
 
     const firstPart = document.getElementById("review-part1");
-    if (!firstPart) {
-      console.error("Element with ID 'review-part1' not found");
-      notification.innerText = "Lỗi: Không thể hiển thị phần đầu tiên.";
-      return;
-    }
-    firstPart.classList.remove("hidden");
-    downloadNotice.classList.add("hidden");
+    if (firstPart) firstPart.classList.remove("hidden");
+    if (downloadNotice) downloadNotice.classList.add("hidden");
+
   } catch (error) {
     console.error("Error showing review answers:", error);
-    notification.innerText = "Lỗi khi hiển thị đáp án. Vui lòng thử lại.";
+    const notification = document.getElementById("notification");
+    if (notification) notification.innerText = "Lỗi khi hiển thị đáp án. Vui lòng thử lại.";
   }
 }
 
@@ -1905,8 +1800,41 @@ async function loadReviewImages(part) {
   }
 }
 
+function startTimer() {
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      submitQuiz();
+      return;
+    }
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+    timerDisplay.innerText = `Còn: ${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+    updateProgressBar(); // Cập nhật thanh tiến trình
+    timeLeft--;
+    localStorage.setItem("timeLeft", timeLeft);
+  }, 1000);
+}
 
-// PDF Zoom Function
+function saveUserAnswers() {
+  if (!userAnswers) {
+    userAnswers = {};
+  }
+  try {
+    localStorage.setItem("userAnswers", JSON.stringify(userAnswers));
+    console.log("User answers saved:", userAnswers);
+  } catch (error) {
+    console.error("Error saving user answers to localStorage:", error);
+    notification.innerText = "Lỗi khi lưu đáp án. Vui lòng thử lại.";
+  }
+}
+
+function clearUserAnswers() {
+  localStorage.removeItem("userAnswers");
+  userAnswers = null;
+}
+
 function zoomPDF(iframeId, scaleFactor) {
   const iframe = document.getElementById(iframeId);
   if (!iframe) {
@@ -1921,105 +1849,100 @@ function zoomPDF(iframeId, scaleFactor) {
   iframe.style.transform = `scale(${newScale})`;
 }
 
-async function logout() {
-    try {
-        if (user && user.name && socket && socket.readyState === WebSocket.OPEN) {
-            socket.send(JSON.stringify({ type: "logout", username: user.name }));
-        }
-    } catch (error) {
-        console.error("Error during server logout notification:", error);
-    }
-    
-    stopHeartbeat();
-    
-    // XÓA TOÀN BỘ DỮ LIỆU CỦA TRANG WEB TRONG LOCALSTORAGE
-    localStorage.clear();
-    
-    // Reset các biến và hiển thị màn hình chào mừng
-    user = null;
-    isAdmin = false;
-    selectedQuizId = null;
-    userAnswers = null;
-    
-    showWelcomeScreen();
+// --- LOGIC ẨN/HIỆN PART ---
+function togglePartVisibility(part) {
+    partVisibility[part] = !partVisibility[part];
+    renderPartVisibilityControls();
 }
 
-document.addEventListener('DOMContentLoaded', function () {
-  const toggleInput = document.getElementById('toggle-dark-mode');
-  const body = document.body;
-
-  if (localStorage.getItem('theme') === 'dark') {
-    body.classList.add('dark-mode');
-    toggleInput.checked = true;
-  }
-
-  toggleInput.addEventListener('change', function () {
-    body.classList.toggle('dark-mode');
-
-    const theme = body.classList.contains('dark-mode') ? 'dark' : 'light';
-    localStorage.setItem('theme', theme);
-
-    if (typeof saveAdminState === 'function') {
-      saveAdminState(theme);
+function renderPartVisibilityControls() {
+    const container = document.getElementById("part-visibility-controls");
+    if (!container) return;
+    container.innerHTML = '<span class="font-semibold align-middle">Các phần hiển thị:</span>';
+    for (let i = 1; i <= 7; i++) {
+        const isVisible = partVisibility[i];
+        const button = document.createElement('button');
+        button.innerText = `Part ${i}`;
+        button.className = `px-3 py-1 rounded text-white font-medium transition-colors duration-200 ${
+            isVisible ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'
+        }`;
+        button.onclick = () => togglePartVisibility(i);
+        container.appendChild(button);
     }
-  });
-});
+}
 
+function resetAndShowPartControls() {
+    partVisibility = { 1: true, 2: true, 3: true, 4: true, 5: true, 6: true, 7: true };
+    renderPartVisibilityControls();
+    document.getElementById('part-visibility-controls').classList.remove('hidden');
+}
+
+function applyPartVisibility(visibility) {
+    if (!visibility) return;
+    studentPartVisibility = visibility;
+    for (let i = 1; i <= 7; i++) {
+        const partContainer = document.getElementById(`quiz-part${i}`);
+        if (partContainer) partContainer.classList.add('hidden');
+    }
+    const firstVisiblePart = findFirstVisiblePart(visibility);
+    if (firstVisiblePart) {
+        document.getElementById(`quiz-part${firstVisiblePart}`).classList.remove('hidden');
+    } else {
+        notification.innerText = "Đề thi này không có phần nào được mở.";
+        document.querySelector("#quizForm button[type=submit]").disabled = true;
+    }
+}
+
+function findFirstVisiblePart(visibility) {
+    if (!visibility) return 1;
+    for (let i = 1; i <= 7; i++) {
+        if (visibility[i]) return i;
+    }
+    return null;
+}
+
+function findNextVisiblePart(current, visibility) {
+    if (!visibility) return current + 1 > 7 ? null : current + 1;
+    for (let i = current + 1; i <= 7; i++) {
+        if (visibility[i]) return i;
+    }
+    return null;
+}
+
+function findPrevVisiblePart(current, visibility) {
+    if (!visibility) return current - 1 < 1 ? null : current - 1;
+    for (let i = current - 1; i >= 1; i--) {
+        if (visibility[i]) return i;
+    }
+    return null;
+}
+
+
+
+// =========================================================================
+// PHẦN 3: HÀM KHỞI CHẠY ỨNG DỤNG (Giữ nguyên, không sửa)
+// =========================================================================
 document.addEventListener("DOMContentLoaded", async () => {
+    // --- Tải trang và khôi phục trạng thái ---
+    setTimeout(() => {
+        const loadingScreen = document.getElementById("loading-screen");
+        if (loadingScreen) loadingScreen.classList.add("hidden");
+    }, 1500);
+
     if (await restoreAdminState()) {
         console.log("Admin state restored");
     } else {
         const savedUser = localStorage.getItem("user");
-        const savedQuizId = localStorage.getItem("selectedQuizId");
-        const savedScreen = localStorage.getItem("currentScreen");
-
-        if (savedUser && savedQuizId && savedScreen === "quiz-container") {
-            user = JSON.parse(savedUser);
-            isAdmin = false;
-
-            const quizRes = await fetch(`/get-quiz?quizId=${savedQuizId}`);
-            if (!quizRes.ok) {
-                console.error("Failed to fetch quiz data on restore, logging out.");
-                logout();
-                return;
-            }
-            const quizData = await quizRes.json();
-            
-            const savedAnswers = localStorage.getItem("userAnswers");
-            userAnswers = savedAnswers ? JSON.parse(savedAnswers) : {};
-            timeLeft = parseInt(localStorage.getItem("timeLeft")) || 7200;
-            selectedQuizId = savedQuizId;
-
-            hideAllScreens();
-            quizContainer.classList.remove("hidden");
-            timerDisplay.classList.remove("hidden");
-            audio.classList.remove("hidden");
-            
-            await loadQuizPdf(quizData.quizPdfUrl, 'image-display');
-
-            Object.keys(userAnswers).forEach(questionId => {
-                const radio = document.querySelector(`input[name="${questionId}"][value="${userAnswers[questionId]}"]`);
-                if (radio) radio.checked = true;
-            });
-            
-            applyPartVisibility(quizData.partVisibility);
-            const firstVisiblePart = findFirstVisiblePart(quizData.partVisibility) || 1;
-            await loadAudio(firstVisiblePart);
-            startTimer();
-            currentQuizPart = firstVisiblePart;
-            updateQuizNavigation(currentQuizPart, studentPartVisibility);
-            
-            downloadNotice.classList.add("hidden");
-            initializeWebSocket();
-        } 
-        else if (savedUser) {
+        if (savedUser) {
             user = JSON.parse(savedUser);
             isAdmin = false;
             hideAllScreens();
-            quizListScreen.classList.remove("hidden");
-            adminOptions.classList.add("hidden");
-            adminControls.classList.add("hidden");
-            downloadNotice.classList.add("hidden");
+            const quizListScreen = document.getElementById("quiz-list-screen");
+            if (quizListScreen) quizListScreen.classList.remove("hidden");
+            const adminOptions = document.getElementById("admin-options");
+            if (adminOptions) adminOptions.classList.add("hidden");
+            const adminControls = document.getElementById("admin-controls");
+            if (adminControls) adminControls.classList.add("hidden");
             initializeWebSocket();
             await loadQuizzes();
         } else {
@@ -2027,37 +1950,77 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     }
 
-    const assignBtn = document.getElementById("assignBtn");
-    if (assignBtn) assignBtn.addEventListener("click", assignQuiz);
+    // --- Gán sự kiện cho các element chính ---
+    const toggleInput = document.getElementById('toggle-dark-mode');
+    if (toggleInput) {
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark-mode');
+            toggleInput.checked = true;
+        }
+        toggleInput.addEventListener('change', function () {
+            document.body.classList.toggle('dark-mode');
+            const theme = document.body.classList.contains('dark-mode') ? 'dark' : 'light';
+            localStorage.setItem('theme', theme);
+        });
+    }
 
-    const directTestBtn = document.getElementById("directTestBtn");
-    if (directTestBtn) directTestBtn.addEventListener("click", startDirectTest);
+    const adminForm = document.getElementById("admin-login-form");
+    if (adminForm) {
+        adminForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const passwordInput = document.getElementById("admin-password");
+            const notifAdmin = document.getElementById("notification-admin");
+            if (passwordInput && passwordInput.value === ADMIN_PASSWORD) {
+                isAdmin = true;
+                user = { name: "Admin", email: "admin@example.com" };
+                hideAllScreens();
+                const quizListScreen = document.getElementById("quiz-list-screen");
+                if (quizListScreen) quizListScreen.classList.remove("hidden");
+                const adminOptions = document.getElementById("admin-options");
+                if (adminOptions) adminOptions.classList.remove("hidden");
+                const adminControls = document.getElementById("admin-controls");
+                if (adminControls) adminControls.classList.remove("hidden");
+                initializeWebSocket();
+                await loadQuizzes();
+            } else {
+                if (notifAdmin) notifAdmin.innerText = "Mật khẩu không đúng!";
+            }
+        };
+    }
 
-    const endDirectTestBtn = document.getElementById("endDirectTestBtn");
-    if (endDirectTestBtn) endDirectTestBtn.addEventListener("click", endDirectTest);
-
-    const quizForm = document.getElementById("quizForm");
-    if (quizForm) {
-        quizForm.addEventListener("submit", (e) => {
+    const studentForm = document.getElementById("student-name-form");
+    if (studentForm) {
+        studentForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const nameInput = document.getElementById("student-name");
+            const name = nameInput ? nameInput.value.trim() : '';
+            if (name) {
+                user = { name };
+                isAdmin = false;
+                localStorage.setItem("user", JSON.stringify(user));
+                hideAllScreens();
+                const quizListScreen = document.getElementById("quiz-list-screen");
+                if (quizListScreen) quizListScreen.classList.remove("hidden");
+                const adminOptions = document.getElementById("admin-options");
+                if (adminOptions) adminOptions.classList.add("hidden");
+                const adminControls = document.getElementById("admin-controls");
+                if (adminControls) adminControls.classList.add("hidden");
+                initializeWebSocket();
+                await loadQuizzes();
+            }
+        };
+    }
+    
+    const toeicQuizForm = document.getElementById("quizForm");
+    if (toeicQuizForm) {
+        toeicQuizForm.addEventListener("submit", (e) => {
             e.preventDefault();
             if (confirm("Bạn có chắc muốn nộp bài không?")) {
                 submitQuiz();
             }
         });
     }
-});
-document.getElementById("assignBtn").addEventListener("click", (e) => {
-    if (e.target.disabled) return; // chặn khi bị disable
-    assignQuiz();
-});
-
-document.addEventListener("DOMContentLoaded", function () {
-  setTimeout(() => {
-    document.getElementById("loading-screen").classList.add("hidden");
-  }, 2000);
-});
-
-document.addEventListener('DOMContentLoaded', () => {
+    
     const customQuizForm = document.getElementById('custom-quiz-form-student');
     if (customQuizForm) {
         customQuizForm.addEventListener('submit', (e) => {
@@ -2068,53 +2031,3 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
-
-// Hàm nộp bài và chấm điểm cho đề tùy chỉnh
-async function submitCustomQuiz() {
-    audio.pause(); // Dừng âm thanh nếu có
-    clearInterval(timerInterval); // Dừng đồng hồ
-
-    if (!user || !user.name || !currentCustomQuizData) {
-        notification.innerText = "Lỗi: Mất thông tin người dùng hoặc đề thi.";
-        showWelcomeScreen();
-        return;
-    }
-
-    const formData = new FormData(document.getElementById('custom-quiz-form-student'));
-    const userAnswers = {};
-    formData.forEach((val, key) => (userAnswers[key] = val));
-
-    try {
-        const res = await fetch("/submit-custom", { // <-- Sử dụng một endpoint mới
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                username: user.name,
-                answers: userAnswers,
-                quizId: currentCustomQuizData.quizId
-            }),
-        });
-
-        if (!res.ok) {
-            const errorData = await res.json();
-            throw new Error(errorData.message || 'Lỗi server');
-        }
-
-        const result = await res.json();
-
-        // Hiển thị màn hình kết quả chỉ với điểm số
-        hideAllScreens();
-        resultScreen.classList.remove("hidden");
-        resultScore.innerText = `Điểm: ${result.score}/${currentCustomQuizData.totalQuestions}`;
-        resultTime.innerText = `Thời gian nộp: ${new Date().toLocaleString()}`;
-        
-        // Vô hiệu hóa nút xem đáp án cho đề tùy chỉnh
-        const reviewButton = resultScreen.querySelector('button[onclick="showReviewAnswers()"]');
-        if(reviewButton) reviewButton.classList.add('hidden');
-
-
-    } catch (error) {
-        console.error("Error submitting custom quiz:", error);
-        notification.innerText = `Lỗi khi nộp bài: ${error.message}.`;
-    }
-}
