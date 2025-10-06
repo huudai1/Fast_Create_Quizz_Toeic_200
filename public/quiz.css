@@ -884,39 +884,57 @@ body.dark-mode .answer-item {
 }
 
 
-.split-container {
-    display: flex;
-    flex-direction: column; /* Quan trọng */
-    height: calc(100vh - 120px); /* Điều chỉnh chiều cao phù hợp */
-}
-
-.image-section, .question-section {
-    overflow-y: auto;
-}
-
-#custom-quiz-container .split-container {
-    flex-direction: row; /* Giữ nguyên cho màn hình làm bài */
-}
-
-@media (max-width: 768px) {
-    #custom-quiz-container .split-container {
-        flex-direction: column;
-    }
-}
-
-#quiz-container {
+#quiz-container:not(.hidden),
+#custom-quiz-container:not(.hidden) {
     display: flex;
     flex-direction: column;
-    /* Chiều cao bằng chiều cao màn hình trừ đi một chút padding/margin của container cha */
+    /* Chiều cao bằng 100% chiều cao màn hình trừ đi một chút lề */
     height: calc(100vh - 2rem); 
 }
 
-#quiz-container .split-container {
-    flex: 1; /* Cho phép vùng này chiếm hết không gian còn lại */
-    min-height: 0; /* Quan trọng để tránh overflow trong flexbox */
+/* Vùng chứa chính (ảnh và câu hỏi) sẽ co giãn để lấp đầy không gian */
+#quiz-container .split-container,
+#custom-quiz-container .split-container {
+    display: flex;
+    flex: 1; /* Quan trọng: Cho phép co giãn */
+    min-height: 0; /* Quan trọng: Giúp thanh cuộn hoạt động đúng */
 }
 
-/* Bỏ thuộc tính sticky cũ nếu có */
+/* Cho phép các cột có thanh cuộn riêng khi nội dung quá dài */
+.image-section, .question-section {
+    overflow-y: auto;
+    padding: 1rem; /* Thêm chút đệm cho đẹp hơn */
+}
+
+
+/* --- BỐ CỤC RIÊNG CHO TỪNG LOẠI QUIZ --- */
+
+/* 1. Đối với Quiz TOEIC mặc định (ảnh bên trái, câu hỏi bên phải) */
+#quiz-container .split-container {
+    flex-direction: row; /* Sắp xếp theo hàng ngang */
+}
+
+/* 2. Đối với Quiz Tùy chỉnh */
+#custom-quiz-container .split-container {
+    flex-direction: row; /* Mặc định cũng xếp theo hàng ngang */
+}
+
+/* Khi màn hình nhỏ (trên mobile), Quiz Tùy chỉnh sẽ xếp theo cột dọc */
+@media (max-width: 768px) {
+    #custom-quiz-container .split-container {
+        flex-direction: column; /* Chuyển sang cột dọc */
+    }
+}
+
+
+/* --- THANH ĐIỀU KHIỂN BÊN DƯỚI --- */
+
 #quiz-controls {
     flex-shrink: 0; /* Ngăn thanh điều khiển bị co lại */
+    padding: 1rem;
+    background-color: #f3f4f6; /* Thêm màu nền để dễ thấy */
+}
+
+body.dark-mode #quiz-controls {
+    background-color: #1f2937; /* Màu nền cho dark mode */
 }
