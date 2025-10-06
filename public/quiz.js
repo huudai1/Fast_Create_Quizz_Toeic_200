@@ -810,53 +810,64 @@ async function assignQuiz() {
 }
 
 async function showStatistics() {
-  if (!selectedQuizId) {
-    notification.innerText = "Vui lòng chọn một đề thi trước!";
-    return;
-  }
+    // Sử dụng một biến cục bộ để tìm element, không dùng biến global 'notification' nữa
+    const notificationElement = document.getElementById('quiz-list-notification');
 
-  try {
-    const res = await fetch(`/statistics?quizId=${selectedQuizId}`);
-    if (!res.ok) {
-      throw new Error(`Lỗi server: ${res.status}`);
+    if (!selectedQuizId) {
+        if (notificationElement) notificationElement.innerText = "Vui lòng chọn một đề thi trước!";
+        return;
     }
-    const data = await res.json();
-    console.log("Statistics data:", data);
 
-    hideAllScreens();
-    const statisticsScreen = document.getElementById("statistics-screen");
-    statisticsScreen.classList.remove("hidden");
-    const notificationStatistics = document.getElementById("notification-statistics");
-    notificationStatistics.innerText = "";
+    try {
+        const res = await fetch(`/statistics?quizId=${selectedQuizId}`);
+        if (!res.ok) {
+            throw new Error(`Lỗi từ server: ${res.status}`);
+        }
+        const data = await res.json();
 
-    const averageScore = data.averageScore || 0;
-    const averageScoreBar = document.getElementById("average-score-bar");
-    const averageScoreText = document.getElementById("average-score-text");
-    const percentage = (averageScore / 200) * 100;
-    averageScoreBar.style.width = `${percentage}%`;
-    averageScoreText.innerText = `Điểm trung bình: ${averageScore.toFixed(2)}/200`;
+        hideAllScreens();
+        const statisticsScreen = document.getElementById("statistics-screen");
+        if (statisticsScreen) statisticsScreen.classList.remove("hidden");
 
-    const statisticsBody = document.getElementById("statistics-body");
-    statisticsBody.innerHTML = "";
-    
-    data.questionStats.forEach(stat => {
-      const tr = document.createElement("tr");
-      const questionNumber = parseInt(stat.questionId.replace("q", ""));
-      const wrongPercentage = stat.totalCount > 0 ? ((stat.wrongCount / stat.totalCount) * 100).toFixed(2) : 0;
-      tr.innerHTML = `
-        <td class="border p-2">${questionNumber}</td>
-        <td class="border p-2">${stat.wrongCount}</td>
-        <td class="border p-2">${stat.totalCount}</td>
-        <td class="border p-2">${wrongPercentage}%</td>
-      `;
-      statisticsBody.appendChild(tr);
-    });
+        const notificationStatistics = document.getElementById("notification-statistics");
+        if (notificationStatistics) notificationStatistics.innerText = "";
 
-    saveAdminState();
-  } catch (error) {
-    console.error("Error fetching statistics:", error);
-    document.getElementById("notification-statistics").innerText = "Lỗi khi tải thống kê. Vui lòng thử lại.";
-  }
+        const averageScore = data.averageScore || 0;
+        const totalQuestions = data.totalQuestions || 200;
+        const averageScoreBar = document.getElementById("average-score-bar");
+        const averageScoreText = document.getElementById("average-score-text");
+
+        if (averageScoreBar && averageScoreText) {
+            const percentage = totalQuestions > 0 ? (averageScore / totalQuestions) * 100 : 0;
+            averageScoreBar.style.width = `${percentage}%`;
+            averageScoreText.innerText = `Điểm trung bình: ${averageScore.toFixed(2)}/${totalQuestions}`;
+        }
+
+        const statisticsBody = document.getElementById("statistics-body");
+        if (statisticsBody) {
+            statisticsBody.innerHTML = "";
+            if (data.questionStats) {
+                data.questionStats.forEach(stat => {
+                    const tr = document.createElement("tr");
+                    const wrongPercentage = stat.totalCount > 0 ? ((stat.wrongCount / stat.totalCount) * 100).toFixed(2) : 0;
+                    tr.innerHTML = `
+                        <td class="border p-2">${stat.questionNumber}</td>
+                        <td class="border p-2">${stat.wrongCount}</td>
+                        <td class="border p-2">${stat.totalCount}</td>
+                        <td class="border p-2">${wrongPercentage}%</td>
+                    `;
+                    statisticsBody.appendChild(tr);
+                });
+            }
+        }
+
+    } catch (error) {
+        console.error("Error fetching statistics:", error);
+        backToQuizList();
+        setTimeout(() => {
+            if (notificationElement) notificationElement.innerText = "Lỗi khi tải thống kê. Đề thi này có thể chưa có ai làm.";
+        }, 100);
+    }
 }
 
 // --- CHỨC NĂNG KIỂM TRA TRỰC TIẾP ---
