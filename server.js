@@ -246,16 +246,8 @@ app.post('/assign-quiz', async (req, res) => {
 });
 
 app.get('/quizzes', async (req, res) => {
-  const email = req.query.email;
-  if (email) {
-    res.json(quizzes.filter((quiz) => quiz.createdBy === email));
-  } else {
-    if (!currentQuiz) {
-      res.json([]);
-    } else {
-      res.json([currentQuiz]);
-    }
-  }
+    // Endpoint này dành cho Admin, luôn trả về toàn bộ danh sách đề thi
+    res.json(quizzes); 
 });
 
 app.post(
