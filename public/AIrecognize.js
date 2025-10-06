@@ -25,7 +25,7 @@ function closeAiModal() {
 }
 
 // Hàm xử lý khi người dùng chọn file và bấm nút "Nhận diện"
-async function handleAiRecognition() {
+async function handleAiRecognition(totalQuestions = null) {
     const fileInput = document.getElementById('ai-file-input');
     const statusElement = document.getElementById('ai-status');
     const resultContainer = document.getElementById('ai-result-container');
