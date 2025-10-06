@@ -82,6 +82,65 @@
     </div>
 </div>
 
+<div id="direct-test-screen" class="container mx-auto p-4 hidden">
+    <div class="flex justify-between items-center mb-4">
+        <h1 class="text-3xl font-bold">Kiểm tra trực tiếp đang diễn ra</h1>
+        <button onclick="backToQuizList()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+            Quay lại Danh sách
+        </button>
+    </div>
+
+    <div class="my-6">
+        <div class="flex justify-between mb-1">
+            <span class="text-base font-medium text-blue-700 dark:text-white">Thời gian còn lại</span>
+            <span id="direct-test-timer" class="text-sm font-medium text-blue-700 dark:text-white">...</span>
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-4 dark:bg-gray-700">
+            <div id="direct-test-progress-bar" class="bg-green-500 h-4 rounded-full transition-all duration-1000" style="width: 100%"></div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-4">
+        <p id="direct-participant-count" class="text-lg">Số người tham gia: 0</p>
+        <p id="direct-submitted-count" class="text-lg">Số bài đã nộp: 0</p>
+    </div>
+    
+    <div class="text-center my-6">
+        <button id="endDirectTestBtn" onclick="endDirectTest()" class="bg-red-600 text-white px-8 py-3 rounded-lg font-bold text-xl hover:bg-red-700 disabled:bg-gray-400">
+            KẾT THÚC BÀI KIỂM TRA
+        </button>
+    </div>
+
+    <table id="direct-results-table" class="w-full border-collapse hidden mt-6">
+        <thead>
+            <tr class="bg-gray-200 dark:bg-gray-700">
+                <th class="border p-2">Tên</th>
+                <th class="border p-2">Điểm</th>
+                <th class="border p-2">Thời gian nộp</th>
+            </tr>
+        </thead>
+        <tbody id="direct-results-body">
+            </tbody>
+    </table>
+</div>
+
+<div id="upload-quizzes" class="container mx-auto p-4 hidden">
+    <h1 class="text-3xl font-bold mb-4">Tải Lên Đề Thi</h1>
+    <p id="notification-upload" class="text-red-500 mb-4"></p>
+    <div class="space-y-4">
+        <div>
+            <label for="quizzes-file" class="block text-lg">Chọn file .zip hoặc .json:</label>
+            <input id="quizzes-file" type="file" accept=".zip,.json" class="border p-2 rounded w-full">
+        </div>
+        <button onclick="uploadQuizzes()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+            Bắt đầu tải lên
+        </button>
+    </div>
+    <button onclick="backToQuizList()" class="mt-8 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+        Quay lại
+    </button>
+</div>
+
 <div id="loading-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
     <div class="bg-white p-6 rounded-lg shadow-lg text-center max-w-md w-full">
         <p class="text-lg font-semibold mb-4">Đang xử lý đề...</p>

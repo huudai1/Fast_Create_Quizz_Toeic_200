@@ -103,16 +103,24 @@ function showCustomQuizCreator() {
     }
 }
 
-function backToQuizList() {
+// Sửa hàm này
+function backToQuizList(message = null) {
     hideAllScreens();
-    if (quizListScreen) quizListScreen.classList.remove("hidden");
-    if (isAdmin) {
-        if (adminOptions) adminOptions.classList.remove("hidden");
-        if (adminControls) adminControls.classList.remove("hidden");
-    }
+        if (quizListScreen) quizListScreen.classList.remove("hidden");
+            if (isAdmin) {
+                if (adminOptions) adminOptions.classList.remove("hidden");
+                if (adminControls) adminControls.classList.remove("hidden");
+            }
     const notif = document.getElementById('quiz-list-notification');
-    if (notif) notif.innerText = "";
-    if (typeof loadQuizzes === "function") loadQuizzes();
+        if (notif) {
+        // Nếu có message truyền vào, hiển thị nó
+        if (message) {
+            notif.innerText = message;
+        } else {
+            notif.innerText = "";
+        }
+    }
+    if (typeof loadQuizzes === "function") loadQuizzes();
 }
 
 function showUploadQuizzes() {
@@ -1098,8 +1106,7 @@ async function saveQuiz() {
             throw new Error(result.message || "Lỗi từ server");
         }
         
-        notificationElement.innerText = result.message;
-        backToQuizList();
+        backToQuizList(result.message);
 
     } catch (error) {
         console.error("Error saving quiz:", error);
@@ -1339,8 +1346,7 @@ async function saveCustomQuiz() {
         const res = await fetch('/save-quiz', { method: 'POST', body: formData });
         const result = await res.json();
         if (!res.ok) throw new Error(result.message);
-        backToQuizList();
-        setTimeout(() => { notification.innerText = "Tạo đề thi tùy chỉnh thành công!"; }, 100);
+        backToQuizList("Tạo đề thi tùy chỉnh thành công!");
     } catch (error) {
         notificationElement.innerText = `Lỗi: ${error.message}`;
     } finally {
