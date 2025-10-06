@@ -1098,7 +1098,7 @@ async function saveQuiz() {
             throw new Error(result.message || "Lỗi từ server");
         }
         
-        notification.innerText = result.message;
+        notificationElement.innerText = result.message;
         backToQuizList();
 
     } catch (error) {
