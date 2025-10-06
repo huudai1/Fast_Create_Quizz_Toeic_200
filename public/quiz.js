@@ -1017,6 +1017,21 @@ async function endDirectTest() {
   }
 }
 
+function generateQuizQuestions() {
+    // Đây chính là đoạn code bị xóa ở trên, giờ được đặt trong hàm
+    let questionIndex = 1;
+    parts.forEach(({ id, count, part }) => {
+        const section = document.getElementById(id);
+        if (section) { // Kiểm tra xem section có tồn tại không
+            section.innerHTML = ''; // Xóa câu hỏi cũ trước khi tạo mới
+            for (let i = 1; i <= count; i++) {
+                section.appendChild(createQuestion(`q${questionIndex}`, questionIndex, part));
+                questionIndex++;
+            }
+        }
+    });
+}
+
 async function startQuiz(quizId) {
     try {
         const res = await fetch("/select-quiz", {
@@ -1030,6 +1045,7 @@ async function startQuiz(quizId) {
             timeLeft = result.timeLimit || 7200;
             const visibility = result.partVisibility;
             const pdfUrl = result.quizPdfUrl; // Lấy URL của PDF
+            generateQuizQuestions();
 
             hideAllScreens();
             quizContainer.classList.remove("hidden");
@@ -1773,14 +1789,7 @@ async function showReviewAnswers() {
       { id: "review-section6", count: 16, part: 6 },
       { id: "review-section7", count: 54, part: 7 },
     ];
-    let questionIndex = 1;
 
-    parts.forEach(({ id, count, part }) => {
-      const section = document.getElementById(id);
-      if (!section) {
-        console.error(`Section with ID '${id}' not found`);
-        return;
-      }
       section.innerHTML = "";
       for (let i = 1; i <= count; i++) {
         const qId = `q${questionIndex}`;
