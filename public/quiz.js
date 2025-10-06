@@ -86,7 +86,8 @@ function hideAllScreens() {
 function showWelcomeScreen() {
     hideAllScreens();
     welcomeScreen.classList.remove("hidden");
-    notification.innerText = "";
+    const welcomeNotification = document.getElementById('welcome-notification');
+    if (welcomeNotification) welcomeNotification.innerText = "";
     user = null;
     isAdmin = false;
     selectedQuizId = null; // Reset ID ở đây
