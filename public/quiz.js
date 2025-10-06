@@ -1944,74 +1944,56 @@ function findPrevVisiblePart(current, visibility) {
 // PHẦN 3: HÀM KHỞI CHẠY ỨNG DỤNG (Giữ nguyên, không sửa)
 // =========================================================================
 document.addEventListener("DOMContentLoaded", async () => {
-    const welcomeScreen = document.getElementById("welcome-screen");
-    const adminLogin = document.getElementById("admin-login");
-    const studentLogin = document.getElementById("student-login");
-    const quizListScreen = document.getElementById("quiz-list-screen");
-    const adminOptions = document.getElementById("admin-options");
-    const adminControls = document.getElementById("admin-controls");
-    const uploadQuizzesSection = document.getElementById("upload-quizzes");
-    const quizzesFileInput = document.getElementById("quizzes-file");
-    const quizList = document.getElementById("quiz-list");
-    const quizContainer = document.getElementById("quiz-container");
-    const notification = document.getElementById("notification"); // Lưu ý: ID này có thể bị trùng, hãy kiểm tra lại HTML
-    const quizStatus = document.getElementById("quiz-status");
-    const participantCount = document.getElementById("participant-count");
-    const submittedCount = document.getElementById("submitted-count");
-    const assignBtn = document.getElementById("assignBtn");
-    const directTestBtn = document.getElementById("directTestBtn");
-    const directTestScreen = document.getElementById("direct-test-screen");
-    const endDirectTestBtn = document.getElementById("endDirectTestBtn");
-    const directParticipantCount = document.getElementById("direct-participant-count");
-    const directSubmittedCount = document.getElementById("direct-submitted-count");
-    const directResultsTable = document.getElementById("direct-results-table");
-    const directResultsBody = document.getElementById("direct-results-body");
-    const resultsTable = document.getElementById("results-table");
-    const resultsBody = document.getElementById("results-body");
-    const imageDisplay = document.getElementById("image-display");
-    const audio = document.getElementById("audio");
-    const audioSource = document.getElementById("audio-source");
-    const timerDisplay = document.getElementById("timer");
-    const quizForm = document.getElementById("quizForm");
-    const resultScreen = document.getElementById("result-screen");
-    const resultScore = document.getElementById("result-score");
-    const resultTime = document.getElementById("result-time");
-    const downloadNotice = document.getElementById("download-notice");
-    const reviewScreen = document.getElementById("review-answers");
-    const staticScreen = document.getElementById("statistics-screen");
-    const adminLoginForm = document.getElementById("admin-login-form");
-    const adminPasswordInput = document.getElementById("admin-password");
-    const notificationAdmin = document.getElementById("notification-admin");
-    // --- Tải trang và khôi phục trạng thái ---
+    // --- Gán giá trị cho các biến element SAU KHI DOM đã tải xong ---
+    welcomeScreen = document.getElementById("welcome-screen");
+    adminLogin = document.getElementById("admin-login");
+    studentLogin = document.getElementById("student-login");
+    quizListScreen = document.getElementById("quiz-list-screen");
+    adminOptions = document.getElementById("admin-options");
+    adminControls = document.getElementById("admin-controls");
+    uploadQuizzesSection = document.getElementById("upload-quizzes");
+    quizzesFileInput = document.getElementById("quizzes-file");
+    quizList = document.getElementById("quiz-list");
+    quizContainer = document.getElementById("quiz-container");
+    customQuizContainer = document.getElementById("custom-quiz-container");
+    notification = document.getElementById("notification"); // Dùng cho các thông báo chung
+    quizStatus = document.getElementById("quiz-status");
+    participantCount = document.getElementById("participant-count");
+    submittedCount = document.getElementById("submitted-count");
+    assignBtn = document.getElementById("assignBtn");
+    directTestBtn = document.getElementById("directTestBtn");
+    directTestScreen = document.getElementById("direct-test-screen");
+    endDirectTestBtn = document.getElementById("endDirectTestBtn");
+    directParticipantCount = document.getElementById("direct-participant-count");
+    directSubmittedCount = document.getElementById("direct-submitted-count");
+    directResultsTable = document.getElementById("direct-results-table");
+    directResultsBody = document.getElementById("direct-results-body");
+    resultsTable = document.getElementById("results-table");
+    resultsBody = document.getElementById("results-body");
+    imageDisplay = document.getElementById("image-display");
+    audio = document.getElementById("audio");
+    audioSource = document.getElementById("audio-source");
+    timerDisplay = document.getElementById("timer");
+    quizForm = document.getElementById("quizForm");
+    resultScreen = document.getElementById("result-screen");
+    resultScore = document.getElementById("result-score");
+    resultTime = document.getElementById("result-time");
+    downloadNotice = document.getElementById("download-notice");
+    reviewScreen = document.getElementById("review-answers");
+    staticScreen = document.getElementById("statistics-screen");
+    adminLoginForm = document.getElementById("admin-login-form");
+    adminPasswordInput = document.getElementById("admin-password");
+    notificationAdmin = document.getElementById("notification-admin");
+
+    // --- Logic khởi chạy ---
     setTimeout(() => {
         const loadingScreen = document.getElementById("loading-screen");
         if (loadingScreen) loadingScreen.classList.add("hidden");
     }, 1500);
 
-    showWelcomeScreen();
+    showWelcomeScreen(); // Luôn bắt đầu ở màn hình chào mừng để reset trạng thái
 
-    if (await restoreAdminState()) {
-        console.log("Admin state restored");
-    } else {
-        const savedUser = localStorage.getItem("user");
-        if (savedUser) {
-            user = JSON.parse(savedUser);
-            isAdmin = false;
-            hideAllScreens();
-            const quizListScreen = document.getElementById("quiz-list-screen");
-            if (quizListScreen) quizListScreen.classList.remove("hidden");
-            const adminOptions = document.getElementById("admin-options");
-            if (adminOptions) adminOptions.classList.add("hidden");
-            const adminControls = document.getElementById("admin-controls");
-            if (adminControls) adminControls.classList.add("hidden");
-            initializeWebSocket();
-            await loadQuizzes();
-        } else {
-            showWelcomeScreen();
-        }
-    }
-
-    // --- Gán sự kiện cho các element chính ---
+    // --- Gán sự kiện ---
     const toggleInput = document.getElementById('toggle-dark-mode');
     if (toggleInput) {
         if (localStorage.getItem('theme') === 'dark') {
@@ -2025,33 +2007,27 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
-    const adminForm = document.getElementById("admin-login-form");
-    if (adminForm) {
-        adminForm.onsubmit = async (e) => {
+    if (adminLoginForm) {
+        adminLoginForm.onsubmit = async (e) => {
             e.preventDefault();
-            const passwordInput = document.getElementById("admin-password");
-            const notifAdmin = document.getElementById("notification-admin");
-            if (passwordInput && passwordInput.value === ADMIN_PASSWORD) {
+            if (adminPasswordInput && adminPasswordInput.value === ADMIN_PASSWORD) {
                 isAdmin = true;
                 user = { name: "Admin", email: "admin@example.com" };
                 hideAllScreens();
-                const quizListScreen = document.getElementById("quiz-list-screen");
                 if (quizListScreen) quizListScreen.classList.remove("hidden");
-                const adminOptions = document.getElementById("admin-options");
                 if (adminOptions) adminOptions.classList.remove("hidden");
-                const adminControls = document.getElementById("admin-controls");
                 if (adminControls) adminControls.classList.remove("hidden");
                 initializeWebSocket();
-                await loadQuizzes();
+                await loadQuizzes(); // Tải quizzes sau khi đăng nhập
             } else {
-                if (notifAdmin) notifAdmin.innerText = "Mật khẩu không đúng!";
+                if (notificationAdmin) notificationAdmin.innerText = "Mật khẩu không đúng!";
             }
         };
     }
-
-    const studentForm = document.getElementById("student-name-form");
-    if (studentForm) {
-        studentForm.onsubmit = async (e) => {
+    
+    const studentNameForm = document.getElementById("student-name-form");
+    if (studentNameForm) {
+        studentNameForm.onsubmit = async (e) => {
             e.preventDefault();
             const nameInput = document.getElementById("student-name");
             const name = nameInput ? nameInput.value.trim() : '';
@@ -2060,21 +2036,17 @@ document.addEventListener("DOMContentLoaded", async () => {
                 isAdmin = false;
                 localStorage.setItem("user", JSON.stringify(user));
                 hideAllScreens();
-                const quizListScreen = document.getElementById("quiz-list-screen");
                 if (quizListScreen) quizListScreen.classList.remove("hidden");
-                const adminOptions = document.getElementById("admin-options");
                 if (adminOptions) adminOptions.classList.add("hidden");
-                const adminControls = document.getElementById("admin-controls");
                 if (adminControls) adminControls.classList.add("hidden");
                 initializeWebSocket();
-                await loadQuizzes();
+                await loadQuizzes(); // Tải quizzes sau khi đăng nhập
             }
         };
     }
     
-    const toeicQuizForm = document.getElementById("quizForm");
-    if (toeicQuizForm) {
-        toeicQuizForm.addEventListener("submit", (e) => {
+    if (quizForm) {
+        quizForm.addEventListener("submit", (e) => {
             e.preventDefault();
             if (confirm("Bạn có chắc muốn nộp bài không?")) {
                 submitQuiz();
