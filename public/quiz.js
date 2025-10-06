@@ -2009,15 +2009,24 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     }
 
-    assignBtn.addEventListener("click", assignQuiz);
-    directTestBtn.addEventListener("click", startDirectTest);
-    endDirectTestBtn.addEventListener("click", endDirectTest);
-    quizForm.addEventListener("submit", (e) => {
-        e.preventDefault();
-        if (confirm("Bạn có chắc muốn nộp bài không?")) {
-            submitQuiz();
-        }
-    });
+    const assignBtn = document.getElementById("assignBtn");
+    if (assignBtn) assignBtn.addEventListener("click", assignQuiz);
+
+    const directTestBtn = document.getElementById("directTestBtn");
+    if (directTestBtn) directTestBtn.addEventListener("click", startDirectTest);
+
+    const endDirectTestBtn = document.getElementById("endDirectTestBtn");
+    if (endDirectTestBtn) endDirectTestBtn.addEventListener("click", endDirectTest);
+
+    const quizForm = document.getElementById("quizForm");
+    if (quizForm) {
+        quizForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            if (confirm("Bạn có chắc muốn nộp bài không?")) {
+                submitQuiz();
+            }
+        });
+    }
 });
 document.getElementById("assignBtn").addEventListener("click", (e) => {
     if (e.target.disabled) return; // chặn khi bị disable
