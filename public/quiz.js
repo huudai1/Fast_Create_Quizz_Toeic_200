@@ -1585,12 +1585,16 @@ function handleWebSocketMessage(event) {
         if (!event.data) { return; }
         const message = JSON.parse(event.data);
 
+        const safeUpdateText = (element, text) => {
+            if (element) {
+                element.innerText = text;
+            }
+        };
+
         if (message.type === "participantUpdate") {
             const count = message.count || 0;
-            const participants = message.participants || [];
-            
-            participantCount.innerText = `Số người tham gia: ${count}`;
-            directParticipantCount.innerText = `Số người tham gia: ${count}`;
+            safeUpdateText(participantCount, `Số người tham gia: ${count}`);
+            safeUpdateText(directParticipantCount, `Số người tham gia: ${count}`);
 
             const container = document.getElementById('participant-list-container');
             const list = document.getElementById('participant-list');
@@ -1622,8 +1626,8 @@ function handleWebSocketMessage(event) {
         } 
         else if (message.type === "submitted" || message.type === "submittedCount") {
             const count = message.count !== undefined ? message.count : 0;
-            submittedCount.innerText = `Số bài đã nộp: ${count}`;
-            directSubmittedCount.innerText = `Số bài đã nộp: ${count}`;
+            safeUpdateText(submittedCount, `Số bài đã nộp: ${count}`);
+            safeUpdateText(directSubmittedCount, `Số bài đã nộp: ${count}`);
             
             if (isAdmin && message.results) {
                 resultsBody.innerHTML = "";
@@ -1691,7 +1695,8 @@ function handleWebSocketMessage(event) {
             }
         } 
         else if (message.type === "quizStatus") {
-            quizStatus.innerText = message.quizId ? `Đề thi hiện tại: ${message.quizName}` : "Chưa có đề thi được chọn.";
+            const statusText = message.quizId ? `Đề thi hiện tại: ${message.quizName}` : "Chưa có đề thi được chọn.";
+            safeUpdateText(quizStatus, statusText);
             if (!isAdmin) {
                 loadQuizzes();
             }
@@ -1701,7 +1706,11 @@ function handleWebSocketMessage(event) {
         }
     } catch (error) {
         console.error("Error handling WebSocket message:", error);
-        notification.innerText = "Lỗi khi xử lý thông tin từ server.";
+        // Tìm một nơi an toàn để hiển thị lỗi, ví dụ như quiz-list-notification
+        const notificationElement = document.getElementById('quiz-list-notification');
+        if(notificationElement) {
+            notificationElement.innerText = "Lỗi khi xử lý thông tin từ server.";
+        }
     }
 }
 
