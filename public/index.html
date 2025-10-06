@@ -1,33 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Quiz App</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="quiz.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="quiz.css">
 </head>
+<body class="bg-gray-100 font-sans">
+
 <div id="ai-recognize-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50">
     <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-2xl">
         <h2 class="text-2xl font-bold mb-4">Nhận diện đáp án bằng AI</h2>
-        
         <div class="space-y-4">
             <div>
                 <label for="ai-file-input" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Chọn file ảnh hoặc PDF chứa đáp án (1-200):</label>
                 <input id="ai-file-input" type="file" accept="image/*,application/pdf" multiple class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
             </div>
-            
             <button onclick="handleAiRecognition()" class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded hover:bg-blue-700 transition-colors">
                 Bắt đầu nhận diện
             </button>
-            
             <p id="ai-status" class="text-center font-medium"></p>
-            
             <div id="ai-result-container" class="hidden space-y-2">
                 <p>Kết quả từ AI. Bấm "Sao chép" và dán vào ô tương ứng.</p>
                 <button onclick="copyAllAiAnswers()" class="w-full bg-green-600 text-white font-bold py-2 px-4 rounded hover:bg-green-700 transition-colors mt-4">
-        Sao chép tất cả (Dùng cho đề tùy chỉnh)
-    </button>
+                    Sao chép tất cả (Dùng cho đề tùy chỉnh)
+                </button>
                 <div class="flex items-center space-x-2">
                     <label for="ai-result-part1" class="w-24">Part 1:</label>
                     <textarea id="ai-result-part1" rows="1" class="flex-1 border p-1 rounded dark:bg-gray-700" readonly></textarea>
@@ -65,17 +63,11 @@
                 </div>
             </div>
         </div>
-        
         <button onclick="closeAiModal()" class="mt-6 bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 w-full">Đóng</button>
     </div>
 </div>
-<body class="bg-gray-100 font-sans">
-  <div id="download-notice" class="fixed top-4 right-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 hidden">
-    <p class="font-bold">Admin Chú Ý</p>
-    <p>HÃY TẢI ĐỀ XUỐNG TRƯỚC THOÁT !</p>
-  </div>
 
-  <div id="create-quiz-choice-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+<div id="create-quiz-choice-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
     <div class="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-xl text-center">
         <h2 class="text-2xl font-bold mb-6">Bạn muốn tạo loại đề nào?</h2>
         <div class="flex justify-center space-x-6">
@@ -88,77 +80,33 @@
         </div>
         <button onclick="document.getElementById('create-quiz-choice-modal').classList.add('hidden')" class="mt-8 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">Đóng</button>
     </div>
-  </div>
+</div>
 
-  <div id="welcome-screen" class="container mx-auto p-4">
+<div id="loading-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white p-6 rounded-lg shadow-lg text-center max-w-md w-full">
+        <p class="text-lg font-semibold mb-4">Đang xử lý đề...</p>
+        <div class="w-full bg-gray-200 rounded-full h-2.5">
+            <div class="bg-blue-600 h-2.5 rounded-full animate-loading"></div>
+        </div>
+    </div>
+</div>
+
+<div id="download-notice" class="fixed top-4 right-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 hidden">
+    <p class="font-bold">Admin Chú Ý</p>
+    <p>HÃY TẢI ĐỀ XUỐNG TRƯỚC KHI THOÁT!</p>
+</div>
+
+<div id="welcome-screen" class="container mx-auto p-4">
     <h1 class="text-3xl font-bold mb-4">Quiz App</h1>
-    <p> Hãy dùng máy tính để có trải nghiệm tốt nhất !</p>
+    <p>Hãy dùng máy tính để có trải nghiệm tốt nhất!</p>
     <p id="notification" class="text-red-500 mb-4"></p>
     <div class="space-y-4">
-      <button onclick="showAdminLogin()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Đăng nhập Admin</button>
-      <button onclick="showStudentLogin()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Đăng nhập Học sinh</button>
-    </div>
-  </div>
-
-  <div id="custom-quiz-creator-screen" class="container mx-auto p-4 hidden">
-    <h1 class="text-3xl font-bold mb-4">Tạo Đề thi Tùy chỉnh</h1>
-    <p id="custom-notification" class="text-red-500 mb-4"></p>
-    <form id="custom-quiz-form" class="space-y-6">
-        <fieldset class="border p-4 rounded">
-            <legend class="text-xl font-semibold px-2">1. Thông tin cơ bản</legend>
-            <div class="space-y-4 mt-2">
-                <div>
-                    <label for="custom-quiz-name">Tên đề thi:</label>
-                    <input id="custom-quiz-name" type="text" class="border p-2 rounded w-full" required>
-                </div>
-                <div>
-                    <label for="custom-total-questions">Tổng số câu:</label>
-                    <input id="custom-total-questions" type="number" min="1" class="border p-2 rounded w-full" required>
-                </div>
-                <div>
-                    <label for="custom-quiz-pdf">File PDF của đề (1 file duy nhất):</label>
-                    <input id="custom-quiz-pdf" type="file" accept="application/pdf" required>
-                </div>
-            </div>
-        </fieldset>
-        <fieldset class="border p-4 rounded">
-            <legend class="text-xl font-semibold px-2">2. Cấu hình Phần nghe (Tùy chọn)</legend>
-            <div id="listening-ranges-container" class="space-y-2">
-                </div>
-            <button type="button" onclick="addListeningRange()" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">+ Thêm khoảng nghe</button>
-        </fieldset>
-        <fieldset class="border p-4 rounded">
-            <legend class="text-xl font-semibold px-2">3. Đáp án</legend>
-             <div class="my-4 text-center">
-                <button type="button" onclick="handleCustomAiRecognition()" class="bg-purple-600 text-white font-bold py-2 px-4 rounded hover:bg-purple-700">🤖 AI Nhận diện đáp án</button>
-            </div>
-            <div>
-                <label for="custom-answer-key">Nhập chuỗi đáp án (cách nhau bằng dấu phẩy):</label>
-                <textarea id="custom-answer-key" rows="4" class="border p-2 rounded w-full"></textarea>
-            </div>
-        </fieldset>
-        <div class="flex space-x-4">
-            <button type="button" onclick="saveCustomQuiz()" class="bg-green-500 text-white px-6 py-2 rounded font-semibold">Lưu đề thi</button>
-            <button type="button" onclick="backToQuizList()" class="bg-gray-500 text-white px-4 py-2 rounded">Quay lại</button>
-        </div>
-    </form>
-</div>
-  
-  <div id="quiz-container" class="container mx-auto p-4 hidden">
-    <div class="split-container"> <div class="image-section">...</div>
-      <div class="question-section">
-        <form id="quizForm" class="space-y-4">
-          </form>
-      </div>
-    </div>
-    <div id="quiz-controls" class="flex space-x-4 bg-gray-100 dark:bg-gray-800 p-4 shadow-md">
-        <button type="button" id="prev-button" onclick="prevQuizPart(currentQuizPart)" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Phần trước</button>
-        <button type="button" id="next-button" onclick="nextQuizPart(currentQuizPart)" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Phần tiếp theo</button>
-        <button type="submit" form="quizForm" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Nộp bài</button>
+        <button onclick="showAdminLogin()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Đăng nhập Admin</button>
+        <button onclick="showStudentLogin()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Đăng nhập Học sinh</button>
     </div>
 </div>
 
-  <div id="admin-login" class="container mx-auto p-4 hidden">
+<div id="admin-login" class="container mx-auto p-4 hidden">
     <h1 class="text-3xl font-bold mb-4">Đăng nhập Admin</h1>
     <p id="notification-admin" class="text-red-500 mb-4"></p>
     <form id="admin-login-form" class="space-y-4">
@@ -171,136 +119,67 @@
     <button onclick="showWelcomeScreen()" class="mt-4 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
 </div>
 
-  <div id="student-login" class="container mx-auto p-4 hidden">
+<div id="student-login" class="container mx-auto p-4 hidden">
     <h1 class="text-3xl font-bold mb-4">Đăng nhập Học sinh</h1>
-    <p id="notification" class="text-red-500 mb-4"></p>
     <form id="student-name-form" class="space-y-4">
-      <div>
-        <label for="student-name" class="block text-lg">Tên:</label>
-        <input id="student-name" type="text" class="border p-2 rounded w-full" required>
-      </div>
-      <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Đăng nhập</button>
+        <div>
+            <label for="student-name" class="block text-lg">Tên:</label>
+            <input id="student-name" type="text" class="border p-2 rounded w-full" required>
+        </div>
+        <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Đăng nhập</button>
     </form>
     <button onclick="showWelcomeScreen()" class="mt-4 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
-  </div>
-
-<div id="participant-list-container" class="mb-6 hidden">
-        <h3 class="text-xl font-bold mb-2">Học sinh đang tham gia: <span id="participant-list-count">0</span></h3>
-        <ul id="participant-list" class="list-disc list-inside bg-gray-50 dark:bg-gray-800 p-4 rounded-md">
-            </ul>
 </div>
 
 <div id="quiz-list-screen" class="container mx-auto p-4 hidden">
-  <div class="flex justify-between items-center mb-4">
-    <h1 class="text-3xl font-bold">Danh sách đề thi</h1>
-    <button onclick="logout()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Đăng xuất</button>
-    <label class="switch">
-    <input type="checkbox" id="toggle-dark-mode">
-    <span class="slider"></span>
-</label>
-</label>
-  </div>
-  <p id="notification" class="text-red-500 mb-4"></p>
-  <p id="quiz-status" class="text-lg mb-4"></p>
-  <p id="participant-count" class="text-lg mb-4"></p>
-  <p id="submitted-count" class="text-lg mb-4"></p>
-  <!-- Thêm thông báo và nút tham gia kiểm tra trực tiếp -->
-  <div id="direct-test-notice" class="bg-yellow-100 p-4 rounded mb-4 hidden">
-    <p id="direct-test-message" class="font-semibold text-lg"></p>
-    <button id="join-direct-test-btn" class="bg-green-500 text-white px-4 py-2 mt-2 rounded hover:bg-green-600">Tham gia kiểm tra</button>//chưa để làm gì...
-  </div>
-  <div id="admin-options" class="space-y-4 mb-4 hidden">
-      <button onclick="createNewQuiz()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Tạo đề thi mới</button>
-      <button onclick="showUploadQuizzes()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Tải lên đề thi</button>
-      <button onclick="clearDatabase()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Xóa database cũ</button>
-      <button onclick="showStatistics()" class="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600">Xem thống kê</button>
+    <div class="flex justify-between items-center mb-4">
+        <h1 class="text-3xl font-bold">Danh sách đề thi</h1>
+        <button onclick="logout()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Đăng xuất</button>
+        <label class="switch">
+            <input type="checkbox" id="toggle-dark-mode">
+            <span class="slider"></span>
+        </label>
+    </div>
+    <p id="quiz-list-notification" class="text-red-500 mb-4"></p>
+    <p id="quiz-status" class="text-lg mb-4"></p>
+    <div id="participant-list-container" class="mb-6 hidden">
+        <h3 class="text-xl font-bold mb-2">Học sinh đang tham gia: <span id="participant-list-count">0</span></h3>
+        <ul id="participant-list" class="list-disc list-inside bg-gray-50 dark:bg-gray-800 p-4 rounded-md"></ul>
+    </div>
+    <p id="submitted-count" class="text-lg mb-4"></p>
+    <div id="direct-test-notice" class="bg-yellow-100 p-4 rounded mb-4 hidden">
+        <p id="direct-test-message" class="font-semibold text-lg"></p>
+        <button id="join-direct-test-btn" class="bg-green-500 text-white px-4 py-2 mt-2 rounded hover:bg-green-600">Tham gia kiểm tra</button>
+    </div>
+    <div id="admin-options" class="space-y-4 mb-4 hidden">
+        <button onclick="createNewQuiz()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Tạo đề thi mới</button>
+        <button onclick="showUploadQuizzes()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Tải lên đề thi</button>
+        <button onclick="clearDatabase()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Xóa database cũ</button>
+        <button onclick="showStatistics()" class="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600">Xem thống kê</button>
     </div>
     <div id="admin-controls" class="space-x-4 mb-4 hidden">
-      <button id="assignBtn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 hidden" disabled>Giao bài</button>
-      <button id="directTestBtn" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 hidden">Kiểm tra trực tiếp</button>
+        <button id="assignBtn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 hidden" disabled>Giao bài</button>
+        <button id="directTestBtn" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 hidden">Kiểm tra trực tiếp</button>
     </div>
     <div id="part-visibility-controls" class="space-x-2 mb-4 hidden">
         <span class="font-semibold align-middle">Các phần hiển thị:</span>
-        </div>
+    </div>
     <div id="quiz-list" class="space-y-4"></div>
-    <table id="results-table" class="w-full border-collapse hidden">
-      <thead>
+    <table id="results-table" class="w-full border-collapse hidden mt-4">
+        <thead>
         <tr class="bg-gray-200 dark:bg-gray-700 text-black dark:text-white">
-          <th class="border p-2">Tên</th>
-          <th class="border p-2">Điểm</th>
-          <th class="border p-2">Thời gian nộp</th>
+            <th class="border p-2">Tên</th>
+            <th class="border p-2">Điểm</th>
+            <th class="border p-2">Thời gian nộp</th>
         </tr>
-      </thead>
-      <tbody id="results-body"></tbody>
+        </thead>
+        <tbody id="results-body"></tbody>
     </table>
-  </div>
-
-  <div id="statistics-screen" class="container mx-auto p-4 hidden">
-  <h1 class="text-3xl font-bold mb-4">Thống kê kết quả</h1>
-  <p id="notification-statistics" class="text-red-500 mb-4"></p>
-  <div class="mb-4">
-    <p class="text-lg font-semibold mb-2">Điểm trung bình:</p>
-    <div class="w-full bg-gray-200 rounded-full h-4">
-      <div id="average-score-bar" class="bg-blue-600 h-4 rounded-full" style="width: 0%"></div>
-    </div>
-    <p id="average-score-text" class="text-lg mt-2"></p>
-  </div>
-  <table id="statistics-table" class="w-full border-collapse">
-    <thead>
-      <tr class="bg-gray-200 dark:bg-gray-700 text-black dark:text-white">
-        <th class="border p-2">Câu</th>
-        <th class="border p-2">Số người sai</th>
-        <th class="border p-2">Tổng số người</th>
-        <th class="border p-2">Tỷ lệ sai (%)</th>
-      </tr>
-    </thead>
-    <tbody id="statistics-body"></tbody>
-  </table>
-  <button id="static-back" onclick="backToQuizList()">
-  Quay lại
-</button>
 </div>
 
-  <div id="direct-test-screen" class="container mx-auto p-4 hidden">
-  <h1 class="text-3xl font-bold mb-4">Kiểm tra trực tiếp</h1>
-  <p id="notification" class="text-red-500 mb-4"></p>
-  <!-- Thanh thời gian -->
-  <div class="mb-6">
-    <p class="text-lg font-semibold mb-2">Thời gian còn lại:</p>
-    <div class="w-full bg-gray-200 rounded-full h-6">
-      <div id="direct-test-progress-bar" class="bg-green-500 h-6 rounded-full transition-all duration-1000" style="width: 100%"></div>
-    </div>
-    <p id="direct-test-timer" class="text-lg font-semibold mt-2"></p>
-  </div>
-  <p id="direct-participant-count" class="text-lg mb-4"></p>
-  <p id="direct-submitted-count" class="text-lg mb-4"></p>
-  <p>Quay lại trang chủ để xem thống kê trung bình !!!</p>
-  <button id="endDirectTestBtn" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Kết thúc kiểm tra</button>
-  <button onclick="backToQuizList()" class="mt-4 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
-  <table id="direct-results-table" class="w-full border-collapse mt-4 hidden">
-    <thead>
-      <tr class="bg-gray-200">
-        <th class="border p-2">Tên</th>
-        <th class="border p-2">Điểm</th>
-        <th class="border p-2">Thời gian nộp</th>
-      </tr>
-    </thead>
-    <tbody id="direct-results-body"></tbody>
-  </table>
-</div>
-
-  <div id="upload-quizzes" class="container mx-auto p-4 hidden">
-    <h1 class="text-3xl font-bold mb-4">Tải lên đề thi</h1>
-    <p id="notification" class="text-red-500 mb-4"></p>
-    <input id="quizzes-file" type="file" accept=".json,.zip" class="mb-4">
-    <button onclick="uploadQuizzes()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Tải lên</button>
-    <button onclick="backToQuizList()" class="mt-4 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
-  </div>
-
-  <div id="admin-step-create-quiz" class="container mx-auto p-4 hidden admin-step">
-    <h1 class="text-3xl font-bold mb-4">Tạo đề thi mới</h1>
+<div id="admin-step-create-quiz" class="container mx-auto p-4 hidden admin-step">
+    <h1 class="text-3xl font-bold mb-4">Tạo Đề thi TOEIC Mới</h1>
     <p id="notification-create" class="text-red-500 mb-4"></p>
-    
     <div class="space-y-6">
         <fieldset class="border p-4 rounded">
             <legend class="text-xl font-semibold px-2">1. Thông tin chung</legend>
@@ -315,7 +194,6 @@
                 </div>
             </div>
         </fieldset>
-
         <fieldset class="border p-4 rounded">
             <legend class="text-xl font-semibold px-2">2. Files Nghe (Part 1-4)</legend>
             <div class="grid grid-cols-2 gap-4 mt-2">
@@ -337,7 +215,6 @@
                 </div>
             </div>
         </fieldset>
-
         <fieldset class="border p-4 rounded">
             <legend class="text-xl font-semibold px-2">3. Đáp án (Các đáp án cách nhau bằng dấu phẩy)</legend>
             <div class="my-4 text-center">
@@ -376,140 +253,185 @@
                 </div>
             </div>
         </fieldset>
-        
         <div class="flex space-x-4">
-            <button onclick="saveQuiz()" class="bg-green-500 text-white px-6 py-2 rounded hover:bg-green-600 font-semibold">Lưu đề thi</button>
-            <button onclick="backToQuizList()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
+            <button type="button" onclick="saveQuiz()" class="bg-green-500 text-white px-6 py-2 rounded hover:bg-green-600 font-semibold">Lưu đề thi</button>
+            <button type="button" onclick="backToQuizList()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
         </div>
     </div>
 </div>
 
-  <div id="quiz-container" class="container mx-auto p-4 hidden">
-    <h1 class="text-3xl font-bold mb-4">Bài thi</h1>
-    <p id="notification" class="text-red-500 mb-4"></p>
-    <p id="timer" class="text-lg mb-4 hidden"></p>
-    <audio id="audio" controls class="mb-4 hidden">
-      <source id="audio-source" src="" type="audio/mpeg">
+<div id="custom-quiz-creator-screen" class="container mx-auto p-4 hidden">
+    <h1 class="text-3xl font-bold mb-4">Tạo Đề thi Tùy chỉnh</h1>
+    <p id="custom-notification" class="text-red-500 mb-4"></p>
+    <form id="custom-quiz-form" class="space-y-6">
+        <fieldset class="border p-4 rounded">
+            <legend class="text-xl font-semibold px-2">1. Thông tin cơ bản</legend>
+            <div class="space-y-4 mt-2">
+                <div>
+                    <label for="custom-quiz-name">Tên đề thi:</label>
+                    <input id="custom-quiz-name" type="text" class="border p-2 rounded w-full" required>
+                </div>
+                <div>
+                    <label for="custom-total-questions">Tổng số câu:</label>
+                    <input id="custom-total-questions" type="number" min="1" class="border p-2 rounded w-full" required>
+                </div>
+                <div>
+                    <label for="custom-quiz-pdf">File PDF của đề (1 file duy nhất):</label>
+                    <input id="custom-quiz-pdf" type="file" accept="application/pdf" required>
+                </div>
+            </div>
+        </fieldset>
+        <fieldset class="border p-4 rounded">
+            <legend class="text-xl font-semibold px-2">2. Cấu hình Phần nghe (Tùy chọn)</legend>
+            <div id="listening-ranges-container" class="space-y-2"></div>
+            <button type="button" onclick="addListeningRange()" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">+ Thêm khoảng nghe</button>
+        </fieldset>
+        <fieldset class="border p-4 rounded">
+            <legend class="text-xl font-semibold px-2">3. Đáp án</legend>
+            <div class="my-4 text-center">
+                <button type="button" onclick="handleCustomAiRecognition()" class="bg-purple-600 text-white font-bold py-2 px-4 rounded hover:bg-purple-700">🤖 AI Nhận diện đáp án</button>
+            </div>
+            <div>
+                <label for="custom-answer-key">Nhập chuỗi đáp án (cách nhau bằng dấu phẩy):</label>
+                <textarea id="custom-answer-key" rows="4" class="border p-2 rounded w-full"></textarea>
+            </div>
+        </fieldset>
+        <div class="flex space-x-4">
+            <button type="button" onclick="saveCustomQuiz()" class="bg-green-500 text-white px-6 py-2 rounded font-semibold">Lưu đề thi</button>
+            <button type="button" onclick="backToQuizList()" class="bg-gray-500 text-white px-4 py-2 rounded">Quay lại</button>
+        </div>
+    </form>
+</div>
+
+<div id="custom-quiz-container" class="container mx-auto p-4 hidden">
+    <h1 id="custom-quiz-title" class="text-3xl font-bold mb-4">Làm bài thi</h1>
+    <audio id="custom-audio-player" controls class="mb-4 hidden sticky top-2 z-10">
+        <source id="custom-audio-source" src="" type="audio/mpeg">
     </audio>
     <div class="split-container">
-      <div class="image-section" id="image-display">
-        <h3 class="text-lg font-semibold mb-2">Part 1</h3>
-      </div>
-      <div class="question-section">
-        <form id="quizForm" class="space-y-4">
-          <div id="quiz-part1">
-            <h2 class="text-2xl font-semibold mb-2">Part 1</h2>
-            <div id="section1" class="space-y-4"></div>
-          </div>
-          <div id="quiz-part2" class="hidden">
-            <h2 class="text-2xl font-semibold mb-2">Part 2</h2>
-            <div id="section2" class="space-y-4"></div>
-          </div>
-          <div id="quiz-part3" class="hidden">
-            <h2 class="text-2xl font-semibold mb-2">Part 3</h2>
-            <div id="section3" class="space-y-4"></div>
-          </div>
-          <div id="quiz-part4" class="hidden">
-            <h2 class="text-2xl font-semibold mb-2">Part 4</h2>
-            <div id="section4" class="space-y-4"></div>
-          </div>
-          <div id="quiz-part5" class="hidden">
-            <h2 class="text-2xl font-semibold mb-2">Part 5</h2>
-            <div id="section5" class="space-y-4"></div>
-          </div>
-          <div id="quiz-part6" class="hidden">
-            <h2 class="text-2xl font-semibold mb-2">Part 6</h2>
-            <div id="section6" class="space-y-4"></div>
-          </div>
-          <div id="quiz-part7" class="hidden">
-            <h2 class="text-2xl font-semibold mb-2">Part 7</h2>
-            <div id="section7" class="space-y-4"></div>
-          </div>
-          <div class="flex space-x-4 sticky bottom-0 bg-gray-100 p-4">
-          <button type="button" id="prev-button" onclick="prevQuizPart(currentQuizPart)" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Phần trước</button>
-          <button type="button" id="next-button" onclick="nextQuizPart(currentQuizPart)" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Phần tiếp theo</button>
-          <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Nộp bài</button>
-</div>
-        </form>
-      </div>
+        <div class="image-section" id="custom-image-display"></div>
+        <div class="question-section" id="custom-question-list"></div>
     </div>
-  </div>
-
-  <div id="result-screen" class="container mx-auto p-4 hidden">
-  <h1 class="text-3xl font-bold mb-4">Kết quả</h1>
-  <p id="notification" class="text-red-500 mb-4"></p>
-  <p id="result-score" class="text-lg mb-2"></p>
-  <p id="result-time" class="text-lg mb-2"></p>
-  <div class="flex space-x-4">
-    <button onclick="showReviewAnswers()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Xem đáp án</button>
-    <button onclick="showWelcomeScreen()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
-  </div>
+    <div class="flex space-x-4 sticky bottom-0 bg-gray-100 dark:bg-gray-800 p-4">
+        <button type="submit" form="custom-quiz-form-student" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Nộp bài</button>
+    </div>
+    <form id="custom-quiz-form-student" class="hidden"></form>
 </div>
 
-  <div id="loading-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
-  <div class="bg-white p-6 rounded-lg shadow-lg text-center max-w-md w-full">
-    <p class="text-lg font-semibold mb-4">Đang xử lý đề...</p>
-    <div class="w-full bg-gray-200 rounded-full h-2.5">
-      <div class="bg-blue-600 h-2.5 rounded-full animate-loading"></div>
+<div id="quiz-container" class="container mx-auto p-4 hidden">
+    <h1 class="text-3xl font-bold mb-4">Bài thi</h1>
+    <p id="quiz-notification" class="text-red-500 mb-4"></p>
+    <p id="timer" class="text-lg mb-4 hidden"></p>
+    <audio id="audio" controls class="mb-4 hidden">
+        <source id="audio-source" src="" type="audio/mpeg">
+    </audio>
+    <div class="split-container">
+        <div class="image-section" id="image-display"></div>
+        <div class="question-section">
+            <form id="quizForm" class="space-y-4">
+                <div id="quiz-part1">
+                    <h2 class="text-2xl font-semibold mb-2">Part 1</h2>
+                    <div id="section1" class="space-y-4"></div>
+                </div>
+                <div id="quiz-part2" class="hidden">
+                    <h2 class="text-2xl font-semibold mb-2">Part 2</h2>
+                    <div id="section2" class="space-y-4"></div>
+                </div>
+                <div id="quiz-part3" class="hidden">
+                    <h2 class="text-2xl font-semibold mb-2">Part 3</h2>
+                    <div id="section3" class="space-y-4"></div>
+                </div>
+                <div id="quiz-part4" class="hidden">
+                    <h2 class="text-2xl font-semibold mb-2">Part 4</h2>
+                    <div id="section4" class="space-y-4"></div>
+                </div>
+                <div id="quiz-part5" class="hidden">
+                    <h2 class="text-2xl font-semibold mb-2">Part 5</h2>
+                    <div id="section5" class="space-y-4"></div>
+                </div>
+                <div id="quiz-part6" class="hidden">
+                    <h2 class="text-2xl font-semibold mb-2">Part 6</h2>
+                    <div id="section6" class="space-y-4"></div>
+                </div>
+                <div id="quiz-part7" class="hidden">
+                    <h2 class="text-2xl font-semibold mb-2">Part 7</h2>
+                    <div id="section7" class="space-y-4"></div>
+                </div>
+            </form>
+        </div>
     </div>
-  </div>
+    <div id="quiz-controls" class="flex space-x-4 bg-gray-100 dark:bg-gray-800 p-4 shadow-md">
+        <button type="button" id="prev-button" onclick="prevQuizPart(currentQuizPart)" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Phần trước</button>
+        <button type="button" id="next-button" onclick="nextQuizPart(currentQuizPart)" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Phần tiếp theo</button>
+        <button type="submit" form="quizForm" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Nộp bài</button>
+    </div>
+</div>
+
+<div id="result-screen" class="container mx-auto p-4 hidden">
+    <h1 class="text-3xl font-bold mb-4">Kết quả</h1>
+    <p id="result-notification" class="text-red-500 mb-4"></p>
+    <p id="result-score" class="text-lg mb-2"></p>
+    <p id="result-time" class="text-lg mb-2"></p>
+    <div class="flex space-x-4">
+        <button onclick="showReviewAnswers()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Xem đáp án</button>
+        <button onclick="showWelcomeScreen()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
+    </div>
 </div>
 
 <div id="review-answers" class="container mx-auto p-4 hidden">
-  <h1 class="text-3xl font-bold mb-4">Xem đáp án</h1>
-  <p id="notification" class="text-red-500 mb-4"></p>
-  <p id="review-score" class="text-lg mb-2"></p>
-  <p id="review-time" class="text-lg mb-2"></p>
-  <div class="split-container">
-    <div class="image-section" id="review-image-display">
-      <h3 class="text-lg font-semibold mb-2">Part 1</h3>
+    <h1 class="text-3xl font-bold mb-4">Xem đáp án</h1>
+    <p id="review-notification" class="text-red-500 mb-4"></p>
+    <p id="review-score" class="text-lg mb-2"></p>
+    <p id="review-time" class="text-lg mb-2"></p>
+    <div class="split-container">
+        <div class="image-section" id="review-image-display"></div>
+        <div class="question-section">
+            <div id="review-part1">
+                <h2 class="text-2xl font-semibold mb-2">Part 1</h2>
+                <div id="review-section1" class="space-y-4"></div>
+            </div>
+            <div id="review-part2" class="hidden">
+                <h2 class="text-2xl font-semibold mb-2">Part 2</h2>
+                <div id="review-section2" class="space-y-4"></div>
+            </div>
+            <div id="review-part3" class="hidden">
+                <h2 class="text-2xl font-semibold mb-2">Part 3</h2>
+                <div id="review-section3" class="space-y-4"></div>
+            </div>
+            <div id="review-part4" class="hidden">
+                <h2 class="text-2xl font-semibold mb-2">Part 4</h2>
+                <div id="review-section4" class="space-y-4"></div>
+            </div>
+            <div id="review-part5" class="hidden">
+                <h2 class="text-2xl font-semibold mb-2">Part 5</h2>
+                <div id="review-section5" class="space-y-4"></div>
+            </div>
+            <div id="review-part6" class="hidden">
+                <h2 class="text-2xl font-semibold mb-2">Part 6</h2>
+                <div id="review-section6" class="space-y-4"></div>
+            </div>
+            <div id="review-part7" class="hidden">
+                <h2 class="text-2xl font-semibold mb-2">Part 7</h2>
+                <div id="review-section7" class="space-y-4"></div>
+            </div>
+        </div>
     </div>
-    <div class="question-section">
-      <div id="review-part1">
-        <h2 class="text-2xl font-semibold mb-2">Part 1</h2>
-        <div id="review-section1" class="space-y-4"></div>
-      </div>
-      <div id="review-part2" class="hidden">
-        <h2 class="text-2xl font-semibold mb-2">Part 2</h2>
-        <div id="review-section2" class="space-y-4"></div>
-      </div>
-      <div id="review-part3" class="hidden">
-        <h2 class="text-2xl font-semibold mb-2">Part 3</h2>
-        <div id="review-section3" class="space-y-4"></div>
-      </div>
-      <div id="review-part4" class="hidden">
-        <h2 class="text-2xl font-semibold mb-2">Part 4</h2>
-        <div id="review-section4" class="space-y-4"></div>
-      </div>
-      <div id="review-part5" class="hidden">
-        <h2 class="text-2xl font-semibold mb-2">Part 5</h2>
-        <div id="review-section5" class="space-y-4"></div>
-      </div>
-      <div id="review-part6" class="hidden">
-        <h2 class="text-2xl font-semibold mb-2">Part 6</h2>
-        <div id="review-section6" class="space-y-4"></div>
-      </div>
-      <div id="review-part7" class="hidden">
-        <h2 class="text-2xl font-semibold mb-2">Part 7</h2>
-        <div id="review-section7" class="space-y-4"></div>
-      </div>
-      <div class="flex space-x-4 sticky bottom-0 bg-gray-100 p-4">
+    <div class="flex space-x-4 sticky bottom-0 bg-gray-100 p-4">
         <button type="button" onclick="prevReviewPart(currentReviewPart)" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Phần trước</button>
         <button type="button" onclick="nextReviewPart(currentReviewPart)" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Phần tiếp theo</button>
         <button onclick="showWelcomeScreen()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
-      </div>
     </div>
-  </div>
 </div>
-<div id="heartbeat-indicator" class="fixed bottom-4 right-4 z-50 text-2xl hidden">
-    ❤️
-</div>
-  <script src="AIrecognize.js"></script>
-  <script src="quiz.js"></script>
-  <script src="AIrecognize.js"></script>
-</body>
+
+<div id="heartbeat-indicator" class="fixed bottom-4 right-4 z-50 text-2xl hidden">❤️</div>
 <div id="loading-screen">
-  <div id="loading-text">Get Ready!</div>
-  <div id="loading-spinner"></div>
-  </div>
+    <div id="loading-text">Get Ready!</div>
+    <div id="loading-spinner"></div>
+</div>
+
+<script src="AIrecognize.js"></script>
+<script src="customquiz.js"></script>
+<script src="quiz.js"></script>
+
+</body>
 </html>
