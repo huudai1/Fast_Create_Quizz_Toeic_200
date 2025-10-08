@@ -21,12 +21,13 @@ const parts = [
 
 // Biến cho các element sẽ được gán giá trị khi DOM đã tải xong
 let welcomeScreen, adminLogin, studentLogin, quizListScreen, adminOptions, adminControls,
-    uploadQuizzesSection, quizzesFileInput, quizList, quizContainer, customQuizContainer, quizStatus,
-    participantCount, submittedCount, assignBtn, directTestBtn, directTestScreen,
-    endDirectTestBtn, directParticipantCount, directSubmittedCount, directResultsTable,
-    directResultsBody, resultsTable, resultsBody, imageDisplay, audio, audioSource,
-    timerDisplay, quizForm, resultScreen, resultScore, resultTime, downloadNotice,
-    reviewScreen, staticScreen, adminLoginForm, adminPasswordInput, notificationAdmin;
+ uploadQuizzesSection, quizzesFileInput, quizList, quizContainer, customQuizContainer, quizStatus,
+ participantCount, submittedCount, assignBtn, directTestBtn, directTestScreen,
+ endDirectTestBtn, directParticipantCount, directSubmittedCount, directResultsTable,
+ directResultsBody, resultsTable, resultsBody, imageDisplay, audio, audioSource,
+ timerDisplay, quizForm, resultScreen, resultScore, resultTime, downloadNotice,
+ reviewScreen, staticScreen, adminLoginForm, adminPasswordInput, notificationAdmin,
+    directTestProgressBar; 
 
 // =========================================================================
 // PHẦN 2: TẤT CẢ CÁC HÀM CHỨC NĂNG
@@ -1831,6 +1832,7 @@ document.addEventListener("DOMContentLoaded", () => {
     directSubmittedCount = document.getElementById("direct-submitted-count");
     directResultsTable = document.getElementById("direct-results-table");
     directResultsBody = document.getElementById("direct-results-body");
+    directTestProgressBar = document.getElementById("direct-test-progress-bar");
     resultsTable = document.getElementById("results-table");
     resultsBody = document.getElementById("results-body");
     imageDisplay = document.getElementById("image-display");
