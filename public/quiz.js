@@ -253,6 +253,7 @@ function handleWebSocketMessage(event) {
             if (!isAdmin) {
                 hideAllScreens();
                 if(quizContainer) quizContainer.classList.remove("hidden");
+                generateQuizQuestions();
                 if(timerDisplay) timerDisplay.classList.remove("hidden");
                 if(audio) audio.classList.remove("hidden");
                 
@@ -1020,57 +1021,62 @@ async function startQuiz(quizId) {
 }
 
 async function submitQuiz() {
-    audio.pause();
+    audio.pause();
+    // Lấy đúng phần tử thông báo của màn hình làm bài
+    const quizNotification = document.getElementById('quiz-notification');
 
-    if (!user || !user.name) {
-        notification.innerText = "Lỗi: Vui lòng nhập tên lại.";
-        showWelcomeScreen();
-        return;
-    }
+    if (!user || !user.name) {
+        if(quizNotification) quizNotification.innerText = "Lỗi: Vui lòng nhập tên lại.";
+        showWelcomeScreen();
+        return;
+    }
 
-    const formData = new FormData(quizForm);
-    userAnswers = {};
-    formData.forEach((val, key) => (userAnswers[key] = val));
+    const formData = new FormData(quizForm);
+    userAnswers = {};
+    formData.forEach((val, key) => (userAnswers[key] = val));
 
-    try {
-        const currentQuizId = selectedQuizId || localStorage.getItem("selectedQuizId");
-        const res = await fetch("/submit", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username: user.name, answers: userAnswers, quizId: currentQuizId }),
-        });
+    try {
+        const currentQuizId = selectedQuizId || localStorage.getItem("selectedQuizId");
+        const res = await fetch("/submit", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username: user.name, answers: userAnswers, quizId: currentQuizId }),
+        });
 
-        if (!res.ok) {
-            const errorData = await res.json().catch(() => ({}));
-            throw new Error(errorData.message || `Lỗi server: ${res.status}`);
-        }
+        if (!res.ok) {
+            const errorData = await res.json().catch(() => ({}));
+            throw new Error(errorData.message || `Lỗi server: ${res.status}`);
+        }
 
-        const result = await res.json();
-        
-        // LẤY VÀ LƯU LẠI ANSWER KEY ĐỂ DÙNG CHO MÀN HÌNH XEM LẠI
-        const answerRes = await fetch(`/answer-key?quizId=${currentQuizId}`);
-        answerKey = await answerRes.json();
-        
-        resultScore.innerText = `Điểm: ${result.score}/200`;
-        resultTime.innerText = `Thời gian nộp: ${new Date().toLocaleString()}`;
-        
-        quizForm.querySelector("button[type=submit]").disabled = true;
-        clearInterval(timerInterval);
-        
-        if (isAdminControlled && socket && socket.readyState === WebSocket.OPEN) {
-            socket.send(JSON.stringify({ type: "submitted", username: user.name }));
-        }
+        const result = await res.json();
+        
+        const answerRes = await fetch(`/answer-key?quizId=${currentQuizId}`);
+        answerKey = await answerRes.json();
+        
+        resultScore.innerText = `Điểm: ${result.score}/200`;
+        resultTime.innerText = `Thời gian nộp: ${new Date().toLocaleString()}`;
+        
+        // Dùng ID để tìm và vô hiệu hóa nút nộp bài
+        const submitButton = document.getElementById('submit-quiz-btn');
+        if (submitButton) submitButton.disabled = true;
 
-        localStorage.setItem("userAnswers", JSON.stringify(userAnswers));
-        localStorage.removeItem("currentScreen");
-        localStorage.removeItem("timeLeft");
-        
-        showResultScreen();
+        clearInterval(timerInterval);
+        
+        if (isAdminControlled && socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({ type: "submitted", username: user.name }));
+        }
 
-    } catch (error) {
-        console.error("Error submitting quiz:", error);
-        notification.innerText = "Lỗi khi nộp bài. Đáp án của bạn vẫn được lưu. Vui lòng thử lại.";
-    }
+        localStorage.setItem("userAnswers", JSON.stringify(userAnswers));
+        localStorage.removeItem("currentScreen");
+        localStorage.removeItem("timeLeft");
+        
+        showResultScreen();
+
+    } catch (error) {
+        console.error("Error submitting quiz:", error);
+        // Hiển thị lỗi đúng chỗ
+        if(quizNotification) quizNotification.innerText = "Lỗi khi nộp bài. Đáp án của bạn vẫn được lưu. Vui lòng thử lại.";
+    }
 }
 
 async function saveQuiz() {
