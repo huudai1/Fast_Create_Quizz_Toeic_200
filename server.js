@@ -28,6 +28,7 @@ let quizzes = [];
 let currentQuiz = null;
 let results = [];
 let clients = new Set();
+let directTestState = null;
 
 // Ensure directories exist
 const ensureDirectories = async () => {
@@ -867,7 +868,21 @@ const wss = new WebSocketServer({ server });
 
 wss.on('connection', (ws) => {
     clients.add(ws);
-    
+    if (directTestState) {
+        const elapsedTime = Math.floor((Date.now() - directTestState.startTime) / 1000);
+        const remainingTime = directTestState.timeLimit - elapsedTime;
+        
+        // Nếu vẫn còn thời gian
+        if (remainingTime > 0) {
+            // Chỉ gửi cho người mới kết nối này thôi
+            ws.send(JSON.stringify({
+                type: 'directTestInProgress', // Gửi một tin nhắn loại mới
+                quizId: directTestState.quizId,
+                quizName: directTestState.quizName,
+                quizType: directTestState.quizType
+            }));
+        }
+    }
     // Gửi thông tin trạng thái ban đầu cho người mới kết nối
     broadcastParticipantList();
     if (currentQuiz) {
@@ -899,18 +914,23 @@ wss.on('connection', (ws) => {
                 broadcastParticipantList();
             } 
             else if (msg.type === 'start') {
-                const quiz = quizzes.find(q => q.quizId === msg.quizId);
-                if (quiz) {
-                    broadcast({
-                        type: 'start',
-                        timeLimit: msg.timeLimit,
-                        quizId: msg.quizId,
-                        startTime: msg.startTime,
-                        partVisibility: msg.partVisibility,
-                        quizPdfUrl: quiz.quizPdfUrl
-                    });
-                }
-            } 
+    const quiz = quizzes.find(q => q.quizId === msg.quizId);
+    if (quiz) {
+        // 1. Ghi vào "sổ ghi nhớ"
+        directTestState = {
+            type: 'start',
+            quizId: msg.quizId,
+            quizName: quiz.quizName,
+            quizPdfUrl: quiz.quizPdfUrl,
+            timeLimit: msg.timeLimit,
+            startTime: msg.startTime,
+            partVisibility: msg.partVisibility,
+            quizType: quiz.type 
+        };
+        // 2. Thông báo cho mọi người
+        broadcast(directTestState);
+    }
+} 
             else if (msg.type === 'end') {
                 if (currentQuiz) {
                     const quizResults = results.filter(r => r.quizId === currentQuiz.quizId);
@@ -924,6 +944,7 @@ wss.on('connection', (ws) => {
                         }))
                     });
                 }
+                directTestState = null;
                 broadcast({ type: 'end' });
             } 
             else if (msg.type === 'requestQuizStatus') {

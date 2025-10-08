@@ -237,41 +237,72 @@ function handleWebSocketMessage(event) {
             }
         } // <--- Dấu } được chuyển xuống đây
         else if (message.type === "start") {
-            isAdminControlled = true;
-            initialTimeLimit = message.timeLimit || 7200;
-            timeLeft = message.timeLimit || 7200;
-            const visibility = message.partVisibility;
-            const pdfUrl = message.quizPdfUrl;
+    // Chỉ học sinh mới xử lý tin nhắn này
+    if (isAdmin) return;
 
+    // Lấy thông tin từ tin nhắn của admin
+    const { quizId, timeLimit, startTime, partVisibility, quizPdfUrl } = message;
+
+    // Dựa vào quizId, fetch để lấy đầy đủ thông tin đề thi (bao gồm cả 'type')
+    fetch(`/get-quiz?quizId=${quizId}`)
+        .then(res => res.json())
+        .then(quizData => {
+            if (!quizData) {
+                throw new Error("Không tìm thấy dữ liệu đề thi.");
+            }
+
+            // Lưu trạng thái kiểm tra trực tiếp
             localStorage.setItem("directTestState", JSON.stringify({
-                isDirectTestMode: true,
-                quizId: message.quizId,
-                timeLimit: message.timeLimit,
-                startTime: message.startTime,
+                isDirectTestMode: true, quizId, timeLimit, startTime
             }));
+            selectedQuizId = quizId;
+            localStorage.setItem("selectedQuizId", quizId);
+            
+            // QUAN TRỌNG: Kiểm tra loại đề thi
+            if (quizData.type === 'custom') {
+                // ---- LOGIC CHO ĐỀ TÙY CHỈNH ----
+                currentCustomQuizData = quizData;
+                hideAllScreens();
+                document.getElementById('custom-quiz-container').classList.remove('hidden');
+                
+                // Setup giao diện
+                document.getElementById('custom-quiz-title').innerText = quizData.quizName;
+                loadQuizPdf(quizData.quizPdfUrl, 'custom-image-display');
+                createCustomQuestionElements(quizData.totalQuestions);
+                setupCustomAudioPlayer(quizData.listeningRanges);
+                
+                timeLeft = timeLimit || 7200;
+                startTimer();
 
-            if (!isAdmin) {
+            } else {
+                // ---- LOGIC CHO ĐỀ TOEIC (như cũ) ----
+                isAdminControlled = true;
+                initialTimeLimit = timeLimit || 7200;
+                timeLeft = timeLimit || 7200;
+                
                 hideAllScreens();
                 if(quizContainer) quizContainer.classList.remove("hidden");
-                generateQuizQuestions();
+                
+                generateQuizQuestions(); // Tạo câu hỏi
+                
                 if(timerDisplay) timerDisplay.classList.remove("hidden");
                 if(audio) audio.classList.remove("hidden");
                 
-                selectedQuizId = message.quizId;
-                localStorage.setItem("selectedQuizId", message.quizId);
-                
-                loadQuizPdf(pdfUrl, 'image-display');
-                applyPartVisibility(visibility);
-                const firstVisiblePart = findFirstVisiblePart(visibility) || 1;
+                loadQuizPdf(quizPdfUrl, 'image-display');
+                applyPartVisibility(partVisibility);
+                const firstVisiblePart = findFirstVisiblePart(partVisibility) || 1;
                 loadAudio(firstVisiblePart);
                 startTimer();
-                updateProgressBar();
                 currentQuizPart = firstVisiblePart;
                 updateQuizNavigation(currentQuizPart, studentPartVisibility);
-                const notif = document.getElementById('quiz-container-notification');
-                if(notif) notif.innerText = "Bài thi đã bắt đầu!";
             }
-        } 
+        })
+        .catch(error => {
+            console.error("Error starting direct test for student:", error);
+            const notif = document.getElementById('quiz-list-notification');
+            if (notif) notif.innerText = "Lỗi khi bắt đầu bài thi.";
+        });
+}
         else if (message.type === "end") {
             isTestEnded = true;
             localStorage.removeItem("directTestState");
@@ -294,6 +325,26 @@ function handleWebSocketMessage(event) {
         else if (message.type === "error") {
              const notif = document.getElementById('quiz-list-notification');
              if(notif) notif.innerText = message.message;
+        }
+        else if (message.type === 'directTestInProgress') {
+            const { quizId, quizName, quizType } = message;
+            const noticeDiv = document.getElementById('direct-test-notice');
+            const messageP = document.getElementById('direct-test-message');
+            const joinBtn = document.getElementById('join-direct-test-btn');
+
+            // Chỉ hiển thị cho học sinh
+            if (noticeDiv && messageP && joinBtn && !isAdmin) {
+                messageP.innerText = `Admin đang tổ chức kiểm tra trực tiếp đề: "${quizName}". Tham gia ngay!`;
+                
+                // Gán đúng hàm để bắt đầu bài thi (TOEIC hoặc Tùy chỉnh)
+                const joinFunction = quizType === 'custom' 
+                    ? `startCustomQuiz('${quizId}')` 
+                    : `startQuiz('${quizId}')`;
+                joinBtn.setAttribute('onclick', joinFunction);
+                
+                // Hiển thị thông báo màu vàng
+                noticeDiv.classList.remove('hidden');
+            }
         }
     } catch (error) {
         console.error("Error handling WebSocket message:", error);
