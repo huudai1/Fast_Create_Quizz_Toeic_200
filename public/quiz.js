@@ -527,6 +527,19 @@ async function clearDatabase() {
   }
 }
 
+function saveAdminState() {
+    if (!isAdmin) return;
+    try {
+        const adminState = {
+            selectedQuizId: selectedQuizId,
+            partVisibility: partVisibility
+        };
+        localStorage.setItem('adminState', JSON.stringify(adminState));
+    } catch (error) {
+        console.error("Error saving admin state:", error);
+    }
+}
+
 async function deleteQuiz(quizId) {
   if (!confirm("Bạn có chắc muốn xóa đề thi này?")) return;
   try {
@@ -684,29 +697,37 @@ async function showStatistics() {
 
 // --- CHỨC NĂNG KIỂM TRA TRỰC TIẾP ---
 async function startDirectTest() {
+    // Lấy đúng phần tử thông báo của màn hình hiện tại
+    const notificationElement = document.getElementById('quiz-list-notification');
+
     if (!selectedQuizId) {
-        notification.innerText = "Vui lòng chọn một đề!";
+        if (notificationElement) notificationElement.innerText = "Vui lòng chọn một đề!";
         return;
     }
+
     const timeLimit = prompt("Nhập thời gian làm bài (phút, tối đa 120):", "120");
-    if (!timeLimit) return;
+    if (timeLimit === null) return; // Người dùng bấm Cancel
+
     let timeLimitSeconds = parseInt(timeLimit) * 60;
     if (isNaN(timeLimitSeconds) || timeLimitSeconds <= 0 || timeLimitSeconds > 7200) {
-        notification.innerText = "Thời gian không hợp lệ! Mặc định 120 phút.";
+        if (notificationElement) notificationElement.innerText = "Thời gian không hợp lệ! Mặc định 120 phút.";
         timeLimitSeconds = 7200;
     }
+
     try {
         const res = await fetch("/select-quiz", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ quizId: selectedQuizId }),
         });
+
         const result = await res.json();
         if (res.ok) {
             isDirectTestMode = true;
             isTestEnded = false;
             initialTimeLimit = timeLimitSeconds;
             timeLeft = timeLimitSeconds;
+            
             hideAllScreens();
             directTestScreen.classList.remove("hidden");
             directResultsTable.classList.add("hidden");
@@ -724,23 +745,25 @@ async function startDirectTest() {
             startDirectTestTimer();
 
             if (socket && socket.readyState === WebSocket.OPEN) {
-                // THAY ĐỔI: Gửi kèm trạng thái các part qua WebSocket
                 socket.send(JSON.stringify({
                     type: "start",
                     quizId: selectedQuizId,
                     timeLimit: timeLimitSeconds,
                     startTime: startTime,
-                    partVisibility: partVisibility 
+                    partVisibility: partVisibility,
+                    quizPdfUrl: result.quizPdfUrl // Gửi kèm PDF url
                 }));
             }
-            notification.innerText = "Đã bắt đầu kiểm tra trực tiếp.";
-            saveAdminState();
+
+            if (notificationElement) notificationElement.innerText = "Đã bắt đầu kiểm tra trực tiếp.";
+            saveAdminState(); // Bây giờ hàm này đã tồn tại và sẽ chạy đúng
+
         } else {
-            notification.innerText = result.message;
+            if (notificationElement) notificationElement.innerText = result.message;
         }
     } catch (error) {
         console.error("Error starting direct test:", error);
-        notification.innerText = "Lỗi khi bắt đầu kiểm tra trực tiếp.";
+        if (notificationElement) notificationElement.innerText = "Lỗi khi bắt đầu kiểm tra trực tiếp.";
     }
 }
 

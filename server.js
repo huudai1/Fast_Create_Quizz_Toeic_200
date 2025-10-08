@@ -782,6 +782,17 @@ app.post('/recognize-answers', memoryUpload.array('answer_files', 10), async (re
 });
 
 
+app.get('/quizzes/assigned', async (req, res) => {
+    try {
+        // Lọc ra những quiz có cờ isAssigned = true
+        const assignedQuizzes = quizzes.filter(q => q.isAssigned === true);
+        res.json(assignedQuizzes);
+    } catch (err) {
+        console.error('Error fetching assigned quizzes:', err);
+        res.status(500).json({ message: 'Error fetching assigned quizzes' });
+    }
+});
+
 app.post(
   '/upload-files',
   upload.fields([
@@ -851,6 +862,7 @@ const server = app.listen(port, () => {
 });
 
 const wss = new WebSocketServer({ server });
+
 
 
 wss.on('connection', (ws) => {
