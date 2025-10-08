@@ -25,7 +25,7 @@ let welcomeScreen, adminLogin, studentLogin, quizListScreen, adminOptions, admin
  participantCount, submittedCount, assignBtn, directTestBtn, directTestScreen,
  endDirectTestBtn, directParticipantCount, directSubmittedCount, directResultsTable,
  directResultsBody, resultsTable, resultsBody, imageDisplay, audio, audioSource,
- timerDisplay, quizForm, resultScreen, resultScore, resultTime, downloadNotice,
+ timerDisplay, quizForm, resultScreen, resultScore, resultTime, downloadNotice,directTestTimer,
  reviewScreen, staticScreen, adminLoginForm, adminPasswordInput, notificationAdmin,
     directTestProgressBar; 
 
@@ -1833,6 +1833,7 @@ document.addEventListener("DOMContentLoaded", () => {
     directResultsTable = document.getElementById("direct-results-table");
     directResultsBody = document.getElementById("direct-results-body");
     directTestProgressBar = document.getElementById("direct-test-progress-bar");
+    directTestTimer = document.getElementById("direct-test-timer");
     resultsTable = document.getElementById("results-table");
     resultsBody = document.getElementById("results-body");
     imageDisplay = document.getElementById("image-display");
