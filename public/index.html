@@ -322,44 +322,61 @@
 <div id="custom-quiz-creator-screen" class="container mx-auto p-4 hidden">
     <h1 class="text-3xl font-bold mb-4">Tạo Đề thi Tùy chỉnh</h1>
     <p id="custom-notification" class="text-red-500 mb-4"></p>
-    <form id="custom-quiz-form" class="space-y-6">
-        <fieldset class="border p-4 rounded">
-            <legend class="text-xl font-semibold px-2">1. Thông tin cơ bản</legend>
-            <div class="space-y-4 mt-2">
-                <div>
-                    <label for="custom-quiz-name">Tên đề thi:</label>
-                    <input id="custom-quiz-name" type="text" class="border p-2 rounded w-full" required>
+
+    <div id="custom-quiz-step-1">
+        <form id="custom-quiz-form-step1" class="space-y-6">
+            <fieldset class="border p-4 rounded">
+                <legend class="text-xl font-semibold px-2">Bước 1: Thông tin cơ bản</legend>
+                <div class="space-y-4 mt-2">
+                    <div>
+                        <label for="custom-quiz-name">Tên đề thi:</label>
+                        <input id="custom-quiz-name" type="text" class="border p-2 rounded w-full" required>
+                    </div>
+                    <div>
+                        <label for="custom-total-questions">Tổng số câu:</label>
+                        <input id="custom-total-questions" type="number" min="1" class="border p-2 rounded w-full" required>
+                    </div>
+                </div>
+            </fieldset>
+            <div class="flex space-x-4">
+                <button type="button" onclick="goToCustomQuizStep2()" class="bg-blue-600 text-white px-6 py-2 rounded font-semibold">Tiếp tục</button>
+                <button type="button" onclick="backToQuizList()" class="bg-gray-500 text-white px-4 py-2 rounded">Quay lại</button>
+            </div>
+        </form>
+    </div>
+
+    <div id="custom-quiz-step-2" class="hidden">
+        <form id="custom-quiz-form-step2" class="space-y-6">
+             <fieldset class="border p-4 rounded">
+                <legend class="text-xl font-semibold px-2">Bước 2: Tải lên File & Cấu hình</legend>
+                 <div class="space-y-4 mt-2">
+                    <div>
+                        <label for="custom-quiz-pdf">File PDF của đề (1 file duy nhất):</label>
+                        <input id="custom-quiz-pdf" type="file" accept="application/pdf" required>
+                    </div>
+                </div>
+            </fieldset>
+            <fieldset class="border p-4 rounded">
+                <legend class="text-xl font-semibold px-2">Cấu hình Phần nghe (Tùy chọn)</legend>
+                <div id="listening-ranges-container" class="space-y-2"></div>
+                <button type="button" onclick="addListeningRange()" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">+ Thêm khoảng nghe</button>
+            </fieldset>
+            <fieldset class="border p-4 rounded">
+                <legend class="text-xl font-semibold px-2">Đáp án</legend>
+                <div class="my-4 text-center">
+                    <button type="button" onclick="handleCustomAiRecognition()" class="bg-purple-600 text-white font-bold py-2 px-4 rounded hover:bg-purple-700">🤖 AI Nhận diện đáp án</button>
                 </div>
                 <div>
-                    <label for="custom-total-questions">Tổng số câu:</label>
-                    <input id="custom-total-questions" type="number" min="1" class="border p-2 rounded w-full" required>
+                    <label id="custom-answer-key-label" for="custom-answer-key">Nhập chuỗi đáp án (cách nhau bằng dấu phẩy):</label>
+                    <textarea id="custom-answer-key" rows="4" class="border p-2 rounded w-full"></textarea>
                 </div>
-                <div>
-                    <label for="custom-quiz-pdf">File PDF của đề (1 file duy nhất):</label>
-                    <input id="custom-quiz-pdf" type="file" accept="application/pdf" required>
-                </div>
+            </fieldset>
+            <div class="flex space-x-4">
+                <button type="button" onclick="saveCustomQuiz()" class="bg-green-500 text-white px-6 py-2 rounded font-semibold">Lưu đề thi</button>
+                <button type="button" onclick="backToCustomQuizStep1()" class="bg-gray-500 text-white px-4 py-2 rounded">Trở lại Bước 1</button>
             </div>
-        </fieldset>
-        <fieldset class="border p-4 rounded">
-            <legend class="text-xl font-semibold px-2">2. Cấu hình Phần nghe (Tùy chọn)</legend>
-            <div id="listening-ranges-container" class="space-y-2"></div>
-            <button type="button" onclick="addListeningRange()" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">+ Thêm khoảng nghe</button>
-        </fieldset>
-        <fieldset class="border p-4 rounded">
-            <legend class="text-xl font-semibold px-2">3. Đáp án</legend>
-            <div class="my-4 text-center">
-                <button type="button" onclick="handleCustomAiRecognition()" class="bg-purple-600 text-white font-bold py-2 px-4 rounded hover:bg-purple-700">🤖 AI Nhận diện đáp án</button>
-            </div>
-            <div>
-                <label for="custom-answer-key">Nhập chuỗi đáp án (cách nhau bằng dấu phẩy):</label>
-                <textarea id="custom-answer-key" rows="4" class="border p-2 rounded w-full"></textarea>
-            </div>
-        </fieldset>
-        <div class="flex space-x-4">
-            <button type="button" onclick="saveCustomQuiz()" class="bg-green-500 text-white px-6 py-2 rounded font-semibold">Lưu đề thi</button>
-            <button type="button" onclick="backToQuizList()" class="bg-gray-500 text-white px-4 py-2 rounded">Quay lại</button>
-        </div>
-    </form>
+        </form>
+    </div>
 </div>
 
 <div id="custom-quiz-container" class="container mx-auto p-4 hidden">

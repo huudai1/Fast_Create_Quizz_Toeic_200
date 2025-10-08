@@ -4,7 +4,7 @@
 let user = null, heartbeatInterval = null, isAdmin = false, timeLeft = 7200, timerInterval = null,
     isAdminControlled = false, selectedQuizId = null, isDirectTestMode = false, isTestEnded = false,
     userAnswers = null, answerKey = null, currentReviewPart = 1, initialTimeLimit = null,
-    currentCustomQuizData = null, socket = null, currentQuizPart = 1;
+    currentCustomQuizData = null, socket = null, currentQuizPart = 1, customQuizTotalQuestions = 0;
 
 let partVisibility = { 1: true, 2: true, 3: true, 4: true, 5: true, 6: true, 7: true };
 let studentPartVisibility = null;
@@ -1072,62 +1072,62 @@ async function startQuiz(quizId) {
 }
 
 async function submitQuiz() {
-    audio.pause();
+         audio.pause();
     // Lấy đúng phần tử thông báo của màn hình làm bài
     const quizNotification = document.getElementById('quiz-notification');
 
-    if (!user || !user.name) {
+         if (!user || !user.name) {
         if(quizNotification) quizNotification.innerText = "Lỗi: Vui lòng nhập tên lại.";
-        showWelcomeScreen();
-        return;
-    }
+                 showWelcomeScreen();
+                 return;
+         }
 
-    const formData = new FormData(quizForm);
-    userAnswers = {};
-    formData.forEach((val, key) => (userAnswers[key] = val));
+         const formData = new FormData(quizForm);
+         userAnswers = {};
+         formData.forEach((val, key) => (userAnswers[key] = val));
 
-    try {
-        const currentQuizId = selectedQuizId || localStorage.getItem("selectedQuizId");
-        const res = await fetch("/submit", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username: user.name, answers: userAnswers, quizId: currentQuizId }),
-        });
+         try {
+                 const currentQuizId = selectedQuizId || localStorage.getItem("selectedQuizId");
+                 const res = await fetch("/submit", {
+                         method: "POST",
+                         headers: { "Content-Type": "application/json" },
+                         body: JSON.stringify({ username: user.name, answers: userAnswers, quizId: currentQuizId }),
+                 });
 
-        if (!res.ok) {
-            const errorData = await res.json().catch(() => ({}));
-            throw new Error(errorData.message || `Lỗi server: ${res.status}`);
-        }
+                 if (!res.ok) {
+                         const errorData = await res.json().catch(() => ({}));
+                         throw new Error(errorData.message || `Lỗi server: ${res.status}`);
+                 }
 
-        const result = await res.json();
-        
-        const answerRes = await fetch(`/answer-key?quizId=${currentQuizId}`);
-        answerKey = await answerRes.json();
-        
-        resultScore.innerText = `Điểm: ${result.score}/200`;
-        resultTime.innerText = `Thời gian nộp: ${new Date().toLocaleString()}`;
-        
+                 const result = await res.json();
+
+                 const answerRes = await fetch(`/answer-key?quizId=${currentQuizId}`);
+                 answerKey = await answerRes.json();
+
+                 resultScore.innerText = `Điểm: ${result.score}/200`;
+                 resultTime.innerText = `Thời gian nộp: ${new Date().toLocaleString()}`;
+
         // Dùng ID để tìm và vô hiệu hóa nút nộp bài
         const submitButton = document.getElementById('submit-quiz-btn');
         if (submitButton) submitButton.disabled = true;
 
-        clearInterval(timerInterval);
-        
-        if (isAdminControlled && socket && socket.readyState === WebSocket.OPEN) {
-            socket.send(JSON.stringify({ type: "submitted", username: user.name }));
-        }
+                 clearInterval(timerInterval);
 
-        localStorage.setItem("userAnswers", JSON.stringify(userAnswers));
-        localStorage.removeItem("currentScreen");
-        localStorage.removeItem("timeLeft");
-        
-        showResultScreen();
+                 if (isAdminControlled && socket && socket.readyState === WebSocket.OPEN) {
+                         socket.send(JSON.stringify({ type: "submitted", username: user.name }));
+                 }
 
-    } catch (error) {
-        console.error("Error submitting quiz:", error);
+                 localStorage.setItem("userAnswers", JSON.stringify(userAnswers));
+                 localStorage.removeItem("currentScreen");
+                 localStorage.removeItem("timeLeft");
+
+                 showResultScreen();
+
+         } catch (error) {
+                 console.error("Error submitting quiz:", error);
         // Hiển thị lỗi đúng chỗ
-        if(quizNotification) quizNotification.innerText = "Lỗi khi nộp bài. Đáp án của bạn vẫn được lưu. Vui lòng thử lại.";
-    }
+                 if(quizNotification) quizNotification.innerText = "Lỗi khi nộp bài. Đáp án của bạn vẫn được lưu. Vui lòng thử lại.";
+         }
 }
 
 async function saveQuiz() {
@@ -1389,81 +1389,83 @@ function updateQuizNavigation(current, visibility) {
 
 // --- LOGIC ĐỀ THI TÙY CHỈNH ---
 function addListeningRange() {
-    const container = document.getElementById('listening-ranges-container');
-    const rangeId = Date.now(); // Tạo ID duy nhất cho mỗi dòng
-    const newRangeDiv = document.createElement('div');
-    newRangeDiv.className = 'flex items-center space-x-2 p-2 border-t';
-    newRangeDiv.id = `range-${rangeId}`;
-    newRangeDiv.innerHTML = `
-        <label>Từ câu:</label>
-        <input type="number" class="w-20 border p-1 rounded from-question" min="1">
-        <label>Đến câu:</label>
-        <input type="number" class="w-20 border p-1 rounded to-question" min="1">
-        <label>File nghe:</label>
-        <input type="file" class="audio-file" accept="audio/*">
-        <button type="button" onclick="document.getElementById('range-${rangeId}').remove()" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Xóa</button>
-    `;
-    container.appendChild(newRangeDiv);
+         const container = document.getElementById('listening-ranges-container');
+         const rangeId = Date.now();
+         const newRangeDiv = document.createElement('div');
+         newRangeDiv.className = 'flex items-center space-x-2 p-2 border-t';
+         newRangeDiv.id = `range-${rangeId}`;
+         newRangeDiv.innerHTML = `
+                 <label>Từ câu:</label>
+        <input type="number" class="w-20 border p-1 rounded from-question" min="1" max="${customQuizTotalQuestions}">
+                 <label>Đến câu:</label>
+        <input type="number" class="w-20 border p-1 rounded to-question" min="1" max="${customQuizTotalQuestions}">
+                 <label>File nghe:</label>
+                 <input type="file" class="audio-file" accept="audio/*">
+                 <button type="button" onclick="document.getElementById('range-${rangeId}').remove()" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Xóa</button>
+         `;
+         container.appendChild(newRangeDiv);
 }
 
 async function saveCustomQuiz() {
-    const notificationElement = document.getElementById('custom-notification');
-    const modal = document.getElementById('loading-modal');
-    notificationElement.innerText = '';
+         const notificationElement = document.getElementById('custom-notification');
+         const modal = document.getElementById('loading-modal');
+         notificationElement.innerText = '';
 
-    const quizName = document.getElementById('custom-quiz-name').value.trim();
-    const totalQuestions = parseInt(document.getElementById('custom-total-questions').value);
-    const pdfFile = document.getElementById('custom-quiz-pdf').files[0];
-    const answerKeyInput = document.getElementById('custom-answer-key').value.trim();
+    // Lấy dữ liệu từ cả 2 bước
+         const quizName = document.getElementById('custom-quiz-name').value.trim();
+         const totalQuestions = customQuizTotalQuestions; // Lấy từ biến đã lưu
+         const pdfFile = document.getElementById('custom-quiz-pdf').files[0];
+         const answerKeyInput = document.getElementById('custom-answer-key').value.trim();
 
-    // --- Validation ---
-    if (!quizName || !totalQuestions || !pdfFile || !answerKeyInput) {
-        notificationElement.innerText = 'Vui lòng điền đầy đủ Tên, Số câu, File PDF và Đáp án.';
-        return;
-    }
-    const answers = answerKeyInput.split(',');
-    if (answers.length !== totalQuestions) {
-        notificationElement.innerText = `Số lượng đáp án (${answers.length}) không khớp với tổng số câu (${totalQuestions}).`;
-        return;
-    }
-    
-    const formData = new FormData();
-    formData.append('quizType', 'custom'); // Đánh dấu đây là đề tùy chỉnh
-    formData.append('quizName', quizName);
-    formData.append('totalQuestions', totalQuestions);
-    formData.append('pdfFile', pdfFile);
-    formData.append('answerKey', answerKeyInput);
-    formData.append('createdBy', user.email);
+         // Validation
+         if (!quizName || !totalQuestions || !pdfFile || !answerKeyInput) {
+                 notificationElement.innerText = 'Vui lòng điền đầy đủ Tên, Số câu, File PDF và Đáp án.';
+                 return;
+         }
+         const answers = answerKeyInput.split(',').filter(a => a.trim() !== '');
+         if (answers.length !== totalQuestions) {
+                 notificationElement.innerText = `Số lượng đáp án đã nhập (${answers.length}) không khớp với tổng số câu yêu cầu (${totalQuestions}).`;
+                 return;
+         }
 
-    const listeningRanges = [];
-    const rangeDivs = document.querySelectorAll('#listening-ranges-container > div');
-    for (let i = 0; i < rangeDivs.length; i++) {
-        const div = rangeDivs[i];
-        const from = div.querySelector('.from-question').value;
-        const to = div.querySelector('.to-question').value;
-        const audioFile = div.querySelector('.audio-file').files[0];
-        if (!from || !to || !audioFile) {
-            notificationElement.innerText = `Vui lòng điền đầy đủ thông tin và file nghe cho tất cả các khoảng nghe.`;
-            return;
-        }
-        const rangeData = { from: parseInt(from), to: parseInt(to) };
-        listeningRanges.push(rangeData);
-        formData.append(`audio_file_${i}`, audioFile);
-    }
-    formData.append('listeningRanges', JSON.stringify(listeningRanges));
+         const formData = new FormData();
+         formData.append('quizType', 'custom');
+         formData.append('quizName', quizName);
+         formData.append('totalQuestions', totalQuestions);
+         formData.append('pdfFile', pdfFile);
+         formData.append('answerKey', answerKeyInput);
+         formData.append('createdBy', user.email);
 
-    modal.classList.remove('hidden');
+         const listeningRanges = [];
+         const rangeDivs = document.querySelectorAll('#listening-ranges-container > div');
+         for (let i = 0; i < rangeDivs.length; i++) {
+        // ... (giữ nguyên logic xử lý listening range)
+                 const div = rangeDivs[i];
+                 const from = div.querySelector('.from-question').value;
+                 const to = div.querySelector('.to-question').value;
+                 const audioFile = div.querySelector('.audio-file').files[0];
+                 if (!from || !to || !audioFile) {
+                         notificationElement.innerText = `Vui lòng điền đầy đủ thông tin và file nghe cho tất cả các khoảng nghe.`;
+                         return;
+                 }
+                 const rangeData = { from: parseInt(from), to: parseInt(to) };
+                 listeningRanges.push(rangeData);
+                 formData.append(`audio_file_${i}`, audioFile);
+         }
+         formData.append('listeningRanges', JSON.stringify(listeningRanges));
 
-    try {
-        const res = await fetch('/save-quiz', { method: 'POST', body: formData });
-        const result = await res.json();
-        if (!res.ok) throw new Error(result.message);
-        backToQuizList("Tạo đề thi tùy chỉnh thành công!");
-    } catch (error) {
-        notificationElement.innerText = `Lỗi: ${error.message}`;
-    } finally {
-        modal.classList.add('hidden');
-    }
+         modal.classList.remove('hidden');
+
+         try {
+                 const res = await fetch('/save-quiz', { method: 'POST', body: formData });
+                 const result = await res.json();
+                 if (!res.ok) throw new Error(result.message);
+                 backToQuizList("Tạo đề thi tùy chỉnh thành công!");
+         } catch (error) {
+                 notificationElement.innerText = `Lỗi: ${error.message}`;
+         } finally {
+                 modal.classList.add('hidden');
+         }
 }
 
 async function startCustomQuiz(quizId) {
@@ -1839,6 +1841,62 @@ function renderPartVisibilityControls() {
         button.onclick = () => togglePartVisibility(i);
         container.appendChild(button);
     }
+}
+
+function nextReviewPart(current) {
+    const nextPart = findNextVisiblePart(current, studentPartVisibility || partVisibility);
+    if (nextPart === null) return;
+
+    document.getElementById(`review-part${current}`).classList.add("hidden");
+    document.getElementById(`review-part${nextPart}`).classList.remove("hidden");
+    currentReviewPart = nextPart;
+    updateReviewNavigation(currentReviewPart);
+}
+
+function prevReviewPart(current) {
+    const prevPart = findPrevVisiblePart(current, studentPartVisibility || partVisibility);
+    if (prevPart === null) return;
+
+    document.getElementById(`review-part${current}`).classList.add("hidden");
+    document.getElementById(`review-part${prevPart}`).classList.remove("hidden");
+    currentReviewPart = prevPart;
+    updateReviewNavigation(currentReviewPart);
+}
+
+function updateReviewNavigation(current) {
+    const prevBtn = document.querySelector('#review-answers button[onclick^="prevReviewPart"]');
+    const nextBtn = document.querySelector('#review-answers button[onclick^="nextReviewPart"]');
+    if (!prevBtn || !nextBtn) return;
+
+    const visibility = studentPartVisibility || partVisibility;
+    prevBtn.disabled = (findPrevVisiblePart(current, visibility) === null);
+    nextBtn.disabled = (findNextVisiblePart(current, visibility) === null);
+}
+
+function goToCustomQuizStep2() {
+    const totalQuestionsInput = document.getElementById('custom-total-questions');
+    const notification = document.getElementById('custom-notification');
+    const total = parseInt(totalQuestionsInput.value);
+
+    if (!total || total <= 0) {
+        notification.innerText = "Vui lòng nhập một số câu hợp lệ (lớn hơn 0).";
+        return;
+    }
+    
+    // Lưu lại tổng số câu và chuyển bước
+    customQuizTotalQuestions = total;
+    notification.innerText = "";
+    document.getElementById('custom-quiz-step-1').classList.add('hidden');
+    document.getElementById('custom-quiz-step-2').classList.remove('hidden');
+
+    // Cập nhật nhãn để người dùng biết cần nhập bao nhiêu đáp án
+    document.getElementById('custom-answer-key-label').innerText = `Nhập chuỗi đáp án (tổng cộng ${total} câu, cách nhau bằng dấu phẩy):`;
+}
+
+function backToCustomQuizStep1() {
+    document.getElementById('custom-quiz-step-2').classList.add('hidden');
+    document.getElementById('custom-quiz-step-1').classList.remove('hidden');
+    document.getElementById('custom-notification').innerText = "";
 }
 
 function resetAndShowPartControls() {
