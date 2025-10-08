@@ -938,6 +938,33 @@ function generateQuizQuestions() {
     });
 }
 
+async function loadQuizPdf(pdfUrl, containerId) {
+    const displayContainer = document.getElementById(containerId);
+
+    // Kiểm tra xem có tìm thấy nơi để hiển thị không
+    if (!displayContainer) {
+        console.error(`Lỗi: Không tìm thấy container với ID '${containerId}'`);
+        return;
+    }
+
+    // Xóa nội dung cũ trước khi hiển thị PDF mới
+    displayContainer.innerHTML = '';
+
+    // Kiểm tra xem có đường dẫn PDF không
+    if (!pdfUrl) {
+        displayContainer.innerHTML = '<p class="text-red-500 p-4">Không tìm thấy file PDF cho đề thi này.</p>';
+        return;
+    }
+
+    // Tạo một thẻ iframe để nhúng file PDF vào
+    const iframe = document.createElement('iframe');
+    iframe.src = pdfUrl;
+    // Thêm class để PDF hiển thị toàn bộ chiều rộng và cao của container cha
+    iframe.className = "w-full h-full border-0"; 
+    
+    displayContainer.appendChild(iframe);
+}
+
 async function startQuiz(quizId) {
     try {
         const res = await fetch("/select-quiz", {
