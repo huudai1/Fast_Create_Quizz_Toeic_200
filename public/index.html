@@ -201,10 +201,6 @@
     </div>
     <p id="quiz-list-notification" class="text-red-500 mb-4"></p>
     <p id="quiz-status" class="text-lg mb-4"></p>
-    <div id="participant-list-container" class="mb-6 hidden">
-        <h3 class="text-xl font-bold mb-2">Học sinh đang tham gia: <span id="participant-list-count">0</span></h3>
-        <ul id="participant-list" class="list-disc list-inside bg-gray-50 dark:bg-gray-800 p-4 rounded-md"></ul>
-    </div>
     <p id="submitted-count" class="text-lg mb-4"></p>
     <div id="direct-test-notice" class="bg-yellow-100 p-4 rounded mb-4 hidden">
         <p id="direct-test-message" class="font-semibold text-lg"></p>
@@ -219,6 +215,10 @@
     <div id="admin-controls" class="space-x-4 mb-4 hidden">
     <button id="assignBtn" onclick="assignQuiz()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 hidden">Giao bài</button>
     <button id="directTestBtn" onclick="startDirectTest()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 hidden">Kiểm tra trực tiếp</button>
+    <div id="participant-list-container" class="mb-6 hidden">
+        <h3 class="text-xl font-bold mb-2">Học sinh đang tham gia: <span id="participant-list-count">0</span></h3>
+        <ul id="participant-list" class="list-disc list-inside bg-gray-50 dark:bg-gray-800 p-4 rounded-md"></ul>
+    </div>
 </div>
     <div id="part-visibility-controls" class="space-x-2 mb-4 hidden">
         <span class="font-semibold align-middle">Các phần hiển thị:</span>
