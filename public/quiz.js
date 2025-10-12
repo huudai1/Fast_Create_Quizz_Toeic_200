@@ -1483,6 +1483,16 @@ async function startCustomQuiz(quizId) {
         await loadQuizPdf(currentCustomQuizData.quizPdfUrl, 'custom-image-display');
         createCustomQuestionElements(currentCustomQuizData.totalQuestions);
         setupCustomAudioPlayer(currentCustomQuizData.listeningRanges);
+
+        const savedAnswers = localStorage.getItem("userAnswers");
+        userAnswers = savedAnswers ? JSON.parse(savedAnswers) : {};
+        if (userAnswers) {
+            Object.keys(userAnswers).forEach(questionId => {
+                // Tìm đúng radio button đã chọn và tick lại
+                const radio = document.querySelector(`input[name="${questionId}"][value="${userAnswers[questionId]}"]`);
+                if (radio) radio.checked = true;
+            });
+        }
         
         // Setup timer (lấy từ hàm assignQuiz - cần cập nhật server)
         timeLeft = currentCustomQuizData.timeLimit || 7200; 
