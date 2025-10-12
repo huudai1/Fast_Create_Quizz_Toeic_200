@@ -947,7 +947,13 @@ wss.on('connection', (ws) => {
                 }
                 directTestState = null;
                 broadcast({ type: 'end' });
-            } 
+            }
+            } else if (msg.type === 'heartbeat') {
+            // Server nhận được nhịp tim từ Admin
+            // console.log("Received heartbeat from an Admin client."); // Dùng để debug nếu cần
+            
+            // Phát lại một tin nhắn 'heartbeat_pulse' cho TẤT CẢ client
+            broadcast({ type: 'heartbeat_pulse' }); 
             else if (msg.type === 'requestQuizStatus') {
                 if (currentQuiz) {
                     ws.send(JSON.stringify({

@@ -33,6 +33,23 @@ let welcomeScreen, adminLogin, studentLogin, quizListScreen, adminOptions, admin
 // PHẦN 2: TẤT CẢ CÁC HÀM CHỨC NĂNG
 // =========================================================================
 
+function startHeartbeat() {
+    // Xóa interval cũ để đảm bảo chỉ có một tiến trình chạy
+    clearInterval(heartbeatInterval); 
+    
+    heartbeatInterval = setInterval(() => {
+        // Chỉ gửi khi là admin và kết nối đang mở
+        if (isAdmin && socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({ type: 'heartbeat' }));
+        }
+    }, 20000); // Gửi tín hiệu mỗi 20 giây
+}
+
+function stopHeartbeat() {
+    // Dừng việc gửi tín hiệu
+    clearInterval(heartbeatInterval);
+}
+
 function hideAllScreens() {
     const screenIds = [
         'welcome-screen', 'admin-login', 'student-login', 'quiz-list-screen',
@@ -2116,6 +2133,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (adminOptions) adminOptions.classList.remove("hidden");
                 if (adminControls) adminControls.classList.remove("hidden");
                 initializeWebSocket();
+                startHeartbeat();
                 if (typeof loadQuizzes === "function") await loadQuizzes();
             } else {
                 if (notificationAdmin) notificationAdmin.innerText = "Mật khẩu không đúng!";
