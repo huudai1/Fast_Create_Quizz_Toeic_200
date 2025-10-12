@@ -1494,11 +1494,16 @@ async function startCustomQuiz(quizId) {
 }
 
 function createCustomQuestionElements(totalQuestions) {
-    const container = document.getElementById('custom-question-list');
-    container.innerHTML = '';
+    // Sửa: Lấy đúng thẻ form làm nơi chứa câu hỏi
+    const container = document.getElementById('custom-quiz-form-student'); 
+    container.innerHTML = ''; // Xóa câu hỏi cũ (nếu có)
+    
+    // Gán class để form hiển thị đúng layout như cũ
+    container.className = "question-section space-y-4"; 
+
     for (let i = 1; i <= totalQuestions; i++) {
-        const questionDiv = createQuestion(`custom_q${i}`, i, ''); // Dùng lại hàm createQuestion cũ
-        questionDiv.dataset.questionNumber = i; // Đánh dấu số câu
+        const questionDiv = createQuestion(`custom_q${i}`, i, '');
+        questionDiv.dataset.questionNumber = i;
         container.appendChild(questionDiv);
     }
 }
