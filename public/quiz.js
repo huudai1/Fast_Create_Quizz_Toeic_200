@@ -46,6 +46,64 @@ function hideAllScreens() {
     });
 }
 
+function restoreSession() {
+    const savedUser = localStorage.getItem("currentUser");
+    const savedScreen = localStorage.getItem("currentScreen");
+
+    if (!savedUser) {
+        // Nếu không có người dùng nào được lưu, hiển thị màn hình chào mừng
+        showWelcomeScreen();
+        return; // Dừng hàm tại đây
+    }
+
+    // Nếu có người dùng, khôi phục thông tin
+    user = JSON.parse(savedUser);
+    isAdmin = user.name === "Admin"; // Xác định lại quyền admin
+
+    // Khởi tạo lại kết nối
+    initializeWebSocket();
+
+    // Dựa vào màn hình đã lưu để hiển thị lại
+    if (savedScreen) {
+        hideAllScreens(); // Ẩn mọi thứ trước
+        document.getElementById(savedScreen).classList.remove('hidden');
+
+        // Khôi phục trạng thái cụ thể cho từng màn hình
+        switch (savedScreen) {
+            case 'quiz-list-screen':
+                if (isAdmin) {
+                    adminOptions.classList.remove("hidden");
+                    adminControls.classList.remove("hidden");
+                }
+                loadQuizzes();
+                break;
+
+            case 'quiz-container': // Đang làm bài TOEIC
+            case 'custom-quiz-container': // Đang làm bài Tùy chỉnh
+                // Tải lại bài thi đang làm dở
+                const savedQuizId = localStorage.getItem("selectedQuizId");
+                const savedTimeLeft = localStorage.getItem("timeLeft");
+
+                if (savedQuizId && savedTimeLeft) {
+                    selectedQuizId = savedQuizId;
+                    timeLeft = parseInt(savedTimeLeft);
+                    
+                    // Gọi lại hàm bắt đầu bài thi để nó tự tải lại mọi thứ
+                    if(savedScreen === 'quiz-container') {
+                        startQuiz(savedQuizId);
+                    } else {
+                        startCustomQuiz(savedQuizId);
+                    }
+                }
+                break;
+            // Thêm các case khác nếu có màn hình cần khôi phục (vd: direct-test-screen)
+        }
+    } else {
+        // Nếu có user nhưng không có màn hình, mặc định về danh sách đề
+        backToQuizList();
+    }
+}
+
 function showWelcomeScreen() {
     hideAllScreens();
     if (welcomeScreen) welcomeScreen.classList.remove("hidden");
@@ -106,6 +164,7 @@ function showCustomQuizCreator() {
 
 // Sửa hàm này
 function backToQuizList(message = null) {
+    localStorage.setItem("currentScreen", "quiz-list-screen");
     hideAllScreens();
         if (quizListScreen) quizListScreen.classList.remove("hidden");
             if (isAdmin) {
@@ -1030,6 +1089,9 @@ async function startQuiz(quizId) {
             timeLeft = result.timeLimit || 7200;
             const visibility = result.partVisibility;
             const pdfUrl = result.quizPdfUrl; // Lấy URL của PDF
+            localStorage.setItem("currentScreen", "quiz-container");
+
+            localStorage.setItem("selectedQuizId", quizId);
             generateQuizQuestions();
 
             hideAllScreens();
@@ -1474,6 +1536,8 @@ async function startCustomQuiz(quizId) {
         if (!res.ok) throw new Error("Không thể tải thông tin đề thi.");
         
         currentCustomQuizData = await res.json();
+        localStorage.setItem("currentScreen", "custom-quiz-container");
+        localStorage.setItem("selectedQuizId", quizId); // Lưu luôn quizId để khôi phục
         
         hideAllScreens();
         document.getElementById('custom-quiz-container').classList.remove('hidden');
@@ -2015,7 +2079,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (loadingScreen) loadingScreen.classList.add("hidden");
     }, 1500);
 
-    showWelcomeScreen();
+    restoreSession();
 
     // Gán sự kiện
     const toggleInput = document.getElementById('toggle-dark-mode');
@@ -2036,6 +2100,8 @@ document.addEventListener("DOMContentLoaded", () => {
             e.preventDefault();
             if (adminPasswordInput && adminPasswordInput.value === ADMIN_PASSWORD) {
                 isAdmin = true; user = { name: "Admin", email: "admin@example.com" };
+                localStorage.setItem("currentUser", JSON.stringify(user));
+                localStorage.setItem("currentScreen", "quiz-list-screen");
                 hideAllScreens();
                 if (quizListScreen) quizListScreen.classList.remove("hidden");
                 if (adminOptions) adminOptions.classList.remove("hidden");
@@ -2056,6 +2122,8 @@ document.addEventListener("DOMContentLoaded", () => {
             const name = nameInput ? nameInput.value.trim() : '';
             if (name) {
                 user = { name }; isAdmin = false;
+                localStorage.setItem("currentUser", JSON.stringify(user)); 
+                localStorage.setItem("currentScreen", "quiz-list-screen");
                 localStorage.setItem("user", JSON.stringify(user));
                 hideAllScreens();
                 if (quizListScreen) quizListScreen.classList.remove("hidden");
