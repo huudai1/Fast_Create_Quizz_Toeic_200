@@ -412,3 +412,91 @@ input:checked + .slider:before { transform: translateX(26px); }
   .answer-item { padding: 6px 10px; }
   .answer-item span { font-size: 12px; }
 }
+
+/* ========================================================================= */
+/* 6. NÂNG CẤP GIAO DIỆN DANH SÁCH HỌC SINH
+/* ========================================================================= */
+
+/* --- Container chính bao bọc danh sách --- */
+#participant-list-container {
+  background-color: #ffffff; /* Nền trắng tinh cho nổi bật */
+  border-radius: 12px;      /* Bo góc mềm mại hơn */
+  padding: 1.25rem;         /* Tăng khoảng đệm bên trong */
+  border: 1px solid #e5e7eb; /* Thêm viền xám nhẹ nhàng */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05); /* Thêm bóng đổ tinh tế */
+  animation: slideIn 0.5s ease-out forwards; /* Giữ hiệu ứng slide-in */
+}
+
+/* --- Tiêu đề (Học sinh đang tham gia: ...) --- */
+#participant-list-container h3 {
+  color: #111827; /* Màu chữ đen đậm */
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #3b82f6; /* Đường kẻ xanh eSport */
+  margin-bottom: 1rem;
+}
+
+/* --- Danh sách UL --- */
+#participant-list {
+  list-style-type: none;  /* Bỏ dấu chấm đầu dòng mặc định */
+  padding-left: 0;
+  max-height: 300px;      /* Giới hạn chiều cao và cho phép cuộn nếu quá đông */
+  overflow-y: auto;
+}
+
+/* --- Tên từng học sinh (LI) --- */
+#participant-list li {
+  color: #374151;
+  padding: 0.8rem 0.5rem;
+  border-bottom: 1px solid #f3f4f6; /* Đường kẻ mờ ngăn cách các tên */
+  transition: background-color 0.2s ease, color 0.2s ease;
+  border-radius: 8px;
+  position: relative;
+  padding-left: 2rem; /* Tạo không gian cho icon "online" */
+  font-weight: 500;
+}
+
+/* Dùng ::before để tạo icon "status online" cực đẹp */
+#participant-list li::before {
+    content: '';
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 9px;
+    height: 9px;
+    background-color: #22c55e; /* Màu xanh lá cây "Online" */
+    border-radius: 50%;
+    box-shadow: 0 0 6px #22c55e; /* Hiệu ứng tỏa sáng nhẹ */
+}
+
+/* Bỏ đường kẻ cho mục cuối cùng */
+#participant-list li:last-child {
+  border-bottom: none;
+}
+
+/* Hiệu ứng khi di chuột vào tên */
+#participant-list li:hover {
+  background-color: #eff6ff; /* Nền xanh dương rất nhạt */
+  color: #1d4ed8;        /* Chữ màu xanh đậm hơn */
+}
+
+/* --- Dark Mode cho danh sách học sinh --- */
+body.dark-mode #participant-list-container {
+  background-color: #1f2937;
+  border-color: #4b5563;
+}
+
+body.dark-mode #participant-list-container h3 {
+  color: #f9fafb;
+  border-bottom-color: #60a5fa;
+}
+
+body.dark-mode #participant-list li {
+  color: #d1d5db;
+  border-bottom-color: #374151;
+}
+
+body.dark-mode #participant-list li:hover {
+  background-color: #374151; /* Nền tối hơn một chút khi hover */
+  color: #ffffff;
+}

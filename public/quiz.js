@@ -73,6 +73,10 @@ function restoreSession() {
         return; // Dừng hàm tại đây
     }
 
+    if (isAdmin) {
+        startHeartbeat();
+    }
+
     // Nếu có người dùng, khôi phục thông tin
     user = JSON.parse(savedUser);
     isAdmin = user.name === "Admin"; // Xác định lại quyền admin
