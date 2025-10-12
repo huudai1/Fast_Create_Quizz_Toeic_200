@@ -574,7 +574,8 @@ app.post('/select-quiz', (req, res) => {
         quizName: quiz.quizName,
         timeLimit: quiz.timeLimit,
         partVisibility: quiz.partVisibility, // <-- THÊM DẤU PHẨY BỊ THIẾU Ở ĐÂY
-        quizPdfUrl: quiz.quizPdfUrl
+        quizPdfUrl: quiz.quizPdfUrl,
+        quizType: quiz.type
     });
 });
 app.get('/answer-key', (req, res) => {

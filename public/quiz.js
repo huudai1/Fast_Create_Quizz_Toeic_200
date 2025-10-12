@@ -687,7 +687,16 @@ async function selectQuiz(quizId) {
         assignBtn.classList.remove("hidden");
         directTestBtn.classList.remove("hidden");
 
-        resetAndShowPartControls();
+        const partControls = document.getElementById('part-visibility-controls');
+
+        // Dựa vào loại đề thi trả về từ server để quyết định
+        if (result.quizType === 'custom') {
+            // Nếu là đề tùy chỉnh, hãy ẩn đi
+            partControls.classList.add('hidden');
+        } else {
+            // Nếu không phải (là đề TOEIC), thì hiển thị
+            resetAndShowPartControls();
+        }
 
         await loadQuizzes();
             // Sử dụng biến đã khai báo đúng ở trên
