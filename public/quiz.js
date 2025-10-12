@@ -818,7 +818,7 @@ async function showStatistics() {
                     const tr = document.createElement("tr");
                     const wrongPercentage = stat.totalCount > 0 ? ((stat.wrongCount / stat.totalCount) * 100).toFixed(2) : 0;
                     tr.innerHTML = `
-                        <td class="border p-2">${stat.questionNumber}</td>
+                        <td class="border p-2">${stat.questionId.replace('q', '')}</td>
                         <td class="border p-2">${stat.wrongCount}</td>
                         <td class="border p-2">${stat.totalCount}</td>
                         <td class="border p-2">${wrongPercentage}%</td>

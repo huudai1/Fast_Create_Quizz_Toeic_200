@@ -497,6 +497,43 @@
         <button onclick="showWelcomeScreen()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Quay lại</button>
     </div>
 </div>
+<div id="statistics-screen" class="container mx-auto p-4 hidden">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold">Thống kê chi tiết</h1>
+        <button onclick="backToQuizList()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+            Quay lại Danh sách
+        </button>
+    </div>
+
+    <p id="notification-statistics" class="text-red-500 mb-4"></p>
+
+    <div class="mb-8">
+        <h2 class="text-xl font-semibold mb-2">Điểm trung bình</h2>
+        <div class="w-full bg-gray-200 rounded-full h-6 dark:bg-gray-700">
+            <div id="average-score-bar" class="bg-blue-600 h-6 rounded-full flex items-center justify-center text-white font-bold" style="width: 0%;">
+                <span id="average-score-text"></span>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <h2 class="text-xl font-semibold mb-4">Thống kê theo từng câu</h2>
+        <div class="overflow-y-auto max-h-[60vh]">
+            <table id="statistics-table" class="w-full border-collapse">
+                <thead class="sticky top-0 bg-gray-100 dark:bg-gray-800">
+                    <tr class="bg-gray-200 dark:bg-gray-700 text-black dark:text-white">
+                        <th class="border p-2">Câu số</th>
+                        <th class="border p-2">Số lần sai</th>
+                        <th class="border p-2">Tổng số lượt làm</th>
+                        <th class="border p-2">Tỷ lệ sai</th>
+                    </tr>
+                </thead>
+                <tbody id="statistics-body">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 <div id="loading-screen">
 <div id="loading-text">Get Ready!</div>
 <div id="loading-spinner"></div>
