@@ -384,19 +384,6 @@ app.get('/api/history/:eventId', async (req, res) => {
     }
 });
 
-// API 2: Lấy chi tiết kết quả của MỘT sự kiện
-app.get('/api/history/:eventId', async (req, res) => {
-    try {
-        const eventId = req.params.eventId;
-        
-        const event = await Event.findById(eventId); // Lấy thông tin của event
-        
-        res.json({ event, results });
-    } catch (err) {
-        res.status(500).json({ message: 'Lỗi khi tải chi tiết lịch sử' });
-    }
-});
-
 app.delete('/delete-quiz/:quizId', async (req, res) => {
     try {
         const quizId = req.params.quizId;
