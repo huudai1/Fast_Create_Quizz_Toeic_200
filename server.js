@@ -13,6 +13,7 @@ const Quiz = require('./models/Quiz');
 const Event = require('./models/Event');
 const Result = require('./models/Result');
 const mongoose = require('mongoose'); // <--- THÊM DÒNG NÀY
+const { Types } = require('mongoose');
 require('dotenv').config();
 
 const app = express();
@@ -358,13 +359,28 @@ app.post('/submit-custom', async (req, res) => {
     }
 });
 
-app.get('/api/history', async (req, res) => {
+app.get('/api/history/:eventId', async (req, res) => {
     try {
-        // Sắp xếp theo ngày bắt đầu, mới nhất lên trước
-        const events = await Event.find({}).sort({ startTime: -1 });
-        res.json(events);
+        const eventId = req.params.eventId;
+
+        // KIỂM TRA ĐỊNH DẠNG ID TRƯỚC KHI TRUY VẤN
+        if (!Types.ObjectId.isValid(eventId)) {
+            return res.status(400).json({ message: 'Định dạng Event ID không hợp lệ.' });
+        }
+
+        // Truy vấn DB (giữ nguyên)
+        const results = await Result.find({ eventId: eventId }).sort({ score: -1 }); 
+        const event = await Event.findById(eventId); 
+
+        // Kiểm tra xem có tìm thấy event không
+        if (!event) {
+             return res.status(404).json({ message: 'Không tìm thấy sự kiện với ID này.' });
+        }
+
+        res.json({ event, results }); 
     } catch (err) {
-        res.status(500).json({ message: 'Lỗi khi tải lịch sử' });
+        console.error("Error fetching history detail:", err); // Log lỗi chi tiết hơn
+        res.status(500).json({ message: 'Lỗi khi tải chi tiết lịch sử' });
     }
 });
 
