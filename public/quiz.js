@@ -1613,7 +1613,7 @@ function createCustomQuestionElements(totalQuestions) {
 }
 
 function setupCustomAudioPlayer(listeningRanges) {
-    const questionList = document.getElementById('custom-question-list');
+    const questionList = document.getElementById('custom-quiz-form-student');
     const audioPlayer = document.getElementById('custom-audio-player');
     const audioSource = document.getElementById('custom-audio-source');
 
