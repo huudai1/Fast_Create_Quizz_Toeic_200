@@ -48,7 +48,6 @@ cloudinary.config({
   secure: true, // Nên dùng https
 });
 
-const app = express();
 
 const upload = multer({ storage: multer.memoryStorage() });
 const memoryUpload = multer({ storage: multer.memoryStorage() });
