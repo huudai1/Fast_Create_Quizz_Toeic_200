@@ -406,7 +406,8 @@ function handleWebSocketMessage(event) {
      submitQuiz();
      const notif = document.getElementById('quiz-container-notification');
      if (notif) notif.innerText = "Bài thi đã kết thúc! Đang nộp bài...";
-    } else {
+ }
+        } else {
                 fetchDirectResults();
             }
         } 
