@@ -63,6 +63,102 @@ function hideAllScreens() {
     });
 }
 
+async function showHistory() {
+    hideAllScreens();
+    const historyScreen = document.getElementById('history-screen');
+    if (historyScreen) historyScreen.classList.remove('hidden');
+
+    const tableBody = document.getElementById('history-list-body');
+    const notif = document.getElementById('history-notification');
+    if (!tableBody || !notif) return;
+
+    tableBody.innerHTML = '<tr><td colspan="5" class="text-center p-4">Đang tải lịch sử...</td></tr>';
+    notif.innerText = "";
+
+    try {
+        const res = await fetch('/api/history');
+        if (!res.ok) throw new Error('Không thể tải lịch sử');
+        const events = await res.json();
+
+        if (events.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="5" class="text-center p-4">Chưa có lịch sử thi nào.</td></tr>';
+            return;
+        }
+
+        tableBody.innerHTML = ''; // Xóa "Đang tải"
+        events.forEach(event => {
+            const tr = document.createElement('tr');
+            tr.className = "hover:bg-gray-100 dark:hover:bg-gray-700";
+
+            const startTime = new Date(event.startTime).toLocaleString('vi-VN');
+            const status = event.status === 'completed' 
+                ? `<span class="text-green-500 font-bold">Đã kết thúc</span>`
+                : `<span class="text-blue-500 font-bold">Đang diễn ra</span>`;
+
+            tr.innerHTML = `
+                <td class="border p-2">${event.quizName}</td>
+                <td class="border p-2">${event.quizType === 'custom' ? 'Tùy chỉnh' : 'TOEIC'}</td>
+                <td class="border p-2">${startTime}</td>
+                <td class="border p-2">${status}</td>
+                <td class="border p-2">
+                    <button onclick="showHistoryDetail('${event._id}')" class="bg-blue-500 text-white px-3 py-1 rounded text-sm">Xem kết quả</button>
+                </td>
+            `;
+            tableBody.appendChild(tr);
+        });
+
+    } catch (err) {
+        notif.innerText = err.message;
+        tableBody.innerHTML = '<tr><td colspan="5" class="text-center p-4 text-red-500">Lỗi tải lịch sử.</td></tr>';
+    }
+}
+
+async function showHistoryDetail(eventId) {
+    hideAllScreens();
+    const detailScreen = document.getElementById('history-detail-screen');
+    if (detailScreen) detailScreen.classList.remove('hidden');
+
+    const tableBody = document.getElementById('history-detail-body');
+    const notif = document.getElementById('history-detail-notification');
+    const title = document.getElementById('history-detail-title');
+    if (!tableBody || !notif || !title) return;
+
+    tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-4">Đang tải chi tiết...</td></tr>';
+    notif.innerText = "";
+    title.innerText = "Chi tiết Lịch sử";
+
+    try {
+        const res = await fetch(`/api/history/${eventId}`);
+        if (!res.ok) throw new Error('Không thể tải chi tiết');
+        const { event, results } = await res.json();
+
+        title.innerText = `Chi tiết: ${event.quizName}`;
+
+        if (results.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-4">Chưa có học sinh nào nộp bài cho lần thi này.</td></tr>';
+            return;
+        }
+
+        tableBody.innerHTML = ''; // Xóa "Đang tải"
+        results.forEach(result => {
+            const tr = document.createElement('tr');
+            tr.className = "hover:bg-gray-100 dark:hover:bg-gray-700";
+            const submittedTime = new Date(result.submittedAt).toLocaleString('vi-VN');
+
+            tr.innerHTML = `
+                <td class="border p-2">${result.username}</td>
+                <td class="border p-2">${result.score} / ${result.totalQuestions}</td>
+                <td class="border p-2">${submittedTime}</td>
+            `;
+            tableBody.appendChild(tr);
+        });
+
+    } catch (err) {
+        notif.innerText = err.message;
+        tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-4 text-red-500">Lỗi tải chi tiết.</td></tr>';
+    }
+}
+
 function restoreSession() {
     const savedUser = localStorage.getItem("currentUser");
     const savedScreen = localStorage.getItem("currentScreen");
@@ -710,7 +806,7 @@ async function deleteQuiz(quizId) {
       method: "DELETE",
     });
     const result = await res.json();
-    notification.innerText = result.message;
+    document.getElementById('quiz-list-notification').innerText = result.message;
     if (res.ok) {
       if (selectedQuizId === quizId) selectedQuizId = null;
       loadQuizzes();
@@ -718,7 +814,7 @@ async function deleteQuiz(quizId) {
     }
   } catch (error) {
     console.error("Error deleting quiz:", error);
-    notification.innerText = "Lỗi khi xóa đề thi. Vui lòng thử lại.";
+    document.getElementById('quiz-list-notification').innerText = "Lỗi khi xóa đề thi. Vui lòng thử lại.";
   }
 }
 
@@ -768,14 +864,14 @@ async function selectQuiz(quizId) {
 
 async function assignQuiz() {
     if (!selectedQuizId) {
-        notification.innerText = "Vui lòng chọn một đề thi trước!";
+        document.getElementById('quiz-list-notification').innerText = "Vui lòng chọn một đề thi trước!";
         return;
     }
     const timeLimit = prompt("Nhập thời gian làm bài (phút, tối đa 120):", "120");
     if (timeLimit === null) return;
     let timeLimitSeconds = parseInt(timeLimit) * 60;
     if (isNaN(timeLimitSeconds) || timeLimitSeconds <= 0 || timeLimitSeconds > 7200) {
-        notification.innerText = "Thời gian không hợp lệ! Sử dụng mặc định 120 phút.";
+        document.getElementById('quiz-list-notification').innerText = "Thời gian không hợp lệ! Sử dụng mặc định 120 phút.";
         timeLimitSeconds = 7200;
     }
     try {
@@ -791,18 +887,18 @@ async function assignQuiz() {
         });
         const result = await res.json();
         if (res.ok) {
-            notification.innerText = "Học sinh đã có thể làm bài!";
+            document.getElementById('quiz-list-notification').innerText = "Học sinh đã có thể làm bài!";
             if (socket && socket.readyState === WebSocket.OPEN) {
                 socket.send(JSON.stringify({ type: "quizAssigned", quizId: selectedQuizId, timeLimit: timeLimitSeconds }));
             }
             loadQuizzes();
             saveAdminState();
         } else {
-            notification.innerText = result.message;
+            document.getElementById('quiz-list-notification').innerText = result.message;
         }
     } catch (error) {
         console.error("Error assigning quiz:", error);
-        notification.innerText = "Lỗi khi giao đề thi. Vui lòng thử lại.";
+        document.getElementById('quiz-list-notification').innerText = "Lỗi khi giao đề thi. Vui lòng thử lại.";
     }
 }
 
@@ -980,7 +1076,7 @@ function updateProgressBar() {
 
 async function endDirectTest() {
   if (isTestEnded) {
-    notification.innerText = "Kiểm tra đã kết thúc!";
+    document.getElementById('direct-test-notification').innerText = "Kiểm tra đã kết thúc!";
     return;
   }
   try {
@@ -992,51 +1088,17 @@ async function endDirectTest() {
       clearInterval(timerInterval);
       directTestProgressBar.style.width = "0%";
       directTestTimer.innerText = "Kiểm tra đã kết thúc!";
-      await fetchDirectResults();
+      const notifElement = document.getElementById('direct-test-notification');
+        if(notifElement) notifElement.innerText = "Kiểm tra đã kết thúc! Kết quả đã được lưu vào Lịch sử thi.";
       saveAdminState();
     } else {
-      notification.innerText = "Không thể gửi tín hiệu kết thúc.";
-      await fetchDirectResults();
+      document.getElementById('direct-test-notification').innerText = "Không thể gửi tín hiệu kết thúc.";
+      const notifElement = document.getElementById('direct-test-notification');
+        if(notifElement) notifElement.innerText = "Kiểm tra đã kết thúc! Kết quả đã được lưu vào Lịch sử thi.";
     }
   } catch (error) {
     console.error("Error ending direct test:", error);
-    notification.innerText = "Lỗi khi kết thúc kiểm tra.";
-  }
-}
-
-async function fetchDirectResults() {
-  const retries = 3;
-  const delay = 2000;
-  for (let i = 0; i < retries; i++) {
-    try {
-      const res = await fetch("/direct-results");
-      if (!res.ok) {
-        throw new Error(`HTTP error! Status: ${res.status}`);
-      }
-      const results = await res.json();
-      directResultsBody.innerHTML = "";
-      if (results.length === 0) {
-        directResultsBody.innerHTML = "<tr><td colspan='3' class='border p-2 text-center'>Chưa có kết quả nào.</td></tr>";
-      } else {
-        results.forEach(result => {
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td class="border p-2">${result.username || 'Unknown'}</td>
-            <td class="border p-2">${result.score || 0}</td>
-            <td class="border p-2">${result.submittedAt ? new Date(result.submittedAt).toLocaleString() : 'N/A'}</td>
-          `;
-          directResultsBody.appendChild(tr);
-        });
-      }
-      directResultsTable.classList.remove("hidden");
-      return;
-    } catch (error) {
-      console.error(`Attempt ${i + 1} failed:`, error);
-      if (i === retries - 1) {
-        notification.innerText = "Lỗi khi tải kết quả kiểm tra trực tiếp. Vui lòng kiểm tra kết nối và thử lại.";
-      }
-      await new Promise(resolve => setTimeout(resolve, delay));
-    }
+    document.getElementById('direct-test-notification').innerText = "Lỗi khi kết thúc kiểm tra.";
   }
 }
 
@@ -1073,22 +1135,21 @@ async function joinDirectTest(quizId, remainingTime, startTime) {
       localStorage.setItem("timeLeft", remainingTime);
 
       await loadAudio(1);
-      await loadImages(1);
       startTimer();
       updateProgressBar(); // Cập nhật thanh tiến trình ngay khi tham gia
       currentQuizPart = 1;
       downloadNotice.classList.add("hidden");
-      notification.innerText = "Đã tham gia kiểm tra trực tiếp!";
+      document.getElementById('quiz-list-notification').innerText = "Đã tham gia kiểm tra trực tiếp!";
       
       if (socket && socket.readyState === WebSocket.OPEN) {
         socket.send(JSON.stringify({ type: "joinDirectTest", username: user.name }));
       }
     } else {
-      notification.innerText = result.message;
+      document.getElementById('quiz-list-notification').innerText = result.message;
     }
   } catch (error) {
     console.error("Error joining direct test:", error);
-    notification.innerText = "Lỗi khi tham gia kiểm tra trực tiếp.";
+    document.getElementById('quiz-list-notification').innerText = "Lỗi khi tham gia kiểm tra trực tiếp.";
   }
 }
 
@@ -1185,11 +1246,11 @@ async function startQuiz(quizId) {
             
             downloadNotice.classList.add("hidden");
         } else {
-            notification.innerText = result.message;
+            document.getElementById('quiz-list-notification').innerText = result.message;
         }
     } catch (error) {
         console.error("Error starting quiz:", error);
-        notification.innerText = "Lỗi khi bắt đầu bài thi. Vui lòng thử lại.";
+        document.getElementById('quiz-list-notification').innerText = "Lỗi khi bắt đầu bài thi. Vui lòng thử lại.";
     }
 }
 
@@ -1391,73 +1452,14 @@ async function loadAudio(part) {
             audioSource.src = data.audio;
             audio.load();
         } else {
-            notification.innerText = `Không tìm thấy file nghe cho Part ${part}!`;
+            document.getElementById('quiz-notification').innerText = `Không tìm thấy file nghe cho Part ${part}!`;
             // Ẩn player nếu không có audio
             audio.classList.add("hidden");
         }
     } catch (audioError) {
         console.error("Error loading audio:", audioError);
-        notification.innerText = `Lỗi khi tải file nghe cho Part ${part}!`;
+        document.getElementById('quiz-notification').innerText = `Lỗi khi tải file nghe cho Part ${part}!`;
     }
-}
-
-async function loadImages(part) {
-  try {
-    const res = await fetch(`/images?part=${part}`);
-    if (!res.ok) {
-      throw new Error(`HTTP error! Status: ${res.status}`);
-    }
-    let files = await res.json();
-    console.log(`Images/PDFs for Part ${part} (before sorting):`, files);
-
-    // Sort files based on numeric index in filename (e.g., partX_Y.extension)
-    files.sort((a, b) => {
-      const getIndex = (url) => {
-        const match = url.match(/part\d+_(\d+)\.(jpg|jpeg|png|pdf)/i);
-        return match ? parseInt(match[1]) : Infinity;
-      };
-      return getIndex(a) - getIndex(b);
-    });
-    console.log(`Images/PDFs for Part ${part} (after sorting):`, files);
-
-    imageDisplay.innerHTML = `<h3 class="text-lg font-semibold mb-2">Part ${part}</h3>`;
-    if (files.length === 0) {
-      imageDisplay.innerHTML += `<p>Không có ảnh hoặc PDF cho Part ${part}</p>`;
-      return;
-    }
-
-    files.forEach((url, index) => {
-      const isPDF = url.endsWith('.pdf');
-      if (isPDF) {
-        const pdfContainer = document.createElement("div");
-        pdfContainer.className = "pdf-container mb-4";
-        pdfContainer.innerHTML = `
-          <div class="pdf-toolbar mb-2 flex space-x-2">
-            <button onclick="zoomPDF('pdf-${part}-${index}', 1.2)" class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">Phóng to</button>
-            <button onclick="zoomPDF('pdf-${part}-${index}', 0.8)" class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">Thu nhỏ</button>
-            <button onclick="zoomPDF('pdf-${part}-${index}', 1)" class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">Đặt lại</button>
-          </div>
-          <iframe id="pdf-${part}-${index}" src="${url}" class="w-full h-[90vh] rounded" style="transform: scale(1); transform-origin: top left;"></iframe>
-        `;
-        imageDisplay.appendChild(pdfContainer);
-      } else {
-        const img = document.createElement("img");
-        img.src = url;
-        img.className = "w-full max-w-[1600px] max-h-[90vh] mb-4 rounded";
-        img.onerror = () => {
-          console.error(`Failed to load image: ${url}`);
-          notification.innerText = `Lỗi khi tải ảnh: ${url}`;
-        };
-        img.onload = () => {
-          console.log(`Image loaded successfully: ${url}`);
-        };
-        imageDisplay.appendChild(img);
-      }
-    });
-  } catch (error) {
-    console.error("Error loading images:", error);
-    notification.innerText = `Lỗi khi tải ảnh hoặc PDF cho Part ${part}.`;
-  }
 }
 
 const createQuestion = (id, num, part) => {
@@ -1647,7 +1649,7 @@ async function startCustomQuiz(quizId) {
         startTimer();
 
     } catch (error) {
-        notification.innerText = error.message;
+        document.getElementById('custom-quiz-notification').innerText = error.message;
     }
 }
 
@@ -1712,7 +1714,7 @@ async function submitCustomQuiz() {
     clearInterval(timerInterval); // Dừng đồng hồ
 
     if (!user || !user.name || !currentCustomQuizData) {
-        notification.innerText = "Lỗi: Mất thông tin người dùng hoặc đề thi.";
+        document.getElementById('custom-quiz-notification').innerText = "Lỗi: Mất thông tin người dùng hoặc đề thi.";
         showWelcomeScreen();
         return;
     }
@@ -1752,7 +1754,7 @@ async function submitCustomQuiz() {
 
     } catch (error) {
         console.error("Error submitting custom quiz:", error);
-        notification.innerText = `Lỗi khi nộp bài: ${error.message}.`;
+        document.getElementById('custom-quiz-notification').innerText = `Lỗi khi nộp bài: ${error.message}.`;
     }
 }
 
@@ -1773,7 +1775,7 @@ async function showReviewAnswers() {
     // Lấy ID đề thi từ biến toàn cục hoặc localStorage
     const quizIdForReview = window.selectedQuizId || localStorage.getItem("selectedQuizId");
     if (!quizIdForReview) {
-      if (notification) notification.innerText = "Lỗi: Không tìm thấy mã đề thi để xem lại đáp án.";
+      if (notification) document.getElementById('result-notification').innerText = "Lỗi: Không tìm thấy mã đề thi để xem lại đáp án.";
       return;
     }
 
@@ -1781,7 +1783,7 @@ async function showReviewAnswers() {
     const quizRes = await fetch(`/get-quiz?quizId=${quizIdForReview}`);
     const quizData = await quizRes.json();
     if (!quizData || !quizData.quizPdfUrl) {
-      if (notification) notification.innerText = "Không tìm thấy thông tin đề thi để xem lại.";
+      if (notification) document.getElementById('result-notification').innerText = "Không tìm thấy thông tin đề thi để xem lại.";
       return;
     }
 
@@ -1794,7 +1796,7 @@ async function showReviewAnswers() {
     const answerKey = await answerRes.json();
 
     if (!userAnswers || !answerKey) {
-      if (notification) notification.innerText = "Lỗi: Không thể tải đáp án hoặc câu trả lời của bạn.";
+      if (notification) document.getElementById('result-notification').innerText = "Lỗi: Không thể tải đáp án hoặc câu trả lời của bạn.";
       return;
     }
 
@@ -1803,7 +1805,7 @@ async function showReviewAnswers() {
     reviewScreen.classList.remove("hidden");
     if (resultScore) document.getElementById("review-score").innerText = resultScore.innerText;
     if (resultTime) document.getElementById("review-time").innerText = resultTime.innerText;
-    if (notification) notification.innerText = "";
+    if (notification) document.getElementById('result-notification').innerText = "";
 
     await loadQuizPdf(quizData.quizPdfUrl, 'review-image-display');
 
@@ -1863,75 +1865,7 @@ async function showReviewAnswers() {
   } catch (error) {
     console.error("Error showing review answers:", error);
     const notification = document.getElementById("notification");
-    if (notification) notification.innerText = "Lỗi khi hiển thị đáp án. Vui lòng thử lại.";
-  }
-}
-
-async function loadReviewImages(part) {
-  try {
-    const res = await fetch(`/images?part=${part}`);
-    if (!res.ok) {
-      console.error(`Failed to fetch images for Part ${part}, status: ${res.status}`);
-      throw new Error(`Không thể tải ảnh hoặc PDF cho Part ${part}`);
-    }
-    let files = await res.json();
-    console.log(`Images/PDFs for Part ${part} (before sorting):`, files);
-
-    // Sort files based on numeric index in filename (e.g., partX_Y.extension)
-    files.sort((a, b) => {
-      const getIndex = (url) => {
-        const match = url.match(/part\d+_(\d+)\.(jpg|jpeg|png|pdf)/i);
-        return match ? parseInt(match[1]) : Infinity;
-      };
-      return getIndex(a) - getIndex(b);
-    });
-    console.log(`Images/PDFs for Part ${part} (after sorting):`, files);
-
-    const reviewImageDisplay = document.getElementById("review-image-display");
-    if (!reviewImageDisplay) {
-      console.error("Element with ID 'review-image-display' not found");
-      throw new Error("Không tìm thấy khu vực hiển thị ảnh");
-    }
-    reviewImageDisplay.innerHTML = `<h3 class="text-lg font-semibold mb-2">Part ${part}</h3>`;
-
-    if (!files || files.length === 0) {
-      console.warn(`No images or PDFs found for Part ${part}`);
-      reviewImageDisplay.innerHTML += `<p>Không có ảnh hoặc PDF cho Part ${part}</p>`;
-      return;
-    }
-
-    files.forEach((url, index) => {
-      console.log(`Processing file: ${url}`);
-      const isPDF = url.endsWith('.pdf');
-      if (isPDF) {
-        const pdfContainer = document.createElement("div");
-        pdfContainer.className = "pdf-container mb-4";
-        pdfContainer.innerHTML = `
-          <div class="pdf-toolbar mb-2 flex space-x-2">
-            <button onclick="zoomPDF('review-pdf-${part}-${index}', 1.2)" class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">Phóng to</button>
-            <button onclick="zoomPDF('review-pdf-${part}-${index}', 0.8)" class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">Thu nhỏ</button>
-            <button onclick="zoomPDF('review-pdf-${part}-${index}', 1)" class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">Đặt lại</button>
-          </div>
-          <iframe id="review-pdf-${part}-${index}" src="${url}" class="w-full h-[90vh] rounded" style="transform: scale(1); transform-origin: top left;"></iframe>
-        `;
-        reviewImageDisplay.appendChild(pdfContainer);
-      } else {
-        const img = document.createElement("img");
-        img.src = url;
-        img.className = "w-full max-w-[1600px] max-h-[90vh] mb-4 rounded";
-        img.onerror = () => {
-          console.error(`Failed to load image: ${url}`);
-          notification.innerText = `Lỗi khi tải ảnh: ${url}`;
-        };
-        img.onload = () => {
-          console.log(`Image loaded successfully: ${url}`);
-        };
-        reviewImageDisplay.appendChild(img);
-      }
-    });
-  } catch (error) {
-    console.error("Error loading review images:", error);
-    notification.innerText = `Lỗi khi tải ảnh hoặc PDF cho Part ${part}: ${error.message}`;
+    if (notification) document.getElementById('result-notification').innerText = "Lỗi khi hiển thị đáp án. Vui lòng thử lại.";
   }
 }
 
@@ -1961,7 +1895,7 @@ function saveUserAnswers() {
     console.log("User answers saved:", userAnswers);
   } catch (error) {
     console.error("Error saving user answers to localStorage:", error);
-    notification.innerText = "Lỗi khi lưu đáp án. Vui lòng thử lại.";
+    document.getElementById('quiz-notification').innerText = "Lỗi khi lưu đáp án. Vui lòng thử lại.";
   }
 }
 
@@ -2079,7 +2013,7 @@ function applyPartVisibility(visibility) {
     if (firstVisiblePart) {
         document.getElementById(`quiz-part${firstVisiblePart}`).classList.remove('hidden');
     } else {
-        notification.innerText = "Đề thi này không có phần nào được mở.";
+        document.getElementById('quiz-notification').innerText = "Đề thi này không có phần nào được mở.";
         document.querySelector("#quizForm button[type=submit]").disabled = true;
     }
 }

@@ -85,6 +85,7 @@
 <div id="direct-test-screen" class="container mx-auto p-4 hidden">
     <div class="flex justify-between items-center mb-4">
         <h1 class="text-3xl font-bold">Kiểm tra trực tiếp đang diễn ra</h1>
+        <p id="direct-test-notification" class="text-red-500 mb-4"></p>
         <button onclick="backToQuizList()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
             Quay lại Danh sách
         </button>
@@ -211,6 +212,7 @@
         <button onclick="showUploadQuizzes()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Tải lên đề thi</button>
         <button onclick="clearDatabase()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Xóa database cũ</button>
         <button onclick="showStatistics()" class="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600">Xem thống kê</button>
+        <button onclick="showHistory()" class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600">Lịch sử thi</button>
     </div>
     <div id="admin-controls" class="space-x-4 mb-4 hidden">
     <button id="assignBtn" onclick="assignQuiz()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 hidden">Giao bài</button>
@@ -320,7 +322,9 @@
 </div>
 
 <div id="custom-quiz-creator-screen" class="container mx-auto p-4 hidden">
+    <p id="custom-quiz-notification" class="text-red-500 mb-4"></p>
     <h1 class="text-3xl font-bold mb-4">Tạo Đề thi Tùy chỉnh</h1>
+    <p id="custom-quiz-notification" class="text-red-500 mb-4"></p>
     <p id="custom-notification" class="text-red-500 mb-4"></p>
 
     <div id="custom-quiz-step-1">
@@ -534,6 +538,55 @@
         </div>
     </div>
 </div>
+
+<div id="history-screen" class="container mx-auto p-4 hidden">
+    <div class="flex justify-between items-center mb-4">
+        <h1 class="text-3xl font-bold">Lịch sử các lần thi</h1>
+        <button onclick="backToQuizList()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+            Quay lại
+        </button>
+    </div>
+    <p id="history-notification" class="text-red-500 mb-4"></p>
+    <div class="overflow-y-auto max-h-[80vh]">
+        <table class="w-full border-collapse">
+            <thead class="sticky top-0 bg-gray-200 dark:bg-gray-700">
+                <tr>
+                    <th class="border p-2">Tên đề thi</th>
+                    <th class="border p-2">Loại đề</th>
+                    <th class="border p-2">Thời gian bắt đầu</th>
+                    <th class="border p-2">Trạng thái</th>
+                    <th class="border p-2">Hành động</th>
+                </tr>
+            </thead>
+            <tbody id="history-list-body">
+                </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="history-detail-screen" class="container mx-auto p-4 hidden">
+    <div class="flex justify-between items-center mb-4">
+        <h1 id="history-detail-title" class="text-3xl font-bold">Chi tiết Lịch sử</h1>
+        <button onclick="showHistory()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+            Quay lại Lịch sử
+        </button>
+    </div>
+    <p id="history-detail-notification" class="text-red-500 mb-4"></p>
+    <div class="overflow-y-auto max-h-[80vh]">
+        <table class="w-full border-collapse">
+            <thead class="sticky top-0 bg-gray-200 dark:bg-gray-700">
+                <tr>
+                    <th class="border p-2">Học sinh</th>
+                    <th class="border p-2">Điểm</th>
+                    <th class="border p-2">Thời gian nộp</th>
+                </tr>
+            </thead>
+            <tbody id="history-detail-body">
+                </tbody>
+        </table>
+    </div>
+</div>
+
 <div id="loading-screen">
 <div id="loading-text">Get Ready!</div>
 <div id="loading-spinner"></div>
