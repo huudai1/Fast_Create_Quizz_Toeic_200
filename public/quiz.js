@@ -598,82 +598,99 @@ async function uploadQuizzes() {
 }
 
 async function downloadQuizzes(quizId) {
-  const loadingModal = document.getElementById('loading-modal');
-  const progressBar = document.getElementById('progress-bar');
-  const progressText = document.getElementById('progress-text');
+    const loadingModal = document.getElementById('loading-modal');
+    const progressBar = document.getElementById('progress-bar');
+    const progressText = document.getElementById('progress-text');
+    
+    // KHAI BÁO ĐÚNG ELEMENT THÔNG BÁO CHO MÀN HÌNH NÀY
+    const notificationElement = document.getElementById('quiz-list-notification');
 
-  loadingModal.classList.remove('hidden');
+    loadingModal.classList.remove('hidden');
 
-  try {
-    const url = `/download-quiz-zip/${quizId}`;
-    const xhr = new XMLHttpRequest();
-    xhr.open('GET', url, true);
-    xhr.responseType = 'blob';
+    try {
+        const url = `/download-quiz-zip/${quizId}`;
+        const xhr = new XMLHttpRequest();
+        xhr.open('GET', url, true);
+        xhr.responseType = 'blob';
 
-    xhr.onprogress = function(event) {
-      if (event.lengthComputable) {
-        const percentComplete = (event.loaded / event.total) * 100;
-        progressBar.style.width = `${percentComplete}%`;
-        progressText.innerText = `${Math.round(percentComplete)}%`;
-      }
-    };
+        xhr.onprogress = function(event) {
+            if (event.lengthComputable) {
+                const percentComplete = (event.loaded / event.total) * 100;
+                progressBar.style.width = `${percentComplete}%`;
+                progressText.innerText = `${Math.round(percentComplete)}%`;
+            }
+        };
 
-    xhr.onload = function() {
-      if (xhr.status === 200) {
-        const blob = xhr.response;
-        const downloadUrl = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = downloadUrl;
-        link.download = `quiz_${quizId}.zip`; // Keep ZIP name as quiz_<quizId>.zip
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(downloadUrl);
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                const blob = xhr.response;
+                const downloadUrl = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+                link.download = `quiz_${quizId}.zip`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(downloadUrl);
 
-        notification.innerText = "Đã tải xuống file ZIP chứa đề thi.";
-        setTimeout(() => {
-          loadingModal.classList.add('hidden');
-          progressBar.style.width = '0%';
-          progressText.innerText = '0%';
-        }, 1000);
-      } else {
-        throw new Error(`HTTP error! Status: ${xhr.status}`);
-      }
-    };
+                // SỬA Ở ĐÂY: Dùng biến cục bộ đã khai báo
+                if (notificationElement) notificationElement.innerText = "Đã tải xuống file ZIP chứa đề thi.";
+                
+                setTimeout(() => {
+                    loadingModal.classList.add('hidden');
+                    progressBar.style.width = '0%';
+                    progressText.innerText = '0%';
+                }, 1000);
+            } else {
+                throw new Error(`HTTP error! Status: ${xhr.status}`);
+            }
+        };
 
-    xhr.onerror = function() {
-      throw new Error('Network error occurred');
-    };
+        xhr.onerror = function() {
+            throw new Error('Network error occurred');
+        };
 
-    xhr.send();
-  } catch (error) {
-    console.error("Error downloading quiz:", error);
-    notification.innerText = "Lỗi khi tải xuống file ZIP. Vui lòng thử lại.";
-    loadingModal.classList.add('hidden');
-    progressBar.style.width = '0%';
-    progressText.innerText = '0%';
-  }
+        xhr.send();
+    } catch (error) {
+        console.error("Error downloading quiz:", error);
+        
+        // SỬA Ở ĐÂY: Dùng biến cục bộ đã khai báo
+        if (notificationElement) notificationElement.innerText = "Lỗi khi tải xuống file ZIP. Vui lòng thử lại.";
+        
+        loadingModal.classList.add('hidden');
+        progressBar.style.width = '0%';
+        progressText.innerText = '0%';
+    }
 }
 
 async function clearDatabase() {
-  if (!confirm("Bạn có chắc muốn xóa toàn bộ database? Hành động này không thể hoàn tác!")) return;
-  try {
-    const res = await fetch("/clear-database", {
-      method: "DELETE",
-    });
-    const result = await res.json();
-    notification.innerText = result.message;
-    if (res.ok) {
-      selectedQuizId = null;
-      loadQuizzes();
-      if (isAdmin) saveAdminState();
-    } else {
-      throw new Error(result.message || 'Lỗi không xác định');
+    if (!confirm("Bạn có chắc muốn xóa toàn bộ database? Hành động này không thể hoàn tác!")) return;
+    
+    // KHAI BÁO ĐÚNG ELEMENT THÔNG BÁO CHO MÀN HÌNH NÀY
+    const notificationElement = document.getElementById('quiz-list-notification');
+
+    try {
+        const res = await fetch("/clear-database", {
+            method: "DELETE",
+        });
+        const result = await res.json();
+        
+        // SỬA Ở ĐÂY: Dùng biến cục bộ đã khai báo
+        if (notificationElement) notificationElement.innerText = result.message;
+
+        if (res.ok) {
+            selectedQuizId = null;
+            loadQuizzes();
+            if (isAdmin) saveAdminState();
+        } else {
+            throw new Error(result.message || 'Lỗi không xác định');
+        }
+    } catch (error) {
+        console.error("Error clearing database:", error);
+        
+        // SỬA Ở ĐÂY: Dùng biến cục bộ đã khai báo
+        if (notificationElement) notificationElement.innerText = `Lỗi khi xóa database: ${error.message}. Vui lòng thử lại.`;
     }
-  } catch (error) {
-    console.error("Error clearing database:", error);
-    notification.innerText = `Lỗi khi xóa database: ${error.message}. Vui lòng thử lại.`;
-  }
 }
 
 function saveAdminState() {
