@@ -14,6 +14,8 @@ const Event = require('./models/Event');
 const Result = require('./models/Result');
 const mongoose = require('mongoose'); // <--- THÊM DÒNG NÀY
 const { Types } = require('mongoose');
+const cloudinary = require('cloudinary').v2;
+
 require('dotenv').config();
 
 const app = express();
@@ -39,7 +41,17 @@ const connectDB = async () => {
   }
 };
 
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true, // Nên dùng https
+});
 
+const app = express();
+
+const upload = multer({ storage: multer.memoryStorage() });
+const memoryUpload = multer({ storage: multer.memoryStorage() });
 
 let clients = new Set();
 let currentDirectEvent = null;
@@ -64,6 +76,36 @@ const ensureDirectories = async () => {
 };
 
 ensureDirectories();
+
+const uploadToCloudinary = (fileObject, resourceType = 'auto') => {
+  return new Promise((resolve, reject) => {
+    if (!fileObject) {
+      return reject('No file object provided.');
+    }
+
+    // Tạo stream để upload từ buffer
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        resource_type: resourceType, // 'image', 'video', 'raw' (cho PDF), 'auto'
+        // folder: 'quiz_files' // Tùy chọn: Tổ chức file trên Cloudinary
+        public_id: `${uuidv4()}-${fileObject.originalname}` // Tạo tên file duy nhất
+      },
+      (error, result) => {
+        if (error) {
+          return reject(error);
+        }
+        if (!result) {
+           return reject(new Error('Cloudinary upload failed without error message.'));
+        }
+        // Trả về URL an toàn (https)
+        resolve(result.secure_url);
+      }
+    );
+
+    // Ghi buffer vào stream
+    uploadStream.end(fileObject.buffer);
+  });
+};
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -222,76 +264,67 @@ app.get('/quizzes', async (req, res) => {
 
 app.post(
     '/save-quiz',
-    upload.fields([
-        { name: 'quiz-pdf', maxCount: 1 }, { name: 'audio-part1', maxCount: 1 },
-        { name: 'audio-part2', maxCount: 1 }, { name: 'audio-part3', maxCount: 1 },
-        { name: 'audio-part4', maxCount: 1 }, { name: 'pdfFile', maxCount: 1 },
-        ...Array(10).fill(0).map((_, i) => ({ name: `audio_file_${i}`, maxCount: 1 }))
-    ]),
+    upload.fields([ /* giữ nguyên các fields */ ]),
     async (req, res) => {
         try {
             const { quizType } = req.body;
-            let quizData; // Dữ liệu để tạo quiz mới
+            let quizData = {};
+            let pdfUrl = '';
+            let audioUrls = {}; // Lưu URL audio từ Cloudinary
+            let listeningRangesWithUrls = []; // Lưu ranges có URL Cloudinary
 
+            // --- XỬ LÝ UPLOAD FILE LÊN CLOUDINARY ---
             if (quizType === 'custom') {
-                // Logic đề tùy chỉnh
-                const { quizName, totalQuestions, answerKey, createdBy, listeningRanges } = req.body;
-                const pdfFile = req.files['pdfFile'][0];
-                const listeningRangesParsed = JSON.parse(listeningRanges);
+                if (req.files['pdfFile'] && req.files['pdfFile'][0]) {
+                    // PDF là 'raw' hoặc 'image' trên Cloudinary (nếu muốn preview)
+                    pdfUrl = await uploadToCloudinary(req.files['pdfFile'][0], 'image'); // Thử 'image' để có thể preview
+                } else { throw new Error('Thiếu file PDF cho đề tùy chỉnh.'); }
 
-                listeningRangesParsed.forEach((range, index) => {
-                    const audioFile = req.files[`audio_file_${index}`][0];
-                    range.audioUrl = `/uploads/audio/${audioFile.filename}`;
-                });
-
-                quizData = {
-                    quizId: uuidv4(), // Tạo quizId mới
-                    quizName,
-                    type: 'custom',
-                    totalQuestions: parseInt(totalQuestions),
-                    quizPdfUrl: `/uploads/images/${pdfFile.filename}`,
-                    answerKey, // Lưu chuỗi "A,B,C"
-                    listeningRanges: listeningRangesParsed,
-                    createdBy,
-                };
-            } else {
-                // Logic đề TOEIC
-                const { quizName, answerKey, createdBy } = req.body;
-                if (!quizName || !answerKey || !createdBy || !req.files['quiz-pdf']) {
-                    return res.status(400).json({ message: "Thiếu thông tin cho đề TOEIC." });
+                const listeningRanges = JSON.parse(req.body.listeningRanges || '[]');
+                for (let i = 0; i < listeningRanges.length; i++) {
+                     let range = {...listeningRanges[i]}; // Copy range object
+                     if (req.files[`audio_file_${i}`] && req.files[`audio_file_${i}`][0]) {
+                        // Audio là 'video' hoặc 'raw' trên Cloudinary
+                        range.audioUrl = await uploadToCloudinary(req.files[`audio_file_${i}`][0], 'video');
+                        listeningRangesWithUrls.push(range); // Thêm range đã có URL
+                     } else { throw new Error(`Thiếu file audio cho khoảng nghe thứ ${i+1}.`); }
                 }
+                quizData.listeningRanges = listeningRangesWithUrls;
 
-                const quizPdfFile = req.files['quiz-pdf'][0];
-                const audioPaths = {};
+            } else { // Đề TOEIC
+                if (req.files['quiz-pdf'] && req.files['quiz-pdf'][0]) {
+                    pdfUrl = await uploadToCloudinary(req.files['quiz-pdf'][0], 'image');
+                } else { throw new Error('Thiếu file PDF cho đề TOEIC.'); }
+
                 for (let i = 1; i <= 4; i++) {
-                    if (req.files[`audio-part${i}`]) {
-                        const audioFile = req.files[`audio-part${i}`][0];
-                        audioPaths[`part${i}`] = `/uploads/audio/${audioFile.filename}`;
-                    }
+                     if (req.files[`audio-part${i}`] && req.files[`audio-part${i}`][0]) {
+                        audioUrls[`part${i}`] = await uploadToCloudinary(req.files[`audio-part${i}`][0], 'video');
+                     } else { throw new Error(`Thiếu file audio cho Part ${i}.`); }
                 }
-
-                quizData = {
-                    quizId: uuidv4(), // Tạo quizId mới
-                    quizName,
-                    type: 'toeic',
-                    totalQuestions: 200, // Mặc định cho TOEIC
-                    quizPdfUrl: `/uploads/images/${quizPdfFile.filename}`,
-                    audio: audioPaths,
-                    answerKey: JSON.parse(answerKey), // Lưu object {q1: 'A'}
-                    createdBy,
-                    isAssigned: false
-                };
+                 quizData.audio = audioUrls;
             }
+            quizData.quizPdfUrl = pdfUrl;
+            // --- KẾT THÚC XỬ LÝ UPLOAD ---
 
-            // LƯU VÀO DATABASE
+            // --- Gộp dữ liệu còn lại từ req.body (giữ nguyên) ---
+            if (quizType === 'custom') {
+                 const { quizName, totalQuestions, answerKey, createdBy } = req.body;
+                 quizData = { ...quizData, quizId: uuidv4(), quizName, type: 'custom', totalQuestions: parseInt(totalQuestions), answerKey, createdBy };
+            } else {
+                 const { quizName, answerKey, createdBy } = req.body;
+                 quizData = { ...quizData, quizId: uuidv4(), quizName, type: 'toeic', totalQuestions: 200, answerKey: JSON.parse(answerKey), createdBy, isAssigned: false };
+            }
+            // --- Kết thúc gộp dữ liệu ---
+
+            // LƯU VÀO DATABASE (giữ nguyên)
             const newQuiz = new Quiz(quizData);
             await newQuiz.save();
 
-            res.json({ message: 'Lưu đề thi thành công!' });
+            res.json({ message: 'Lưu đề thi thành công! Files đã được upload lên Cloudinary.' });
 
         } catch (err) {
-            console.error('Error saving quiz:', err);
-            res.status(500).json({ message: 'Lỗi khi lưu đề thi' });
+            console.error('Error saving quiz with Cloudinary upload:', err);
+            res.status(500).json({ message: `Lỗi khi lưu đề thi: ${err.message}` });
         }
     }
 );
@@ -483,7 +516,7 @@ app.post('/upload-quizzes-zip', upload.single('quizzes'), async (req, res) => {
         if (!req.file) return res.status(400).json({ message: 'No ZIP file' });
         await fs.mkdir(extractPath, { recursive: true });
 
-        // Giải nén file
+        // Giải nén file (giữ nguyên)
         await new Promise((resolve, reject) => {
             fsSync.createReadStream(zipPath)
                 .pipe(unzipper.Extract({ path: extractPath }))
@@ -496,50 +529,124 @@ app.post('/upload-quizzes-zip', upload.single('quizzes'), async (req, res) => {
         }
         
         const quizData = JSON.parse(await fs.readFile(quizzesJsonPath, 'utf8'));
-        const newQuizId = uuidv4();
+        const newQuizId = uuidv4(); // Vẫn dùng ID này để tạo tên file duy nhất
         quizData.createdBy = req.body.createdBy;
+        // BỎ DÒNG NÀY -> quizId sẽ được MongoDB tự tạo HOẶC model tự gán default
+        // quizData.quizId = newQuizId; 
 
-        // Xử lý PDF
+        // --- BẮT ĐẦU SỬA: XỬ LÝ UPLOAD LÊN CLOUDINARY ---
+
+        // 1. Xử lý PDF
         const pdfSrcPath = path.join(extractPath, 'pdf', 'de_thi.pdf');
         if (fsSync.existsSync(pdfSrcPath)) {
-            const pdfDestFilename = `${newQuizId}_de_thi.pdf`;
-            await fs.copyFile(pdfSrcPath, path.join(__dirname, 'public/uploads/images', pdfDestFilename));
-            quizData.quizPdfUrl = `/uploads/images/${pdfDestFilename}`;
+            // Đọc nội dung file PDF vào buffer
+            const pdfBuffer = await fs.readFile(pdfSrcPath); 
+            // Upload buffer lên Cloudinary
+            const pdfCloudinaryUrl = await uploadToCloudinary(
+                {
+                    // Tạo tên file duy nhất trên Cloudinary
+                    originalname: `${newQuizId}_de_thi.pdf`, 
+                    mimetype: 'application/pdf',
+                    buffer: pdfBuffer // Nội dung file
+                }, 
+                'image' // Upload PDF như là 'image' để Cloudinary có thể tạo preview
+            );
+            // Lưu URL trả về từ Cloudinary vào quizData
+            quizData.quizPdfUrl = pdfCloudinaryUrl; 
         } else {
             throw new Error('File ZIP không hợp lệ: thiếu pdf/de_thi.pdf');
         }
 
-        // Xử lý audio dựa trên loại đề
+        // 2. Xử lý audio dựa trên loại đề
+        const audioDir = path.join(extractPath, 'audio'); // Thư mục chứa audio trong file ZIP
+        
         if (quizData.type === 'custom' && quizData.listeningRanges) {
+             // Duyệt qua từng khoảng nghe trong file JSON
             for (let i = 0; i < quizData.listeningRanges.length; i++) {
-                const audioSrcPath = path.join(extractPath, 'audio', `range_${i}.mp3`);
-                if (fsSync.existsSync(audioSrcPath)) {
-                    const newAudioFilename = `${newQuizId}_range_${i}.mp3`;
-                    await fs.copyFile(audioSrcPath, path.join(__dirname, 'public/uploads/audio', newAudioFilename));
-                    quizData.listeningRanges[i].audioUrl = `/uploads/audio/${newAudioFilename}`;
+                let foundAudioPath = null;
+                let originalname = `range_${i}`; // Tên mặc định
+                let mimetype = 'audio/mpeg'; // Loại mặc định
+
+                // Kiểm tra xem thư mục audio có tồn tại không
+                if (fsSync.existsSync(audioDir)) {
+                    // Đọc danh sách file trong thư mục audio
+                    const files = await fs.readdir(audioDir);
+                    // Tìm file audio khớp với index của khoảng nghe (ví dụ: range_0.mp3, range_1.wav)
+                    const audioFile = files.find(f => f.startsWith(`range_${i}.`)); 
+                    if (audioFile) {
+                        foundAudioPath = path.join(audioDir, audioFile);
+                        originalname = audioFile; // Lấy tên file gốc
+                        // Thử lấy mimetype từ tên file
+                        mimetype = multer.memoryStorage._getMimeType(originalname) || mimetype;
+                    }
                 }
+
+                if (foundAudioPath) {
+                    // Đọc nội dung file audio vào buffer
+                    const audioBuffer = await fs.readFile(foundAudioPath);
+                    // Upload buffer lên Cloudinary
+                    const audioCloudinaryUrl = await uploadToCloudinary(
+                        {
+                            originalname: `${newQuizId}_${originalname}`, // Tên file duy nhất
+                            mimetype: mimetype,
+                            buffer: audioBuffer // Nội dung file
+                        }, 
+                        'video' // Upload audio như là 'video'
+                    );
+                    // CẬP NHẬT URL Cloudinary vào listeningRanges
+                    quizData.listeningRanges[i].audioUrl = audioCloudinaryUrl; 
+                }
+                // Nếu không tìm thấy file audio cho range này, bạn có thể bỏ qua hoặc báo lỗi
+                // else { console.warn(`Audio file for range ${i} not found.`); }
             }
         } else { // Mặc định là đề TOEIC
-            const newAudioPaths = {};
-            for (let i = 1; i <= 4; i++) {
-                const partKey = `part${i}`;
-                const audioSrcPath = path.join(extractPath, 'audio', `${partKey}.mp3`);
-                if (fsSync.existsSync(audioSrcPath)) {
-                    const newAudioFilename = `${newQuizId}_${partKey}.mp3`;
-                    await fs.copyFile(audioSrcPath, path.join(__dirname, 'public/uploads/audio', newAudioFilename));
-                    newAudioPaths[partKey] = `/uploads/audio/${newAudioFilename}`;
+            const newAudioPaths = {}; // Object để lưu URL audio các part
+             // Kiểm tra xem thư mục audio có tồn tại không
+            if (fsSync.existsSync(audioDir)) {
+                // Đọc danh sách file trong thư mục audio
+                const files = await fs.readdir(audioDir);
+                // Duyệt qua các part 1 đến 4
+                for (let i = 1; i <= 4; i++) {
+                    const partKey = `part${i}`;
+                    // Tìm file audio khớp với part (ví dụ: part1.mp3, part2.ogg)
+                    const audioFile = files.find(f => f.startsWith(`${partKey}.`));
+                    if (audioFile) {
+                        const foundAudioPath = path.join(audioDir, audioFile);
+                        // Đọc nội dung file audio vào buffer
+                        const audioBuffer = await fs.readFile(foundAudioPath);
+                        const originalname = audioFile; // Tên file gốc
+                        const mimetype = multer.memoryStorage._getMimeType(originalname) || 'audio/mpeg';
+
+                        // Upload buffer lên Cloudinary
+                        const audioCloudinaryUrl = await uploadToCloudinary(
+                            {
+                                originalname: `${newQuizId}_${originalname}`, // Tên file duy nhất
+                                mimetype: mimetype,
+                                buffer: audioBuffer // Nội dung file
+                            }, 
+                            'video' // Upload audio như là 'video'
+                        );
+                        // Lưu URL Cloudinary vào object newAudioPaths
+                        newAudioPaths[partKey] = audioCloudinaryUrl; 
+                    }
+                    // else { console.warn(`Audio file for ${partKey} not found.`); }
                 }
             }
-            quizData.audio = newAudioPaths;
+            // Gán object chứa URL các part vào quizData
+            quizData.audio = newAudioPaths; 
         }
+        // --- KẾT THÚC UPLOAD LÊN CLOUDINARY ---
 
+        // LƯU VÀO DATABASE (giữ nguyên)
         const newQuiz = new Quiz(quizData);
         await newQuiz.save();
-        res.json({ message: 'Tải lên đề thi từ ZIP thành công!' });
+
+        res.json({ message: 'Tải lên đề thi từ ZIP và Cloudinary thành công!' });
     } catch (err) {
-        console.error('Error uploading ZIP:', err);
+        console.error('Error uploading ZIP to Cloudinary:', err);
         res.status(500).json({ message: err.message || 'Lỗi khi xử lý ZIP' });
     } finally {
+        // Dọn dẹp file ZIP và thư mục tạm (giữ nguyên)
         if (zipPath && fsSync.existsSync(zipPath)) await fs.unlink(zipPath);
         if (fsSync.existsSync(extractPath)) await fs.rm(extractPath, { recursive: true, force: true });
     }
