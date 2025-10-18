@@ -1195,59 +1195,71 @@ async function submitQuiz() {
          formData.forEach((val, key) => (userAnswers[key] = val));
 
          try {
-                 const currentQuizId = selectedQuizId || localStorage.getItem("selectedQuizId");
-                 const res = await fetch("/submit", {
-                         method: "POST",
-                         headers: { "Content-Type": "application/json" },
-                         body: JSON.stringify({ username: user.name, answers: userAnswers, quizId: currentQuizId }),
-                 });
+    // (Phần code fetch và tính điểm của bạn giữ nguyên)
+    const currentQuizId = selectedQuizId || localStorage.getItem("selectedQuizId");
+    const res = await fetch("/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: user.name, answers: userAnswers, quizId: currentQuizId }),
+    });
 
-                 if (!res.ok) {
-                         const errorData = await res.json().catch(() => ({}));
-                         throw new Error(errorData.message || `Lỗi server: ${res.status}`);
-                 }
+    if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || `Lỗi server: ${res.status}`);
+    }
 
-                 const result = await res.json();
+    const result = await res.json();
 
-                 const answerRes = await fetch(`/answer-key?quizId=${currentQuizId}`);
-                 answerKey = await answerRes.json();
+    const answerRes = await fetch(`/answer-key?quizId=${currentQuizId}`);
+    answerKey = await answerRes.json();
 
-                 resultScore.innerText = `Điểm: ${result.score}/200`;
-                 resultTime.innerText = `Thời gian nộp: ${new Date().toLocaleString()}`;
+    resultScore.innerText = `Điểm: ${result.score}/200`;
+    resultTime.innerText = `Thời gian nộp: ${new Date().toLocaleString()}`;
 
-        // Dùng ID để tìm và vô hiệu hóa nút nộp bài
-        const submitButton = document.getElementById('submit-quiz-btn');
-        if (submitButton) submitButton.disabled = true;
+    // Dùng ID để tìm và vô hiệu hóa nút nộp bài
+    const submitButton = document.getElementById('submit-quiz-btn');
+    if (submitButton) submitButton.disabled = true;
 
-                 clearInterval(timerInterval);
+    clearInterval(timerInterval);
 
-                 if (isAdminControlled && socket && socket.readyState === WebSocket.OPEN) {
-                         socket.send(JSON.stringify({ type: "submitted", username: user.name }));
-                 }
+    if (isAdminControlled && socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: "submitted", username: user.name }));
+    }
 
-                 localStorage.setItem("userAnswers", JSON.stringify(userAnswers));
-                 localStorage.removeItem("currentScreen");
-                 localStorage.removeItem("timeLeft");
+    localStorage.setItem("userAnswers", JSON.stringify(userAnswers));
+    localStorage.removeItem("currentScreen");
+    localStorage.removeItem("timeLeft");
 
-                 showResultScreen();
+    showResultScreen();
 
-            const resultNotif = document.getElementById('result-notification');
-            
-            if (reviewBtn) {
-            if (!isAdminControlled || (isAdminControlled && isTestEnded)) {
-                    reviewBtn.classList.remove('hidden');
+    // ==========================================================
+    // LOGIC MỚI: KIỂM SOÁT NÚT XEM ĐÁP ÁN (ĐÂY LÀ PHẦN SỬA)
+    // ==========================================================
+    // Dòng này đã bị thiếu trong file của bạn:
+    const reviewBtn = document.getElementById('review-answers-btn'); 
+    const resultNotif = document.getElementById('result-notification');
+
+    if (reviewBtn) {
+        // Chỉ hiển thị nút khi:
+        // 1. Đây KHÔNG phải là bài thi do admin kiểm soát
+        // 2. HOẶC đây LÀ bài thi do admin kiểm soát NHƯNG đã kết thúc (isTestEnded = true)
+        if (!isAdminControlled || (isAdminControlled && isTestEnded)) {
+            reviewBtn.classList.remove('hidden');
             if (resultNotif) resultNotif.innerText = "";
-                } else {
-                    reviewBtn.classList.add('hidden');
+        } else {
+            // Ngược lại (là bài thi trực tiếp và CHƯA kết thúc)
+            reviewBtn.classList.add('hidden');
             if (resultNotif) resultNotif.innerText = "Bạn đã nộp bài. Vui lòng đợi admin kết thúc bài thi để xem đáp án.";
-                }
-            }
+        }
+    }
+    // ==========================================================
 
-         } catch (error) {
-                 console.error("Error submitting quiz:", error);
-        // Hiển thị lỗi đúng chỗ
-                 if(quizNotification) quizNotification.innerText = "Lỗi khi nộp bài. Đáp án của bạn vẫn được lưu. Vui lòng thử lại.";
-         }
+} catch (error) {
+    console.error("Error submitting quiz:", error);
+    // Hiển thị lỗi đúng chỗ (biến này được khai báo ở đầu hàm submitQuiz)
+    const quizNotification = document.getElementById('quiz-notification'); 
+    if (quizNotification) quizNotification.innerText = "Lỗi khi nộp bài. Đáp án của bạn vẫn được lưu. Vui lòng thử lại.";
+}
 }
 
 async function saveQuiz() {
