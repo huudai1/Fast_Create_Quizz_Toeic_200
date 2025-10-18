@@ -388,10 +388,25 @@ function handleWebSocketMessage(event) {
             localStorage.removeItem("directTestState");
             clearInterval(timerInterval);
             if (!isAdmin) {
-                submitQuiz();
-                const notif = document.getElementById('quiz-container-notification');
-                if(notif) notif.innerText = "Bài thi đã kết thúc!";
-            } else {
+                // Kiểm tra xem học sinh có đang ở màn hình kết quả không (đã nộp bài sớm)
+                const resultScreenEl = document.getElementById('result-screen');
+     if (resultScreenEl && !resultScreenEl.classList.contains('hidden')) {
+    
+     const reviewBtn = document.getElementById('review-answers-btn');
+     if (reviewBtn) {
+     reviewBtn.classList.remove('hidden');
+     }
+     const resultNotif = document.getElementById('result-notification');
+     if (resultNotif) {
+     resultNotif.innerText = "Admin đã kết thúc bài thi. Bây giờ bạn có thể xem đáp án.";
+     }
+     } else {
+    // Nếu chưa nộp bài, ép nộp bài
+     // Hàm submitQuiz() giờ sẽ tự động hiển thị nút xem đáp án vì isTestEnded = true
+     submitQuiz();
+     const notif = document.getElementById('quiz-container-notification');
+     if (notif) notif.innerText = "Bài thi đã kết thúc! Đang nộp bài...";
+    } else {
                 fetchDirectResults();
             }
         } 
@@ -1215,6 +1230,18 @@ async function submitQuiz() {
 
                  showResultScreen();
 
+            const resultNotif = document.getElementById('result-notification');
+            
+            if (reviewBtn) {
+            if (!isAdminControlled || (isAdminControlled && isTestEnded)) {
+                    reviewBtn.classList.remove('hidden');
+            if (resultNotif) resultNotif.innerText = "";
+                } else {
+                    reviewBtn.classList.add('hidden');
+            if (resultNotif) resultNotif.innerText = "Bạn đã nộp bài. Vui lòng đợi admin kết thúc bài thi để xem đáp án.";
+                }
+            }
+
          } catch (error) {
                  console.error("Error submitting quiz:", error);
         // Hiển thị lỗi đúng chỗ
@@ -1692,7 +1719,7 @@ async function submitCustomQuiz() {
         resultTime.innerText = `Thời gian nộp: ${new Date().toLocaleString()}`;
         
         // Vô hiệu hóa nút xem đáp án cho đề tùy chỉnh
-        const reviewButton = resultScreen.querySelector('button[onclick="showReviewAnswers()"]');
+        const reviewButton = document.getElementById('review-answers-btn');
         if(reviewButton) reviewButton.classList.add('hidden');
 
 
