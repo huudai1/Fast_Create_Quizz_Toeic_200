@@ -1410,7 +1410,7 @@ async function saveQuiz() {
     try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 phút
-        const res = await fetch("/save-quiz", {
+        const res = await fetch("/save-toeic-quiz", {
             method: "POST",
             body: formData,
             signal: controller.signal,
@@ -1602,7 +1602,7 @@ async function saveCustomQuiz() {
          modal.classList.remove('hidden');
 
          try {
-                 const res = await fetch('/save-quiz', { method: 'POST', body: formData });
+                 const res = await fetch('/save-custom-quiz', { method: 'POST', body: formData });
                  const result = await res.json();
                  if (!res.ok) throw new Error(result.message);
                  backToQuizList("Tạo đề thi tùy chỉnh thành công!");

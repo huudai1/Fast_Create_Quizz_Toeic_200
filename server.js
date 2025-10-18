@@ -258,134 +258,116 @@ app.get('/quizzes', async (req, res) => {
 });
 
 app.post(
-    '/save-quiz',
-    upload.fields([ /* giữ nguyên các fields */ ]),
+    '/save-toeic-quiz',
+    // Chỉ cấu hình Multer cho các file của đề TOEIC
+    upload.fields([
+        { name: 'quiz-pdf', maxCount: 1 },
+        { name: 'audio-part1', maxCount: 1 },
+        { name: 'audio-part2', maxCount: 1 },
+        { name: 'audio-part3', maxCount: 1 },
+        { name: 'audio-part4', maxCount: 1 },
+    ]),
     async (req, res) => {
         try {
-            const { quizType } = req.body;
-            let quizData = {};
-            let pdfUrl = '';
-            let audioUrls = {}; // Lưu URL audio từ Cloudinary
-            let listeningRangesWithUrls = []; // Lưu ranges có URL Cloudinary
+            const { quizName, answerKey, createdBy } = req.body;
 
-            // --- XỬ LÝ UPLOAD FILE LÊN CLOUDINARY ---
-            if (quizType === 'custom') {
-                if (req.files['pdfFile'] && req.files['pdfFile'][0]) {
-                    // PDF là 'raw' hoặc 'image' trên Cloudinary (nếu muốn preview)
-                    pdfUrl = await uploadToCloudinary(req.files['pdfFile'][0], 'image'); // Thử 'image' để có thể preview
-                } else { throw new Error('Thiếu file PDF cho đề tùy chỉnh.'); }
+            // --- Validation ---
+            if (!quizName || !answerKey || !createdBy || !req.files || !req.files['quiz-pdf'] || 
+                !req.files['audio-part1'] || !req.files['audio-part2'] || !req.files['audio-part3'] || !req.files['audio-part4']) {
+                 return res.status(400).json({ message: "Thiếu thông tin hoặc file cần thiết cho đề TOEIC." });
+             }
 
-                const listeningRanges = JSON.parse(req.body.listeningRanges || '[]');
-                for (let i = 0; i < listeningRanges.length; i++) {
-                     let range = {...listeningRanges[i]}; // Copy range object
-                     if (req.files[`audio_file_${i}`] && req.files[`audio_file_${i}`][0]) {
-                        // Audio là 'video' hoặc 'raw' trên Cloudinary
-                        range.audioUrl = await uploadToCloudinary(req.files[`audio_file_${i}`][0], 'video');
-                        listeningRangesWithUrls.push(range); // Thêm range đã có URL
-                     } else { throw new Error(`Thiếu file audio cho khoảng nghe thứ ${i+1}.`); }
-                }
-                quizData.listeningRanges = listeningRangesWithUrls;
-
-            } else { // Đề TOEIC
-                if (req.files['quiz-pdf'] && req.files['quiz-pdf'][0]) {
-                    pdfUrl = await uploadToCloudinary(req.files['quiz-pdf'][0], 'image');
-                } else { throw new Error('Thiếu file PDF cho đề TOEIC.'); }
-
-                for (let i = 1; i <= 4; i++) {
-                     if (req.files[`audio-part${i}`] && req.files[`audio-part${i}`][0]) {
-                        audioUrls[`part${i}`] = await uploadToCloudinary(req.files[`audio-part${i}`][0], 'video');
-                     } else { throw new Error(`Thiếu file audio cho Part ${i}.`); }
-                }
-                 quizData.audio = audioUrls;
+            // --- Upload files lên Cloudinary ---
+            let pdfUrl = await uploadToCloudinary(req.files['quiz-pdf'][0], 'image');
+            let audioUrls = {};
+            for (let i = 1; i <= 4; i++) {
+                audioUrls[`part${i}`] = await uploadToCloudinary(req.files[`audio-part${i}`][0], 'video');
             }
-            quizData.quizPdfUrl = pdfUrl;
-            // --- KẾT THÚC XỬ LÝ UPLOAD ---
 
-            // --- Gộp dữ liệu còn lại từ req.body (giữ nguyên) ---
-            if (quizType === 'custom') {
-                 const { quizName, totalQuestions, answerKey, createdBy } = req.body;
-                 quizData = { ...quizData, quizId: uuidv4(), quizName, type: 'custom', totalQuestions: parseInt(totalQuestions), answerKey, createdBy };
-            } else {
-                 const { quizName, answerKey, createdBy } = req.body;
-                 quizData = { ...quizData, quizId: uuidv4(), quizName, type: 'toeic', totalQuestions: 200, answerKey: JSON.parse(answerKey), createdBy, isAssigned: false };
-            }
-            // --- Kết thúc gộp dữ liệu ---
+            // --- Chuẩn bị dữ liệu lưu vào DB ---
+            const quizData = {
+                quizId: uuidv4(),
+                quizName,
+                type: 'toeic',
+                totalQuestions: 200,
+                quizPdfUrl: pdfUrl,
+                audio: audioUrls,
+                // Đảm bảo answerKey là object nếu gửi lên dạng string
+                answerKey: typeof answerKey === 'string' ? JSON.parse(answerKey) : answerKey, 
+                createdBy,
+                isAssigned: false
+            };
 
-            // LƯU VÀO DATABASE (giữ nguyên)
+            // --- Lưu vào DB ---
             const newQuiz = new Quiz(quizData);
             await newQuiz.save();
-
-            res.json({ message: 'Lưu đề thi thành công! Files đã được upload lên Cloudinary.' });
+            res.json({ message: 'Lưu đề thi TOEIC thành công!' });
 
         } catch (err) {
-            console.error('Error saving quiz with Cloudinary upload:', err);
-            res.status(500).json({ message: `Lỗi khi lưu đề thi: ${err.message}` });
+            console.error('Error saving TOEIC quiz:', err);
+            res.status(500).json({ message: `Lỗi khi lưu đề thi TOEIC: ${err.message}` });
         }
     }
 );
 
-app.post('/submit-custom', async (req, res) => {
-    const { username, answers, quizId } = req.body;
-    if (!username || !answers || !quizId) {
-        return res.status(400).json({ message: 'Thiếu thông tin' });
-    }
+app.post(
+    '/save-custom-quiz',
+    // Chỉ cấu hình Multer cho các file của đề tùy chỉnh
+    upload.fields([
+        { name: 'pdfFile', maxCount: 1 },
+        // Chấp nhận tối đa 10 file audio cho listening ranges
+        ...Array(10).fill(0).map((_, i) => ({ name: `audio_file_${i}`, maxCount: 1 }))
+    ]),
+    async (req, res) => {
+        try {
+            const { quizName, totalQuestions, answerKey, createdBy, listeningRanges } = req.body;
 
-    try {
-        const quiz = await Quiz.findOne({ quizId: quizId });
-        if (!quiz || quiz.type !== 'custom') {
-            return res.status(404).json({ message: 'Không tìm thấy đề tùy chỉnh' });
-        }
+            // --- Validation ---
+             if (!quizName || !totalQuestions || !answerKey || !createdBy || !listeningRanges || !req.files || !req.files['pdfFile']) {
+                 return res.status(400).json({ message: "Thiếu thông tin hoặc file PDF cho đề tùy chỉnh." });
+             }
 
-        // Tính điểm (logic cũ của bạn)
-        let score = 0;
-        const correctAnswers = quiz.answerKey.split(',');
-        for (let i = 0; i < quiz.totalQuestions; i++) {
-            const questionId = `custom_q${i + 1}`;
-            const userAnswer = answers[questionId];
-            const correctAnswer = correctAnswers[i];
-            if (userAnswer && userAnswer.trim().toUpperCase() === correctAnswer.trim().toUpperCase()) {
-                score++;
+            // --- Upload files lên Cloudinary ---
+            let pdfUrl = await uploadToCloudinary(req.files['pdfFile'][0], 'image');
+            let listeningRangesWithUrls = [];
+            const parsedRanges = JSON.parse(listeningRanges || '[]'); // Parse chuỗi JSON ranges
+
+            for (let i = 0; i < parsedRanges.length; i++) {
+                 let range = {...parsedRanges[i]}; // Copy range object
+                 // Kiểm tra xem có file audio tương ứng được gửi lên không
+                 if (req.files[`audio_file_${i}`] && req.files[`audio_file_${i}`][0]) {
+                     range.audioUrl = await uploadToCloudinary(req.files[`audio_file_${i}`][0], 'video');
+                     listeningRangesWithUrls.push(range);
+                 } else { 
+                     // Nếu trong JSON có range mà không có file audio gửi kèm -> Lỗi
+                     throw new Error(`Thiếu file audio cho khoảng nghe thứ ${i+1} (câu ${range.from}-${range.to}).`); 
+                 }
             }
+
+            // --- Chuẩn bị dữ liệu lưu vào DB ---
+            const quizData = {
+                quizId: uuidv4(),
+                quizName,
+                type: 'custom',
+                totalQuestions: parseInt(totalQuestions),
+                quizPdfUrl: pdfUrl,
+                answerKey, // Giữ dạng chuỗi "A,B,C"
+                listeningRanges: listeningRangesWithUrls, // Lưu mảng đã có URL Cloudinary
+                createdBy,
+                isAssigned: false // Mặc định
+            };
+
+            // --- Lưu vào DB ---
+            const newQuiz = new Quiz(quizData);
+            await newQuiz.save();
+            res.json({ message: 'Lưu đề thi tùy chỉnh thành công!' });
+
+        } catch (err) {
+            console.error('Error saving Custom quiz:', err);
+            res.status(500).json({ message: `Lỗi khi lưu đề thi tùy chỉnh: ${err.message}` });
         }
-
-        // KIỂM TRA xem có thuộc EVENT nào đang chạy không
-        let currentEventId = null;
-        if (currentDirectEvent && currentDirectEvent.quizId === quizId) {
-            currentEventId = currentDirectEvent.eventId;
-        }
-
-        // Tạo và LƯU KẾT QUẢ (SIÊU NHANH)
-        const newResult = new Result({
-            eventId: currentEventId,
-            quizId: quizId,
-            username: username,
-            score: score,
-            totalQuestions: quiz.totalQuestions,
-            answers: answers,
-            submittedAt: new Date()
-        });
-        await newResult.save();
-
-        // Broadcast (nếu là thi trực tiếp)
-        if(currentEventId) {
-            const eventResults = await Result.find({ eventId: currentEventId });
-            broadcast({
-                type: 'submitted',
-                count: eventResults.length,
-                results: eventResults.map(r => ({
-                    username: r.username,
-                    score: r.score,
-                    submittedAt: r.submittedAt
-                }))
-            });
-        }
-
-        res.json({ score });
-    } catch (err) {
-        console.error("Error submitting custom quiz:", err);
-        res.status(500).json({ message: 'Lỗi khi nộp bài' });
     }
-});
+);
 
 app.get('/api/history/:eventId', async (req, res) => {
     try {
