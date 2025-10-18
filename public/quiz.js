@@ -582,10 +582,7 @@ async function uploadQuizzes() {
         }
         
         // Tải lên thành công, tự động quay lại màn hình admin và thông báo
-        backToQuizList();
-        setTimeout(() => {
-            notification.innerText = "Tải lên đề thi thành công! Danh sách đã được cập nhật.";
-        }, 100);
+        backToQuizList("Tải lên đề thi thành công! Danh sách đã được cập nhật.");
 
     } catch (error) {
         console.error("Error uploading quizzes:", error);
