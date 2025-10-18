@@ -122,10 +122,6 @@ const storage = multer.diskStorage({
   },
 });
 
-const upload = multer({ storage });
-const memoryUpload = multer({ storage: multer.memoryStorage() });
-
-
 
 
 app.get('/statistics', async (req, res) => {
