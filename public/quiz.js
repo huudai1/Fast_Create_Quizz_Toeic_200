@@ -503,11 +503,8 @@ function handleWebSocketMessage(event) {
      const notif = document.getElementById('quiz-container-notification');
      if (notif) notif.innerText = "Bài thi đã kết thúc! Đang nộp bài...";
  }
-        } else {
-                fetchDirectResults();
-            }
-        } 
-        else if (message.type === "quizStatus") {
+        }
+        } else if (message.type === "quizStatus") {
             const statusText = message.quizId ? `Đề thi hiện tại: ${message.quizName}` : "Chưa có đề thi được chọn.";
             safeUpdateText(quizStatus, statusText);
             if (!isAdmin) {
