@@ -866,7 +866,7 @@ app.post('/recognize-answers', memoryUpload.array('answer_files', 10), async (re
 
         // Lấy tổng số câu từ request. Nếu không có, nó là null.
         const { totalQuestions } = req.body;
-        
+
         let prompt;
         let isCustomQuiz = !!totalQuestions; // True nếu có totalQuestions
 
@@ -895,7 +895,7 @@ app.post('/recognize-answers', memoryUpload.array('answer_files', 10), async (re
         }
 
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
-        const contentParts = [{ text: prompt }]; 
+        const contentParts = [{ text: prompt }];
         for (const file of req.files) {
             contentParts.push({
                 inlineData: { data: file.buffer.toString("base64"), mimeType: file.mimetype }
@@ -903,17 +903,55 @@ app.post('/recognize-answers', memoryUpload.array('answer_files', 10), async (re
         }
 
         const result = await model.generateContent({ contents: [{ parts: contentParts }] });
-        const responseText = result.response.text();
-        
-        console.log("Gemini raw response:", responseText);
+        let responseText = result.response.text(); // Dùng let để có thể sửa đổi
 
-        const jsonString = responseText.substring(responseText.indexOf('{'), responseText.lastIndexOf('}') + 1);
-        let data = JSON.parse(jsonString);
-        
+        console.log("Gemini raw response:", responseText); // Giữ lại log này!
+
+        // --- START: Improved JSON extraction ---
+        let jsonString = '';
+        let data = {}; // Mặc định là object rỗng nếu lỗi
+
+        try {
+            // 1. Xóa markdown fences (```json ... ``` hoặc ``` ... ```)
+            responseText = responseText.replace(/```json\s*([\s\S]*?)\s*```/g, '$1');
+            responseText = responseText.replace(/```([\s\S]*?)```/g, '$1');
+            responseText = responseText.trim(); // Xóa khoảng trắng thừa đầu/cuối
+
+            // 2. Tìm '{' đầu tiên và '}' cuối cùng
+            const startIndex = responseText.indexOf('{');
+            const endIndex = responseText.lastIndexOf('}');
+
+            if (startIndex !== -1 && endIndex !== -1 && endIndex > startIndex) {
+                // 3. Trích xuất chuỗi JSON tiềm năng
+                jsonString = responseText.substring(startIndex, endIndex + 1);
+
+                // 4. Thử parse chuỗi đã trích xuất
+                data = JSON.parse(jsonString);
+                console.log("Parsed AI data:", data); // Log object đã parse thành công
+
+            } else {
+                // Log lỗi nếu không tìm thấy cấu trúc {...}
+                console.error('Không tìm thấy đối tượng JSON hợp lệ ({...}) trong phản hồi Gemini.');
+                // Có thể trả lỗi về client ở đây nếu muốn:
+                // return res.status(500).json({ message: 'AI không trả về JSON nhận dạng được.' });
+            }
+        } catch (parseError) {
+            // Log lỗi nếu JSON.parse thất bại
+            console.error('Lỗi khi parse JSON từ phản hồi Gemini:', parseError);
+            console.error('Đã thử parse chuỗi:', jsonString); // Log chuỗi gây lỗi
+            // Có thể trả lỗi về client:
+            // return res.status(500).json({ message: 'AI trả về định dạng JSON không hợp lệ.' });
+        }
+        // --- END: Improved JSON extraction ---
+
+        // Đảm bảo khối chuyển đổi custom quiz đã bị xóa hoặc comment
+        // if (isCustomQuiz && data.answers) { ... } // << KHÔNG CÒN Ở ĐÂY
+
+        // Gửi 'data' đã parse (có thể là {} nếu parse lỗi)
         res.json(data);
 
-    } catch (error) {
-        console.error('Error with Gemini API:', error);
+    } catch (error) { // Khối catch bên ngoài
+        console.error('Lỗi với Gemini API hoặc quá trình xử lý:', error); // Sửa log
         res.status(500).json({ message: error.message || 'Lỗi khi nhận diện bằng AI.' });
     }
 });
