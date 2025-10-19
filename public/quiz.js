@@ -58,7 +58,7 @@ function hideAllScreens() {
         'welcome-screen', 'admin-login', 'student-login', 'quiz-list-screen',
         'admin-step-create-quiz', 'custom-quiz-creator-screen', 'quiz-container',
         'custom-quiz-container', 'result-screen', 'review-answers', 'statistics-screen',
-        'direct-test-screen', 'upload-quizzes', 'history-screen'
+        'direct-test-screen', 'upload-quizzes', 'history-screen' ,'history-detail-screen'
     ];
     screenIds.forEach(id => {
         const screen = document.getElementById(id);
