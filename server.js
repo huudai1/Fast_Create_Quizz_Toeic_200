@@ -441,7 +441,7 @@ app.post('/submit-custom', async (req, res) => {
             broadcast({
                 type: 'submitted',
                 count: eventResults.length,
-              .map(r => ({
+              map(r => ({
                     username: r.username,
                     score: r.score,
                     submittedAt: r.submittedAt
