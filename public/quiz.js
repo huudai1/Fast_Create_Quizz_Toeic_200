@@ -35,28 +35,52 @@ let welcomeScreen, adminLogin, studentLogin, quizListScreen, adminOptions, admin
 
 function startHeartbeat() {
     clearInterval(heartbeatInterval);
-    const indicator = document.getElementById('heartbeat-indicator'); // Lấy element trái tim
+    const indicator = document.getElementById('heartbeat-indicator');
+    console.log('[Heartbeat] Starting heartbeat interval...'); // Log khi bắt đầu
 
     heartbeatInterval = setInterval(() => {
         if (socket && socket.readyState === WebSocket.OPEN) {
+            console.log('[Heartbeat] Sending heartbeat ping...'); // Log trước khi gửi
             socket.send(JSON.stringify({ type: 'heartbeat' }));
-            // Hiện trái tim mỗi khi gửi thành công (hoặc chỉ cần hiện 1 lần ngoài interval)
-            if (indicator) indicator.classList.remove('hidden');
+            if (indicator) {
+                if (indicator.classList.contains('hidden')) {
+                    console.log('[Heartbeat] Showing indicator ❤️'); // Log khi hiện
+                    indicator.classList.remove('hidden');
+                }
+            } else {
+                console.warn('[Heartbeat] Indicator element not found!'); // Cảnh báo nếu không tìm thấy element
+            }
         } else {
-            // Nếu socket không mở, ẩn trái tim đi
-            if (indicator) indicator.classList.add('hidden');
+            console.log('[Heartbeat] WebSocket not open, skipping send. State:', socket ? socket.readyState : 'null'); // Log trạng thái socket
+            if (indicator && !indicator.classList.contains('hidden')) {
+                console.log('[Heartbeat] Hiding indicator (socket not open) ❤️'); // Log khi ẩn do socket đóng
+                indicator.classList.add('hidden');
+            }
         }
-    }, 20000);
+    }, 20000); // Gửi mỗi 20 giây
 
-    // Bạn cũng có thể hiện nó ngay lập tức ở đây thay vì trong interval
-    // if (indicator) indicator.classList.remove('hidden');
+    // Log trạng thái ban đầu của indicator khi hàm được gọi
+    if (indicator) {
+        console.log('[Heartbeat] Initial indicator state:', indicator.classList.contains('hidden') ? 'Hidden' : 'Visible');
+    } else {
+         console.warn('[Heartbeat] Indicator element not found on start!');
+    }
 }
 
 function stopHeartbeat() {
+    console.log('[Heartbeat] Stopping heartbeat interval...'); // Log khi gọi hàm dừng
     clearInterval(heartbeatInterval);
-    const indicator = document.getElementById('heartbeat-indicator'); // Lấy element trái tim
-    // Ẩn trái tim khi dừng
-    if (indicator) indicator.classList.add('hidden');
+    const indicator = document.getElementById('heartbeat-indicator');
+    if (indicator) {
+        if (!indicator.classList.contains('hidden')) {
+            console.log('[Heartbeat] Hiding indicator via stopHeartbeat ❤️'); // Log khi ẩn
+            indicator.classList.add('hidden');
+        } else {
+            console.log('[Heartbeat] Indicator already hidden on stop.');
+        }
+    } else {
+        console.warn('[Heartbeat] Indicator element not found on stop!');
+    }
 }
 
 function hideAllScreens() {
@@ -338,30 +362,49 @@ function startDownloadNotice() {
 
 function initializeWebSocket() {
     try {
+        console.log('[WebSocket] Initializing...'); // Log khi bắt đầu kết nối
         socket = new WebSocket(wsProtocol + location.host);
+
         socket.onopen = () => {
-            console.log("WebSocket connected successfully.");
+            console.log("[WebSocket] Connection opened successfully."); // Log khi mở kết nối
             const notif = document.getElementById('quiz-list-notification');
             if (notif) notif.innerText = "";
             if (user && user.name) {
-                socket.send(JSON.stringify({ type: "login", username: user.name }));
+                 // Thêm kiểm tra readyState TRƯỚC KHI send
+                 if (socket.readyState === WebSocket.OPEN) {
+                    console.log("[WebSocket] Sending login message for:", user.name);
+                    socket.send(JSON.stringify({ type: "login", username: user.name }));
+                 } else {
+                     console.warn("[WebSocket] Tried to send login, but state is:", socket.readyState);
+                 }
             }
+            // Gọi startHeartbeat SAU KHI kết nối thực sự mở
+            startHeartbeat(); // <- Di chuyển hoặc gọi lại ở đây
         };
-        socket.onmessage = handleWebSocketMessage;
+
+        socket.onmessage = handleWebSocketMessage; // Giữ nguyên
+
         socket.onerror = (error) => {
-            console.error("WebSocket error:", error);
+            console.error("[WebSocket] Error:", error); // Log lỗi
             const notif = document.getElementById('quiz-list-notification');
             if (notif) notif.innerText = "Lỗi kết nối WebSocket.";
         };
-        socket.onclose = () => {
-            console.log("WebSocket closed. Reconnecting...");
+
+        socket.onclose = (event) => { // Thêm event để xem lý do đóng
+            console.log("[WebSocket] Connection closed. Reconnecting...");
+            console.log(`[WebSocket] Close code: ${event.code}, reason: ${event.reason}, wasClean: ${event.wasClean}`); // Log chi tiết đóng
             socket = null;
             const indicator = document.getElementById('heartbeat-indicator');
-            if (indicator) indicator.classList.add('hidden');
+            if (indicator && !indicator.classList.contains('hidden')) {
+                console.log('[Heartbeat] Hiding indicator due to WebSocket close ❤️'); // Log khi ẩn do đóng kết nối
+                indicator.classList.add('hidden');
+            }
+            // Không gọi stopHeartbeat ở đây vì interval đã bị ảnh hưởng bởi socket đóng
+            // Chỉ cần đảm bảo indicator ẩn đi
             setTimeout(initializeWebSocket, 3000);
         };
     } catch (error) {
-        console.error("Failed to initialize WebSocket:", error);
+        console.error("[WebSocket] Failed to initialize:", error); // Log lỗi khởi tạo
     }
 }
 
@@ -1692,79 +1735,93 @@ function setupCustomAudioPlayer(listeningRanges) {
     const questionList = document.getElementById('custom-quiz-form-student');
     const audioPlayer = document.getElementById('custom-audio-player');
     const audioSource = document.getElementById('custom-audio-source');
-    let currentAudioUrl = null; // Biến để theo dõi URL audio đang được load
+    let currentAudioUrl = null; // Biến theo dõi URL audio đang được load/nghe
+    let scrollListenerAttached = false; // Cờ để tránh gắn listener nhiều lần
 
-    // Kiểm tra các element cần thiết có tồn tại không
+    // Kiểm tra các element cần thiết
     if (!listeningRanges || listeningRanges.length === 0 || !questionList || !audioPlayer || !audioSource) {
-       if(audioPlayer) audioPlayer.classList.add('hidden'); // Ẩn player nếu không có range hoặc element
+        if (audioPlayer) audioPlayer.classList.add('hidden');
         console.warn("setupCustomAudioPlayer: Missing elements or listeningRanges.");
-        return; // Dừng nếu thiếu
+        return;
     }
 
-    // --- Logic xử lý cuộn trang ĐÃ ĐƯỢC DEBOUNCE ---
+    // --- Logic xử lý cuộn trang ĐÃ ĐƯỢC DEBOUNCE VÀ CẢI TIẾN ---
     const handleScroll = debounce(() => {
         const questions = questionList.querySelectorAll('[data-question-number]');
-        let activeRange = null;
+        let newActiveRange = null;
         let firstVisibleQuestionNumber = -1;
 
         // Tìm câu hỏi ĐẦU TIÊN hiển thị ở nửa trên màn hình
         for (const q of questions) {
             const rect = q.getBoundingClientRect();
-             // Kiểm tra xem đỉnh câu hỏi có nằm trong nửa trên viewport không
             if (rect.top >= 0 && rect.top < window.innerHeight / 2) {
                 firstVisibleQuestionNumber = parseInt(q.dataset.questionNumber);
-                break; // Tìm thấy câu đầu tiên rồi, dừng lại
+                break;
             }
         }
 
-        // Nếu tìm thấy câu hỏi hiển thị, xác định khoảng nghe tương ứng
+        // Xác định khoảng nghe mới (nếu có) dựa trên câu hỏi tìm được
         if (firstVisibleQuestionNumber !== -1) {
-            activeRange = listeningRanges.find(r => firstVisibleQuestionNumber >= r.from && firstVisibleQuestionNumber <= r.to);
+            newActiveRange = listeningRanges.find(r => firstVisibleQuestionNumber >= r.from && firstVisibleQuestionNumber <= r.to);
         }
 
-        // Nếu tìm thấy khoảng nghe đang hoạt động
-        if (activeRange) {
-            // Chỉ thay đổi audio nếu URL của khoảng nghe MỚI khác với URL đang được load
-            if (activeRange.audioUrl !== currentAudioUrl) {
-                console.log(`Đổi audio sang khoảng: ${activeRange.from}-${activeRange.to}`);
-                currentAudioUrl = activeRange.audioUrl; // Cập nhật URL đang load
-                audioSource.src = activeRange.audioUrl;
+        const newAudioUrl = newActiveRange ? newActiveRange.audioUrl : null;
+
+        // --- Logic Quyết định Hành động ---
+        if (newAudioUrl !== currentAudioUrl) {
+            // URL đã thay đổi (vào khoảng mới hoặc ra khỏi khoảng)
+
+            if (newAudioUrl) {
+                // --- VỪA VÀO KHOẢNG NGHE MỚI ---
+                console.log(`Đang vào khoảng ${newActiveRange.from}-${newActiveRange.to}, load audio: ${newAudioUrl}`);
+                currentAudioUrl = newAudioUrl;
+                audioSource.src = currentAudioUrl;
                 audioPlayer.load(); // Load nguồn mới
-                // Cố gắng play, bắt lỗi AbortError nếu có (thường do load mới ngắt play cũ)
+                // Cố gắng play, bắt lỗi AbortError (thường do load mới ngắt play cũ)
                 audioPlayer.play().catch(error => {
                     if (error.name !== 'AbortError') {
                         console.error("Lỗi khi play audio:", error);
                     } else {
-                         console.warn("Play bị ngắt bởi load/pause mới."); // Chỉ cảnh báo, không báo lỗi đỏ
+                         console.warn("Play bị ngắt bởi load/pause mới (bình thường khi đổi bài).");
                     }
                 });
                 audioPlayer.classList.remove('hidden'); // Hiển thị trình phát
+
             } else {
-                 // Nếu URL giống nhau (vẫn trong cùng khoảng nghe), chỉ đảm bảo trình phát hiển thị
-                 audioPlayer.classList.remove('hidden');
-                 // Không tự động play lại nếu người dùng đã chủ động pause
+                // --- VỪA RA KHỎI KHOẢNG NGHE ---
+                console.log("Đã ra khỏi khoảng nghe, tạm dừng audio.");
+                audioPlayer.pause();
+                currentAudioUrl = null; // Reset URL
+                audioPlayer.classList.add('hidden'); // Ẩn trình phát
             }
         } else {
-            // Nếu không có khoảng nghe nào đang hoạt động (đã cuộn ra ngoài)
-            if (currentAudioUrl !== null) { // Chỉ pause nếu trước đó có audio đang chạy/load
-                console.log("Cuộn ra ngoài khoảng nghe, tạm dừng.");
-                audioPlayer.pause();
-                currentAudioUrl = null; // Reset URL đang load
-                // Cân nhắc ẩn trình phát đi:
-                // audioPlayer.classList.add('hidden');
+            // --- URL KHÔNG ĐỔI ---
+            // Đang cuộn trong cùng 1 khoảng nghe HOẶC đang cuộn ngoài các khoảng nghe
+            // ==> KHÔNG LÀM GÌ CẢ liên quan đến load/play/pause
+            // Chỉ cần đảm bảo player hiện nếu đang trong khoảng nghe
+            if (newActiveRange) {
+                 audioPlayer.classList.remove('hidden');
+            } else {
+                 audioPlayer.classList.add('hidden');
             }
-             // Cân nhắc ẩn trình phát đi nếu muốn:
-            // audioPlayer.classList.add('hidden');
+            // console.log("Vẫn trong/ngoài khoảng cũ, không đổi audio."); // Bỏ comment nếu muốn debug
         }
-    }, 250); // Chỉ chạy logic sau khi ngừng cuộn 250ms (có thể điều chỉnh)
+        // --- Kết thúc Logic Quyết định ---
 
-    // Quan trọng: Xóa listener cũ trước khi thêm mới để tránh bị trùng lặp
-    questionList.removeEventListener('scroll', handleScroll);
-    // Thêm listener mới đã được debounce
-    questionList.addEventListener('scroll', handleScroll);
+    }, 250); // Độ trễ debounce (ms)
 
-    // Gọi lần đầu để kiểm tra vị trí ban đầu khi tải trang
-    handleScroll();
+    // Chỉ gắn listener MỘT LẦN duy nhất
+    if (!scrollListenerAttached) {
+        questionList.addEventListener('scroll', handleScroll);
+        scrollListenerAttached = true;
+        console.log("Scroll listener for custom audio attached.");
+        // Gọi lần đầu để check vị trí ban đầu
+        handleScroll();
+    } else {
+         console.log("Scroll listener for custom audio already attached.");
+         // Có thể gọi lại handleScroll ở đây nếu cần cập nhật lại ngay lập tức
+         // handleScroll();
+    }
 }
 
 async function submitCustomQuiz() {
