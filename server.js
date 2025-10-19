@@ -494,6 +494,37 @@ app.get('/api/history/:eventId', async (req, res) => {
     }
 });
 
+app.delete('/api/history/:eventId', async (req, res) => {
+    try {
+        const eventId = req.params.eventId;
+
+        // 1. Kiểm tra định dạng ID
+        if (!Types.ObjectId.isValid(eventId)) {
+            return res.status(400).json({ message: 'Định dạng Event ID không hợp lệ.' });
+        }
+
+        // 2. Tìm và xóa Event
+        const deletedEvent = await Event.findByIdAndDelete(eventId);
+
+        // Kiểm tra xem có tìm thấy Event để xóa không
+        if (!deletedEvent) {
+            return res.status(404).json({ message: 'Không tìm thấy lịch sử thi với ID này để xóa.' });
+        }
+
+        // 3. Xóa tất cả các Result liên quan đến Event này
+        const deleteResult = await Result.deleteMany({ eventId: eventId });
+
+        console.log(`Deleted event ${eventId} and ${deleteResult.deletedCount} associated results.`);
+
+        // 4. Trả về thông báo thành công
+        res.json({ message: `Đã xóa thành công lịch sử thi '${deletedEvent.quizName}' và ${deleteResult.deletedCount} kết quả liên quan.` });
+
+    } catch (err) {
+        console.error("Error deleting history entry:", err);
+        res.status(500).json({ message: 'Lỗi server khi xóa lịch sử thi.' });
+    }
+});
+
 app.delete('/delete-quiz/:quizId', async (req, res) => {
     try {
         const quizId = req.params.quizId;

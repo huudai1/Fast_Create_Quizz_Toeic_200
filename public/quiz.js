@@ -109,7 +109,7 @@ async function showHistory() {
     notif.innerText = "";
 
     try {
-        const res = await fetch('/api/history');
+        const res = await fetch('/api/history'); // Endpoint lấy danh sách
         if (!res.ok) throw new Error('Không thể tải lịch sử');
         const events = await res.json();
 
@@ -122,9 +122,10 @@ async function showHistory() {
         events.forEach(event => {
             const tr = document.createElement('tr');
             tr.className = "hover:bg-gray-100 dark:hover:bg-gray-700";
+            tr.id = `history-row-${event._id}`; // Thêm ID cho dòng để dễ xóa khỏi UI
 
             const startTime = new Date(event.startTime).toLocaleString('vi-VN');
-            const status = event.status === 'completed' 
+            const status = event.status === 'completed'
                 ? `<span class="text-green-500 font-bold">Đã kết thúc</span>`
                 : `<span class="text-blue-500 font-bold">Đang diễn ra</span>`;
 
@@ -133,8 +134,11 @@ async function showHistory() {
                 <td class="border p-2">${event.quizType === 'custom' ? 'Tùy chỉnh' : 'TOEIC'}</td>
                 <td class="border p-2">${startTime}</td>
                 <td class="border p-2">${status}</td>
-                <td class="border p-2">
-                    <button onclick="showHistoryDetail('${event._id}')" class="bg-blue-500 text-white px-3 py-1 rounded text-sm">Xem kết quả</button>
+                <td class="border p-2 space-x-2"> {/* Thêm space-x-2 */}
+                    <button onclick="showHistoryDetail('${event._id}')" class="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600">Xem</button>
+                    {/* --- THÊM NÚT XÓA --- */}
+                    <button onclick="deleteHistoryEntry('${event._id}')" class="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600">Xóa</button>
+                    {/* ------------------ */}
                 </td>
             `;
             tableBody.appendChild(tr);
@@ -143,6 +147,48 @@ async function showHistory() {
     } catch (err) {
         notif.innerText = err.message;
         tableBody.innerHTML = '<tr><td colspan="5" class="text-center p-4 text-red-500">Lỗi tải lịch sử.</td></tr>';
+    }
+}
+
+// --- THÊM HÀM MỚI NÀY ---
+async function deleteHistoryEntry(eventId) {
+    if (!confirm(`Bạn có chắc muốn xóa lịch sử thi này (ID: ${eventId}) không? Hành động này sẽ xóa cả kết quả của học sinh và không thể hoàn tác!`)) {
+        return; // Người dùng bấm Cancel
+    }
+
+    const notif = document.getElementById('history-notification');
+    if (notif) notif.innerText = 'Đang xóa...'; // Thông báo tạm thời
+
+    try {
+        const response = await fetch(`/api/history/${eventId}`, {
+            method: 'DELETE',
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.message || 'Lỗi không xác định từ server');
+        }
+
+        // Xóa thành công
+        if (notif) notif.innerText = result.message; // Hiển thị thông báo thành công
+
+        // Xóa dòng tương ứng khỏi bảng trên UI
+        const rowToRemove = document.getElementById(`history-row-${eventId}`);
+        if (rowToRemove) {
+            rowToRemove.remove();
+        }
+
+        // Kiểm tra xem còn dòng nào không, nếu không thì hiển thị "Chưa có lịch sử"
+        const tableBody = document.getElementById('history-list-body');
+        if (tableBody && tableBody.rows.length === 0) {
+             tableBody.innerHTML = '<tr><td colspan="5" class="text-center p-4">Chưa có lịch sử thi nào.</td></tr>';
+        }
+
+
+    } catch (error) {
+        console.error('Error deleting history entry:', error);
+        if (notif) notif.innerText = `Lỗi khi xóa: ${error.message}`;
     }
 }
 
@@ -1826,6 +1872,8 @@ function setupCustomAudioPlayer(listeningRanges) {
 
 async function submitCustomQuiz() {
     audio.pause(); // Dừng âm thanh nếu có
+    const customAudioPlayer = document.getElementById('custom-audio-player');
+    if (customAudioPlayer) customAudioPlayer.pause(); // Dừng audio Tùy chỉnh
     clearInterval(timerInterval); // Dừng đồng hồ
 
     if (!user || !user.name || !currentCustomQuizData) {
