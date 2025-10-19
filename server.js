@@ -387,6 +387,77 @@ app.post(
     }
 );
 
+app.post('/submit-custom', async (req, res) => {
+    const { username, answers, quizId } = req.body;
+    if (!username || !answers || !quizId) {
+        return res.status(400).json({ message: 'Thiếu thông tin' });
+    }
+
+    try {
+        const quiz = await Quiz.findOne({ quizId: quizId });
+        if (!quiz) {
+            return res.status(404).json({ message: 'Quiz not found' });
+        }
+
+        // --- Đây là logic tính điểm MỚI cho đề tùy chỉnh ---
+        let score = 0;
+        // Đáp án đúng là một chuỗi "A,B,C,..."
+        const correctAnswersArray = quiz.answerKey.split(',');
+        const totalQuestions = quiz.totalQuestions; // Lấy tổng số câu từ DB
+
+        for (let i = 1; i <= totalQuestions; i++) {
+            const qId = `custom_q${i}`; // Key của câu trả lời từ client
+            const userAnswer = answers[qId];
+            const correctAnswer = correctAnswersArray[i - 1]; // Đáp án đúng (index 0)
+
+            // So sánh sau khi chuẩn hóa (bỏ qua khoảng trắng và viết hoa)
+            if (userAnswer && userAnswer.trim().toUpperCase() === correctAnswer?.trim().toUpperCase()) {
+                score++;
+            }
+        }
+        // --- Hết logic tính điểm mới ---
+
+        // KIỂM TRA xem có thuộc EVENT nào đang chạy không (giống /submit)
+        let currentEventId = null;
+        if (currentDirectEvent && currentDirectEvent.quizId === quizId) {
+            currentEventId = currentDirectEvent.eventId;
+        }
+
+        // Tạo và LƯU KẾT QUẢ (dùng totalQuestions từ quiz)
+        const newResult = new Result({
+            eventId: currentEventId,
+            quizId: quizId,
+            username: username,
+            score: score,
+            totalQuestions: totalQuestions, // Dùng totalQuestions từ quiz
+            answers: answers,
+            submittedAt: new Date()
+        });
+        await newResult.save();
+
+        // Broadcast (giống /submit)
+        if(currentEventId) {
+            const eventResults = await Result.find({ eventId: currentEventId });
+            broadcast({
+                type: 'submitted',
+                count: eventResults.length,
+              .map(r => ({
+                    username: r.username,
+                    score: r.score,
+                    submittedAt: r.submittedAt
+                }))
+            });
+        }
+
+        // Trả về kết quả (client đang chờ {score: X, totalQuestions: Y})
+        res.json({ score: score, totalQuestions: totalQuestions });
+
+    } catch (err) {
+        console.error("Error submitting custom quiz:", err);
+        res.status(500).json({ message: 'Lỗi khi nộp bài (custom quiz)' });
+    }
+});
+
 app.get('/api/history/:eventId', async (req, res) => {
     try {
         const eventId = req.params.eventId;
