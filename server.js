@@ -909,15 +909,6 @@ app.post('/recognize-answers', memoryUpload.array('answer_files', 10), async (re
 
         const jsonString = responseText.substring(responseText.indexOf('{'), responseText.lastIndexOf('}') + 1);
         let data = JSON.parse(jsonString);
-
-        // Nếu là đề tùy chỉnh, chúng ta cần chuyển đổi cấu trúc một chút để frontend dễ xử lý
-        if (isCustomQuiz && data.answers) {
-            const allAnswers = data.answers.split(',');
-            data = {
-                part1: allAnswers.join(','), // Gộp tất cả vào part1 để copy cho dễ
-                part2: '', part3: '', part4: '', part5: '', part6: '', part7: ''
-            };
-        }
         
         res.json(data);
 

@@ -279,7 +279,7 @@
         <fieldset class="border p-4 rounded">
             <legend class="text-xl font-semibold px-2">3. Đáp án (Các đáp án cách nhau bằng dấu phẩy)</legend>
             <div class="my-4 text-center">
-                <button type="button" onclick="showAiModal()" class="bg-purple-600 text-white font-bold py-2 px-4 rounded hover:bg-purple-700 transition-colors">
+                <button type="button" onclick="showAiModal('toeic')" class="bg-purple-600 text-white font-bold py-2 px-4 rounded hover:bg-purple-700 transition-colors">
                     🤖 Dùng AI nhận diện đáp án từ ảnh/PDF
                 </button>
             </div>
@@ -368,7 +368,7 @@
             <fieldset class="border p-4 rounded">
                 <legend class="text-xl font-semibold px-2">Đáp án</legend>
                 <div class="my-4 text-center">
-                    <button type="button" onclick="handleCustomAiRecognition()" class="bg-purple-600 text-white font-bold py-2 px-4 rounded hover:bg-purple-700">🤖 AI Nhận diện đáp án</button>
+                    <button type="button" onclick="showAiModal('custom')" class="bg-purple-600 text-white font-bold py-2 px-4 rounded hover:bg-purple-700">🤖 AI Nhận diện đáp án</button>
                 </div>
                 <div>
                     <label id="custom-answer-key-label" for="custom-answer-key">Nhập chuỗi đáp án (cách nhau bằng dấu phẩy):</label>
