@@ -569,43 +569,54 @@ body.dark-mode #participant-list li:hover {
 /* 7. OVERRIDES CHO BỐ CỤC CUSTOM QUIZ (Thêm vào cuối file quiz.css)
 /* ========================================================================= */
 
-/* Ghi đè cho container PDF trong Custom Quiz */
+/* Bố cục chính của Custom Quiz */
+#custom-quiz-container {
+  display: flex;              /* Flex ngang */
+  flex-direction: row;        /* PDF bên trái, câu hỏi bên phải */
+  width: 100%;
+  height: 100vh;              /* Chiều cao full màn hình */
+  gap: 1rem;                  /* Khoảng cách giữa PDF và câu hỏi */
+  box-sizing: border-box;
+  padding: 1rem;
+}
+
+/* Vùng hiển thị PDF */
 #custom-quiz-container .image-section {
-  width: 100%; /* Ép chiều rộng 100% */
-  border-right: none; /* Bỏ đường kẻ dọc bên phải */
-  height: auto; /* Để chiều cao tự động theo nội dung iframe */
-  min-height: 60vh; /* Đặt chiều cao tối thiểu để PDF không quá bé */
-  padding: 0; /* Bỏ padding cũ nếu iframe đã có lề */
-  margin-bottom: 1rem; /* Giữ khoảng cách với phần câu hỏi bên dưới */
+  width: 70%;                 /* PDF chiếm 70% */
+  min-width: 400px;           /* Giữ tối thiểu để PDF không quá bé */
+  height: 100%;               /* Chiều cao full container */
+  display: flex;
+  justify-content: center;    /* Căn giữa iframe */
+  align-items: center;
+  background-color: #fff;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
-/* Ghi đè cho container Câu hỏi trong Custom Quiz */
-#custom-quiz-container .question-section {
-  width: 100%; /* Ép chiều rộng 100% */
-  padding: 1rem; /* Giữ lại padding cho câu hỏi */
-  max-height: none; /* Bỏ giới hạn chiều cao cũ nếu có */
-}
-
-/* Đảm bảo iframe bên trong container PDF chiếm đủ không gian */
+/* Iframe PDF */
 #custom-quiz-container .image-section iframe {
   width: 100%;
-  height: 60vh; /* Đặt chiều cao cụ thể cho iframe (có thể chỉnh) */
-  /* Hoặc thử height: 100%; nếu container cha có chiều cao rõ ràng */
-  border: none; /* Bỏ viền mặc định của iframe */
-  display: block; /* Đảm bảo iframe không có margin lạ */
+  height: 100%;               /* Chiếm toàn bộ container PDF */
+  border: none;
+  display: block;
 }
 
-/* Bỏ hover scale cho iframe (vì không cần thiết và có thể gây lỗi) */
-#custom-quiz-container .image-section iframe:hover {
- transform: none;
+/* Khu vực câu hỏi / đáp án */
+#custom-quiz-container .question-section {
+  width: 30%;                 /* Câu hỏi chiếm 30% */
+  min-width: 300px;           /* Tránh quá nhỏ */
+  background-color: #fff;
+  padding: 1rem;
+  border-radius: 8px;
+  box-sizing: border-box;
+  overflow-y: auto;           /* Scroll nếu nội dung nhiều */
 }
 
-/* Ghi đè Dark mode cho Custom Quiz (chủ yếu là bỏ border) */
+/* Dark mode */
 body.dark-mode #custom-quiz-container .image-section {
-  border-right-color: initial; /* Bỏ border */
-  background-color: #1f2937; /* Giữ nền tối */
+  background-color: #1f2937;
 }
 
 body.dark-mode #custom-quiz-container .question-section {
-  background-color: #111827; /* Giữ nền tối */
+  background-color: #111827;
 }
