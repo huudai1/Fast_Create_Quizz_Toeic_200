@@ -592,20 +592,31 @@ app.post('/upload-quizzes-zip', upload.single('quizzes'), async (req, res) => {
                     const partKey = `part${i}`;
                     // Tìm file audio khớp với part (ví dụ: part1.mp3, part2.ogg)
                     const audioFile = files.find(f => f.startsWith(`${partKey}.`));
-                    if (foundAudioPath) {
-                    const audioBuffer = await fs.readFile(foundAudioPath);
-                    const audioSupabaseUrl = await uploadToSupabase({ // Gọi hàm Supabase
-                        originalname: `${newQuizId}_${originalname}`,
-                        mimetype: mimetype,
-                        buffer: audioBuffer 
-                    });
-                    newAudioPaths[partKey] = audioSupabaseUrl; // Lưu URL Supabase
+                    if (audioFile) {
+                        const foundAudioPath = path.join(audioDir, audioFile);
+                        // Đọc nội dung file audio vào buffer
+                        const audioBuffer = await fs.readFile(foundAudioPath);
+                        const originalname = audioFile; // Tên file gốc
+                        const mimetype = multer.memoryStorage._getMimeType(originalname) || 'audio/mpeg';
+
+                        // Upload buffer lên Cloudinary
+                        const audioSupabaseUrl = await uploadToSupabase(
+                            {
+                                originalname: `${newQuizId}_${originalname}`, // Tên file duy nhất
+                                mimetype: mimetype,
+                                buffer: audioBuffer // Nội dung file
+                            }, 
+                            'video' // Upload audio như là 'video'
+                        );
+                        // Lưu URL Cloudinary vào object newAudioPaths
+                        newAudioPaths[partKey] = audioSupabaseUrl; 
+                    }
+                    // else { console.warn(`Audio file for ${partKey} not found.`); }
                 }
             }
             // Gán object chứa URL các part vào quizData
             quizData.audio = newAudioPaths; 
         }
-        // --- KẾT THÚC UPLOAD LÊN CLOUDINARY ---
 
         // LƯU VÀO DATABASE (giữ nguyên)
         const newQuiz = new Quiz(quizData);
