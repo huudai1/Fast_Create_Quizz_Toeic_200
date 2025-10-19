@@ -34,23 +34,29 @@ let welcomeScreen, adminLogin, studentLogin, quizListScreen, adminOptions, admin
 // =========================================================================
 
 function startHeartbeat() {
-    // Xóa interval cũ để đảm bảo chỉ có một tiến trình chạy
     clearInterval(heartbeatInterval);
+    const indicator = document.getElementById('heartbeat-indicator'); // Lấy element trái tim
 
     heartbeatInterval = setInterval(() => {
-        // ---- SỬA Ở ĐÂY ----
-        // Bỏ điều kiện 'isAdmin &&' đi
-        // Chỉ cần kiểm tra xem socket có tồn tại và đang mở không
         if (socket && socket.readyState === WebSocket.OPEN) {
-        // ---- KẾT THÚC SỬA ----
             socket.send(JSON.stringify({ type: 'heartbeat' }));
+            // Hiện trái tim mỗi khi gửi thành công (hoặc chỉ cần hiện 1 lần ngoài interval)
+            if (indicator) indicator.classList.remove('hidden');
+        } else {
+            // Nếu socket không mở, ẩn trái tim đi
+            if (indicator) indicator.classList.add('hidden');
         }
-    }, 20000); // Gửi tín hiệu mỗi 20 giây
+    }, 20000);
+
+    // Bạn cũng có thể hiện nó ngay lập tức ở đây thay vì trong interval
+    // if (indicator) indicator.classList.remove('hidden');
 }
 
 function stopHeartbeat() {
-    // Dừng việc gửi tín hiệu
     clearInterval(heartbeatInterval);
+    const indicator = document.getElementById('heartbeat-indicator'); // Lấy element trái tim
+    // Ẩn trái tim khi dừng
+    if (indicator) indicator.classList.add('hidden');
 }
 
 function hideAllScreens() {
@@ -350,6 +356,8 @@ function initializeWebSocket() {
         socket.onclose = () => {
             console.log("WebSocket closed. Reconnecting...");
             socket = null;
+            const indicator = document.getElementById('heartbeat-indicator');
+            if (indicator) indicator.classList.add('hidden');
             setTimeout(initializeWebSocket, 3000);
         };
     } catch (error) {
