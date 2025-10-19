@@ -1668,45 +1668,95 @@ function createCustomQuestionElements(totalQuestions) {
     }
 }
 
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
 function setupCustomAudioPlayer(listeningRanges) {
     const questionList = document.getElementById('custom-quiz-form-student');
     const audioPlayer = document.getElementById('custom-audio-player');
     const audioSource = document.getElementById('custom-audio-source');
+    let currentAudioUrl = null; // Biến để theo dõi URL audio đang được load
 
-    if (!listeningRanges || listeningRanges.length === 0) {
-        audioPlayer.classList.add('hidden');
-        return;
+    // Kiểm tra các element cần thiết có tồn tại không
+    if (!listeningRanges || listeningRanges.length === 0 || !questionList || !audioPlayer || !audioSource) {
+       if(audioPlayer) audioPlayer.classList.add('hidden'); // Ẩn player nếu không có range hoặc element
+        console.warn("setupCustomAudioPlayer: Missing elements or listeningRanges.");
+        return; // Dừng nếu thiếu
     }
 
-    // Theo dõi vị trí cuộn của người dùng
-    questionList.addEventListener('scroll', () => {
+    // --- Logic xử lý cuộn trang ĐÃ ĐƯỢC DEBOUNCE ---
+    const handleScroll = debounce(() => {
         const questions = questionList.querySelectorAll('[data-question-number]');
         let activeRange = null;
+        let firstVisibleQuestionNumber = -1;
 
-        // Tìm xem câu hỏi đang hiển thị trên màn hình thuộc khoảng nghe nào
+        // Tìm câu hỏi ĐẦU TIÊN hiển thị ở nửa trên màn hình
         for (const q of questions) {
             const rect = q.getBoundingClientRect();
+             // Kiểm tra xem đỉnh câu hỏi có nằm trong nửa trên viewport không
             if (rect.top >= 0 && rect.top < window.innerHeight / 2) {
-                const qNum = parseInt(q.dataset.questionNumber);
-                activeRange = listeningRanges.find(r => qNum >= r.from && qNum <= r.to);
-                break;
+                firstVisibleQuestionNumber = parseInt(q.dataset.questionNumber);
+                break; // Tìm thấy câu đầu tiên rồi, dừng lại
             }
         }
 
-        if (activeRange) {
-            // Nếu audio source chưa đúng, thay đổi nó
-            if (audioSource.src.includes(activeRange.audioUrl) === false) {
-                audioSource.src = activeRange.audioUrl;
-                audioPlayer.load();
-                audioPlayer.play();
-            }
-            audioPlayer.classList.remove('hidden');
-        } else {
-            // Nếu không nằm trong khoảng nghe, ẩn và dừng audio
-            audioPlayer.classList.add('hidden');
-            audioPlayer.pause();
+        // Nếu tìm thấy câu hỏi hiển thị, xác định khoảng nghe tương ứng
+        if (firstVisibleQuestionNumber !== -1) {
+            activeRange = listeningRanges.find(r => firstVisibleQuestionNumber >= r.from && firstVisibleQuestionNumber <= r.to);
         }
-    });
+
+        // Nếu tìm thấy khoảng nghe đang hoạt động
+        if (activeRange) {
+            // Chỉ thay đổi audio nếu URL của khoảng nghe MỚI khác với URL đang được load
+            if (activeRange.audioUrl !== currentAudioUrl) {
+                console.log(`Đổi audio sang khoảng: ${activeRange.from}-${activeRange.to}`);
+                currentAudioUrl = activeRange.audioUrl; // Cập nhật URL đang load
+                audioSource.src = activeRange.audioUrl;
+                audioPlayer.load(); // Load nguồn mới
+                // Cố gắng play, bắt lỗi AbortError nếu có (thường do load mới ngắt play cũ)
+                audioPlayer.play().catch(error => {
+                    if (error.name !== 'AbortError') {
+                        console.error("Lỗi khi play audio:", error);
+                    } else {
+                         console.warn("Play bị ngắt bởi load/pause mới."); // Chỉ cảnh báo, không báo lỗi đỏ
+                    }
+                });
+                audioPlayer.classList.remove('hidden'); // Hiển thị trình phát
+            } else {
+                 // Nếu URL giống nhau (vẫn trong cùng khoảng nghe), chỉ đảm bảo trình phát hiển thị
+                 audioPlayer.classList.remove('hidden');
+                 // Không tự động play lại nếu người dùng đã chủ động pause
+            }
+        } else {
+            // Nếu không có khoảng nghe nào đang hoạt động (đã cuộn ra ngoài)
+            if (currentAudioUrl !== null) { // Chỉ pause nếu trước đó có audio đang chạy/load
+                console.log("Cuộn ra ngoài khoảng nghe, tạm dừng.");
+                audioPlayer.pause();
+                currentAudioUrl = null; // Reset URL đang load
+                // Cân nhắc ẩn trình phát đi:
+                // audioPlayer.classList.add('hidden');
+            }
+             // Cân nhắc ẩn trình phát đi nếu muốn:
+            // audioPlayer.classList.add('hidden');
+        }
+    }, 250); // Chỉ chạy logic sau khi ngừng cuộn 250ms (có thể điều chỉnh)
+
+    // Quan trọng: Xóa listener cũ trước khi thêm mới để tránh bị trùng lặp
+    questionList.removeEventListener('scroll', handleScroll);
+    // Thêm listener mới đã được debounce
+    questionList.addEventListener('scroll', handleScroll);
+
+    // Gọi lần đầu để kiểm tra vị trí ban đầu khi tải trang
+    handleScroll();
 }
 
 async function submitCustomQuiz() {
