@@ -134,11 +134,10 @@ async function showHistory() {
                 <td class="border p-2">${event.quizType === 'custom' ? 'Tùy chỉnh' : 'TOEIC'}</td>
                 <td class="border p-2">${startTime}</td>
                 <td class="border p-2">${status}</td>
-                <td class="border p-2 space-x-2"> {/* Thêm space-x-2 */}
+                <td class="border p-2 space-x-2"> 
                     <button onclick="showHistoryDetail('${event._id}')" class="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600">Xem</button>
-                    {/* --- THÊM NÚT XÓA --- */}
                     <button onclick="deleteHistoryEntry('${event._id}')" class="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600">Xóa</button>
-                    {/* ------------------ */}
+                    
                 </td>
             `;
             tableBody.appendChild(tr);
