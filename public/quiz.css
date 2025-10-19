@@ -163,6 +163,70 @@ body.dark-mode #custom-quiz-container .flex.sticky {
 /* 4. CÁC THÀNH PHẦN GIAO DIỆN (UI COMPONENTS)
 /* ========================================================================= */
 
+#direct-test-notice {
+    background-color: #fef3c7; /* Nền vàng nhạt mặc định */
+    border-left: 4px solid #f59e0b; /* Viền vàng đậm bên trái */
+    color: #b45309; /* Màu chữ vàng đậm */
+    padding: 1rem;
+    border-radius: 0.375rem; /* rounded */
+    margin-bottom: 1rem;
+    /* Hiệu ứng neon nhẹ nhàng */
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.3), 0 0 15px rgba(245, 158, 11, 0.2);
+    animation: neonPulse 2s ease-in-out infinite alternate;
+}
+
+#direct-test-message {
+    font-weight: 600; /* semibold */
+    font-size: 1.125rem; /* text-lg */
+}
+
+/* Dark Mode cho Direct Test Notice */
+body.dark-mode #direct-test-notice {
+    background-color: #4f46e5; /* Nền tím đậm hơn trong dark mode */
+    border-left-color: #a78bfa; /* Viền tím nhạt hơn */
+    color: #e0e7ff; /* Màu chữ trắng ngà */
+    /* Hiệu ứng neon màu tím */
+    box-shadow: 0 0 10px rgba(167, 139, 250, 0.4), 0 0 15px rgba(167, 139, 250, 0.3);
+}
+
+/* --- Modal Đang Tải (Loading Modal) --- */
+#loading-modal .bg-white { /* Nhắm vào div nội dung bên trong */
+    background-color: #ffffff;
+    /* Các style khác đã có từ Tailwind */
+}
+
+#loading-modal p {
+    color: #1f2937; /* Màu chữ mặc định */
+}
+
+#loading-modal .bg-gray-200 { /* Thanh nền của progress bar */
+    background-color: #e5e7eb;
+}
+
+/* Dark Mode cho Loading Modal */
+body.dark-mode #loading-modal .bg-white { /* Đổi thành class nhắm vào nền */
+    background-color: #1f2937; /* Nền tối */
+}
+
+body.dark-mode #loading-modal p {
+    color: #f3f4f6; /* Màu chữ sáng */
+}
+
+body.dark-mode #loading-modal .bg-gray-200 { /* Thanh nền progress bar */
+    background-color: #4b5563; /* Xám tối hơn */
+}
+
+/* --- Loading Animation (Giữ nguyên hoặc tùy chỉnh) --- */
+@keyframes loading {
+    0% { width: 0%; }
+    100% { width: 100%; }
+}
+.animate-loading {
+    animation: loading 1.5s ease-in-out infinite;
+    /* background: linear-gradient(90deg, #3b82f6, #60a5fa); /* Gradient đẹp hơn */ */
+    background-color: #3b82f6; /* Giữ màu xanh mặc định */
+}
+
 /* --- Timer & Audio Player --- */
 #timer, #audio, #custom-audio-player {
   position: fixed;
