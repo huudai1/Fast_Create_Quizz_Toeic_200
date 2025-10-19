@@ -35,11 +35,14 @@ let welcomeScreen, adminLogin, studentLogin, quizListScreen, adminOptions, admin
 
 function startHeartbeat() {
     // Xóa interval cũ để đảm bảo chỉ có một tiến trình chạy
-    clearInterval(heartbeatInterval); 
-    
+    clearInterval(heartbeatInterval);
+
     heartbeatInterval = setInterval(() => {
-        // Chỉ gửi khi là admin và kết nối đang mở
-        if (isAdmin && socket && socket.readyState === WebSocket.OPEN) {
+        // ---- SỬA Ở ĐÂY ----
+        // Bỏ điều kiện 'isAdmin &&' đi
+        // Chỉ cần kiểm tra xem socket có tồn tại và đang mở không
+        if (socket && socket.readyState === WebSocket.OPEN) {
+        // ---- KẾT THÚC SỬA ----
             socket.send(JSON.stringify({ type: 'heartbeat' }));
         }
     }, 20000); // Gửi tín hiệu mỗi 20 giây
@@ -55,7 +58,7 @@ function hideAllScreens() {
         'welcome-screen', 'admin-login', 'student-login', 'quiz-list-screen',
         'admin-step-create-quiz', 'custom-quiz-creator-screen', 'quiz-container',
         'custom-quiz-container', 'result-screen', 'review-answers', 'statistics-screen',
-        'direct-test-screen', 'upload-quizzes'
+        'direct-test-screen', 'upload-quizzes', 'history-screen'
     ];
     screenIds.forEach(id => {
         const screen = document.getElementById(id);
