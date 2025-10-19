@@ -1171,31 +1171,55 @@ function updateProgressBar() {
 }
 
 async function endDirectTest() {
-  if (isTestEnded) {
-    document.getElementById('direct-test-notification').innerText = "Kiểm tra đã kết thúc!";
-    return;
-  }
-  try {
-    if (socket && socket.readyState === WebSocket.OPEN) {
-      socket.send(JSON.stringify({ type: "end" }));
-      isTestEnded = true;
-      endDirectTestBtn.disabled = true;
-      localStorage.removeItem("directTestState");
-      clearInterval(timerInterval);
-      directTestProgressBar.style.width = "0%";
-      directTestTimer.innerText = "Kiểm tra đã kết thúc!";
-      const notifElement = document.getElementById('direct-test-notification');
-        if(notifElement) notifElement.innerText = "Kiểm tra đã kết thúc! Kết quả đã được lưu vào Lịch sử thi.";
-      saveAdminState();
-    } else {
-      document.getElementById('direct-test-notification').innerText = "Không thể gửi tín hiệu kết thúc.";
-      const notifElement = document.getElementById('direct-test-notification');
-        if(notifElement) notifElement.innerText = "Kiểm tra đã kết thúc! Kết quả đã được lưu vào Lịch sử thi.";
+    if (isTestEnded) {
+        document.getElementById('direct-test-notification').innerText = "Kiểm tra đã kết thúc!";
+        return;
     }
-  } catch (error) {
-    console.error("Error ending direct test:", error);
-    document.getElementById('direct-test-notification').innerText = "Lỗi khi kết thúc kiểm tra.";
-  }
+    try {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({ type: "end" }));
+            isTestEnded = true;
+            endDirectTestBtn.disabled = true; // Vô hiệu hóa nút kết thúc
+            localStorage.removeItem("directTestState");
+            clearInterval(timerInterval);
+            directTestProgressBar.style.width = "0%";
+            directTestTimer.innerText = "Kiểm tra đã kết thúc!";
+            const notifElement = document.getElementById('direct-test-notification');
+            if(notifElement) notifElement.innerText = "Kiểm tra đã kết thúc! Kết quả đã được lưu vào Lịch sử thi.";
+
+            // --- THÊM ĐOẠN NÀY ĐỂ HIỆN NÚT QUAY LẠI ---
+            const backButton = document.getElementById('back-to-list-from-direct');
+            if (backButton) {
+                backButton.classList.remove('hidden'); // Hiện nút quay lại
+                console.log("Hiện nút Quay lại Danh sách.");
+            }
+            // ------------------------------------------
+
+            saveAdminState(); // Nếu hàm này tồn tại
+        } else {
+            // Trường hợp không gửi được tín hiệu kết thúc (vẫn nên hiện nút quay lại)
+            document.getElementById('direct-test-notification').innerText = "Không thể gửi tín hiệu kết thúc. Kiểm tra đã dừng cục bộ.";
+            isTestEnded = true; // Đánh dấu đã kết thúc cục bộ
+            endDirectTestBtn.disabled = true;
+            clearInterval(timerInterval);
+            directTestProgressBar.style.width = "0%";
+            directTestTimer.innerText = "Kiểm tra đã kết thúc!";
+             const backButton = document.getElementById('back-to-list-from-direct');
+             if (backButton) {
+                 backButton.classList.remove('hidden');
+                 console.log("Hiện nút Quay lại Danh sách (lỗi gửi tín hiệu).");
+             }
+        }
+    } catch (error) {
+        console.error("Error ending direct test:", error);
+        document.getElementById('direct-test-notification').innerText = "Lỗi khi kết thúc kiểm tra.";
+        // Vẫn nên hiện nút quay lại nếu có lỗi
+         const backButton = document.getElementById('back-to-list-from-direct');
+         if (backButton) {
+             backButton.classList.remove('hidden');
+             console.log("Hiện nút Quay lại Danh sách (do lỗi).");
+         }
+    }
 }
 
 async function joinDirectTest(quizId, remainingTime, startTime) {
