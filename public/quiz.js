@@ -8,6 +8,7 @@ let user = null, heartbeatInterval = null, isAdmin = false, timeLeft = 7200, tim
 
 let partVisibility = { 1: true, 2: true, 3: true, 4: true, 5: true, 6: true, 7: true };
 let studentPartVisibility = null;
+let customQuizScrollListener = null;
 
 const ADMIN_PASSWORD = "admin123";
 const wsProtocol = location.protocol === 'https:' ? 'wss://' : 'ws://';
@@ -359,6 +360,7 @@ function showCustomQuizCreator() {
 
 // Sửa hàm này
 function backToQuizList(message = null) {
+    removeCustomQuizScrollListener();
     localStorage.setItem("currentScreen", "quiz-list-screen");
     hideAllScreens();
         if (quizListScreen) quizListScreen.classList.remove("hidden");
@@ -644,6 +646,7 @@ function handleWebSocketMessage(event) {
 }
 
 async function logout() {
+    removeCustomQuizScrollListener();
     try {
         if (user && user.name && socket && socket.readyState === WebSocket.OPEN) {
             socket.send(JSON.stringify({ type: "logout", username: user.name }));
@@ -1318,6 +1321,7 @@ async function loadQuizPdf(pdfUrl, containerId) {
 }
 
 async function startQuiz(quizId) {
+    removeCustomQuizScrollListener();
     try {
         const res = await fetch("/select-quiz", {
             method: "POST",
@@ -1806,7 +1810,7 @@ function setupCustomAudioPlayer(listeningRanges) {
     const audioSource = document.getElementById('custom-audio-source');
     let currentAudioUrl = null; // Biến theo dõi URL audio đang được load/nghe
     let scrollListenerAttached = false; // Cờ để tránh gắn listener nhiều lần
-
+    removeCustomQuizScrollListener();
     // Kiểm tra các element cần thiết
     if (!listeningRanges || listeningRanges.length === 0 || !questionList || !audioPlayer || !audioSource) {
         if (audioPlayer) audioPlayer.classList.add('hidden');
@@ -1879,6 +1883,7 @@ function setupCustomAudioPlayer(listeningRanges) {
 
     }, 250); // Độ trễ debounce (ms)
 
+    customQuizScrollListener = handleScroll;
     // Chỉ gắn listener MỘT LẦN duy nhất
     if (!scrollListenerAttached) {
         questionList.addEventListener('scroll', handleScroll);
@@ -1893,11 +1898,33 @@ function setupCustomAudioPlayer(listeningRanges) {
     }
 }
 
+function removeCustomQuizScrollListener() {
+    const questionList = document.getElementById('custom-quiz-form-student');
+    const audioPlayer = document.getElementById('custom-audio-player');
+
+    // Kiểm tra xem có listener nào đang tồn tại không
+    if (questionList && customQuizScrollListener) {
+        console.log("Removing custom quiz scroll listener.");
+        questionList.removeEventListener('scroll', customQuizScrollListener);
+        customQuizScrollListener = null; // Reset biến
+    }
+
+    // Ẩn và dừng audio player của custom quiz (đảm bảo)
+    if (audioPlayer) {
+        audioPlayer.pause();
+        audioPlayer.classList.add('hidden');
+        // Reset src để tránh phát nhầm nếu ẩn không kịp
+        const audioSource = document.getElementById('custom-audio-source');
+        if(audioSource) audioSource.src = "";
+    }
+}
+
 async function submitCustomQuiz() {
     audio.pause(); // Dừng âm thanh nếu có
     const customAudioPlayer = document.getElementById('custom-audio-player');
     if (customAudioPlayer) customAudioPlayer.pause(); // Dừng audio Tùy chỉnh
     clearInterval(timerInterval); // Dừng đồng hồ
+    removeCustomQuizScrollListener();
 
     if (!user || !user.name || !currentCustomQuizData) {
         document.getElementById('custom-quiz-notification').innerText = "Lỗi: Mất thông tin người dùng hoặc đề thi.";
